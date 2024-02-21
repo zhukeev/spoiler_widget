@@ -1,5 +1,7 @@
-import 'package:flutter/rendering.dart' show DiagnosticPropertiesBuilder, DiagnosticsProperty, TextSelection;
-import 'package:flutter/widgets.dart' show BuildContext, Directionality, RichText, ValueSetter;
+import 'package:flutter/rendering.dart'
+    show DiagnosticPropertiesBuilder, DiagnosticsProperty, TextSelection;
+import 'package:flutter/widgets.dart'
+    show BuildContext, Directionality, RichText, ValueSetter;
 import 'package:spoiler_widget/models/string_details.dart';
 import 'package:spoiler_widget/widgets/spoiler_paragraph.dart';
 
@@ -34,7 +36,8 @@ class SpoilerRichText extends RichText {
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(properties);
     properties.add(DiagnosticsProperty<bool>('initialized', initialized));
-    properties.add(DiagnosticsProperty<ValueSetter<StringDetails>>('onBoundariesCalculated', onBoundariesCalculated));
+    properties.add(DiagnosticsProperty<ValueSetter<StringDetails>>(
+        'onBoundariesCalculated', onBoundariesCalculated));
     properties.add(DiagnosticsProperty<PaintCallback?>('onPaint', onPaint));
   }
 }

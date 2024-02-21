@@ -14,17 +14,24 @@ extension RectX on Rect {
   /// ```
   ///
   bool containsOffset(Offset offset) {
-    return bottom >= offset.dy && top <= offset.dy && left <= offset.dx && right >= offset.dx;
+    return bottom >= offset.dy &&
+        top <= offset.dy &&
+        left <= offset.dx &&
+        right >= offset.dx;
   }
 
   (Rect, Rect, Rect, Rect) divideRect() {
     final halfWidth = width / 2;
     final halfHeight = height / 2;
 
-    final topLeft = Rect.fromLTRB(left, top, left + halfWidth, top + halfHeight);
-    final topRight = Rect.fromLTRB(left + halfWidth, top, right, top + halfHeight);
-    final bottomLeft = Rect.fromLTRB(left, top + halfHeight, left + halfWidth, bottom);
-    final bottomRight = Rect.fromLTRB(left + halfWidth, top + halfHeight, right, bottom);
+    final topLeft =
+        Rect.fromLTRB(left, top, left + halfWidth, top + halfHeight);
+    final topRight =
+        Rect.fromLTRB(left + halfWidth, top, right, top + halfHeight);
+    final bottomLeft =
+        Rect.fromLTRB(left, top + halfHeight, left + halfWidth, bottom);
+    final bottomRight =
+        Rect.fromLTRB(left + halfWidth, top + halfHeight, right, bottom);
 
     return (topLeft, topRight, bottomLeft, bottomRight);
   }
@@ -45,7 +52,6 @@ extension RectX on Rect {
       return center;
     }
   }
-
 
   /// Get random offset inside the rectangle
   Offset randomOffset() {
