@@ -1,6 +1,17 @@
 import 'dart:math';
 import 'dart:ui' show Color, Offset, Rect;
 
+/// Particle class to represent a single particle
+///
+/// This class is used to represent a single particle in the particle system.
+/// It contains the position, size, color, life, speed, angle, and rect of the particle.
+///
+/// [size] is the size of the particle.
+/// [color] is the color of the particle.
+/// [life] is the life of the particle.
+/// [speed] is the speed of the particle.
+/// [angle] is the angle which indicates the direction of the particle.
+/// [rect] is the rect of the particle.
 class Particle extends Offset {
   final double size;
   final Color color;
@@ -42,6 +53,10 @@ class Particle extends Offset {
     );
   }
 
+  /// Move the particle
+  /// 
+  /// This method is used to move the particle.
+  /// It calculates the next position of the particle based on the current position, speed, and angle.
   Particle move() {
     final next = this + Offset.fromDirection(angle, speed);
 
