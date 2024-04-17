@@ -38,7 +38,8 @@ class SpoilerTextWidget extends StatefulWidget {
   State createState() => _SpoilerTextWidgetState();
 }
 
-class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProviderStateMixin {
+class _SpoilerTextWidgetState extends State<SpoilerTextWidget>
+    with TickerProviderStateMixin {
   final rng = Random();
 
   AnimationController? fadeAnimationController;
@@ -74,13 +75,15 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
     particles.clear();
     spoilerPath.reset();
 
-    spoilerRects = details.words.map((e) => e.rect.deflate(widget.fadeRadius)).toList();
+    spoilerRects =
+        details.words.map((e) => e.rect.deflate(widget.fadeRadius)).toList();
     spoilerBounds = spoilerRects.getBounds();
 
     for (final word in details.words) {
       spoilerPath.addRect(word.rect);
 
-      final count = (word.rect.width + word.rect.height) * widget.particleDensity;
+      final count =
+          (word.rect.width + word.rect.height) * widget.particleDensity;
       for (int index = 0; index < count; index++) {
         particles.add(randomParticle(word.rect));
       }
@@ -89,15 +92,19 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
 
   @override
   void initState() {
-    particleAnimationController = AnimationController(duration: const Duration(seconds: 1), vsync: this);
-    particleAnimation = Tween<double>(begin: 0, end: 1).animate(particleAnimationController)..addListener(_myListener);
+    particleAnimationController =
+        AnimationController(duration: const Duration(seconds: 1), vsync: this);
+    particleAnimation = Tween<double>(begin: 0, end: 1)
+        .animate(particleAnimationController)
+      ..addListener(_myListener);
 
     if (widget.fadeAnimation) {
       fadeAnimationController = AnimationController(
         duration: const Duration(milliseconds: 300),
         vsync: this,
       );
-      fadeAnimation = Tween<double>(begin: 0, end: 1).animate(fadeAnimationController!);
+      fadeAnimation =
+          Tween<double>(begin: 0, end: 1).animate(fadeAnimationController!);
     }
 
     enabled = widget.enable;
@@ -117,7 +124,8 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
 
           // If particle is dead, replace it with a new one
           // Otherwise, move it
-          particles[index] = offset.life <= 0.1 ? randomParticle(offset.rect) : offset.move();
+          particles[index] =
+              offset.life <= 0.1 ? randomParticle(offset.rect) : offset.move();
         }
       },
     );
@@ -125,7 +133,8 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
 
   @override
   void didUpdateWidget(covariant SpoilerTextWidget oldWidget) {
-    if (oldWidget.selection != widget.selection || oldWidget.style != widget.style) {
+    if (oldWidget.selection != widget.selection ||
+        oldWidget.style != widget.style) {
       particles.clear();
     }
 
@@ -172,7 +181,8 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
     ..onTapUp = (details) {
       fadeOffset = details.localPosition;
 
-      if (widget.enable && spoilerRects.any((rect) => rect.contains(fadeOffset))) {
+      if (widget.enable &&
+          spoilerRects.any((rect) => rect.contains(fadeOffset))) {
         setState(() {
           _onEnabledChanged(!enabled);
         });
@@ -191,13 +201,15 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
           return;
         }
 
-        final isAnimating = fadeAnimationController != null && fadeAnimationController!.isAnimating;
+        final isAnimating = fadeAnimationController != null &&
+            fadeAnimationController!.isAnimating;
 
         late final double radius;
         late final Offset center;
 
         void updateRadius() {
-          final farthestPoint = spoilerBounds.getFarthestPoint(fadeOffset + offset);
+          final farthestPoint =
+              spoilerBounds.getFarthestPoint(fadeOffset + offset);
 
           final distance = (farthestPoint - (fadeOffset + offset)).distance;
 
@@ -219,7 +231,8 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
           if (isAnimating) {
             if ((center - point).distance < radius) {
               if ((center - point).distance > radius - 20) {
-                context.canvas.drawCircle(point + offset, point.size * 1.5, paint..color = Colors.white);
+                context.canvas.drawCircle(point + offset, point.size * 1.5,
+                    paint..color = Colors.white);
               } else {
                 context.canvas.drawCircle(point + offset, point.size, paint);
               }
@@ -252,7 +265,8 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
             spoilerPath,
           );
 
-          context.pushClipPath(true, offset, context.estimatedBounds, path, superPaint);
+          context.pushClipPath(
+              true, offset, context.estimatedBounds, path, superPaint);
         }
       },
       initialized: particles.isNotEmpty,
