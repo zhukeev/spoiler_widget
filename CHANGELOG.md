@@ -11,3 +11,7 @@
 ## 1.0.3
 
 * Position fix
+
+## 1.0.4
+
+* Added docs
