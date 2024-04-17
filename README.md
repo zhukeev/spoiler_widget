@@ -19,7 +19,7 @@ To use this package, add `spoiler_widget` as a dependency in your `pubspec.yaml`
 
 ```yaml
 dependencies:
-  spoiler_widget: ^1.0.0
+  spoiler_widget: ^1.0.3
 ```
 
 Then, run `flutter pub get` to install the package.
