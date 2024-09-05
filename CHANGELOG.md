@@ -15,3 +15,7 @@
 ## 1.0.4
 
 * Added docs
+
+## 1.0.5
+
+* Added new SpoilerWidget widget to hide widgets below
