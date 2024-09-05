@@ -5,41 +5,24 @@ import 'package:flutter/material.dart';
 import 'package:spoiler_widget/extension/rect_x.dart';
 import 'package:spoiler_widget/models/particle.dart';
 import 'package:spoiler_widget/models/string_details.dart';
+import 'package:spoiler_widget/models/text_spoiler_configs.dart';
 import 'package:spoiler_widget/widgets/spoiler_richtext.dart';
 
 class SpoilerTextWidget extends StatefulWidget {
   const SpoilerTextWidget({
     super.key,
-    this.particleColor = Colors.white70,
-    this.maxParticleSize = 1,
-    this.particleDensity = 20,
-    this.speedOfParticles = 0.2,
-    this.fadeRadius = 10,
-    this.enable = false,
-    this.fadeAnimation = false,
-    this.enableGesture = false,
-    this.selection,
     required this.text,
-    this.style,
+    required this.configuration,
   });
-  final double particleDensity;
-  final double speedOfParticles;
-  final Color particleColor;
-  final double maxParticleSize;
-  final bool fadeAnimation;
-  final double fadeRadius;
-  final bool enable;
-  final bool enableGesture;
-  final TextStyle? style;
+
+  final TextSpoilerConfiguration configuration;
   final String text;
-  final TextSelection? selection;
 
   @override
   State createState() => _SpoilerTextWidgetState();
 }
 
-class _SpoilerTextWidgetState extends State<SpoilerTextWidget>
-    with TickerProviderStateMixin {
+class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProviderStateMixin {
   final rng = Random();
 
   AnimationController? fadeAnimationController;
@@ -56,34 +39,31 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget>
   Path spoilerPath = Path();
 
   Particle randomParticle(Rect rect) {
-    final offset = rect.deflate(widget.fadeRadius).randomOffset();
+    final offset = rect.deflate(widget.configuration.fadeRadius).randomOffset();
 
     return Particle(
       offset.dx,
       offset.dy,
-      widget.maxParticleSize,
-      widget.particleColor,
+      widget.configuration.maxParticleSize,
+      widget.configuration.particleColor,
       rng.nextDouble(),
-      widget.speedOfParticles,
+      widget.configuration.speedOfParticles,
       rng.nextDouble() * 2 * pi,
       rect,
     );
   }
 
   void initializeOffsets(StringDetails details) {
-    debugPrint('initializeOffsets');
     particles.clear();
     spoilerPath.reset();
 
-    spoilerRects =
-        details.words.map((e) => e.rect.deflate(widget.fadeRadius)).toList();
+    spoilerRects = details.words.map((e) => e.rect.deflate(widget.configuration.fadeRadius)).toList();
     spoilerBounds = spoilerRects.getBounds();
 
     for (final word in details.words) {
       spoilerPath.addRect(word.rect);
 
-      final count =
-          (word.rect.width + word.rect.height) * widget.particleDensity;
+      final count = (word.rect.width + word.rect.height) * widget.configuration.particleDensity;
       for (int index = 0; index < count; index++) {
         particles.add(randomParticle(word.rect));
       }
@@ -92,25 +72,21 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget>
 
   @override
   void initState() {
-    particleAnimationController =
-        AnimationController(duration: const Duration(seconds: 1), vsync: this);
-    particleAnimation = Tween<double>(begin: 0, end: 1)
-        .animate(particleAnimationController)
-      ..addListener(_myListener);
+    particleAnimationController = AnimationController(duration: const Duration(seconds: 1), vsync: this);
+    particleAnimation = Tween<double>(begin: 0, end: 1).animate(particleAnimationController)..addListener(_myListener);
 
-    if (widget.fadeAnimation) {
+    if (widget.configuration.fadeAnimation) {
       fadeAnimationController = AnimationController(
         duration: const Duration(milliseconds: 300),
         vsync: this,
       );
-      fadeAnimation =
-          Tween<double>(begin: 0, end: 1).animate(fadeAnimationController!);
+      fadeAnimation = Tween<double>(begin: 0, end: 1).animate(fadeAnimationController!);
     }
 
-    enabled = widget.enable;
+    enabled = widget.configuration.isEnabled;
 
     if (enabled) {
-      _onEnabledChanged(widget.enable);
+      _onEnabledChanged(enabled);
     }
 
     super.initState();
@@ -124,8 +100,7 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget>
 
           // If particle is dead, replace it with a new one
           // Otherwise, move it
-          particles[index] =
-              offset.life <= 0.1 ? randomParticle(offset.rect) : offset.move();
+          particles[index] = offset.life <= 0.1 ? randomParticle(offset.rect) : offset.moveToRandomAngle();
         }
       },
     );
@@ -133,13 +108,13 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget>
 
   @override
   void didUpdateWidget(covariant SpoilerTextWidget oldWidget) {
-    if (oldWidget.selection != widget.selection ||
-        oldWidget.style != widget.style) {
+    if (oldWidget.configuration.selection != widget.configuration.selection ||
+        oldWidget.configuration.style != widget.configuration.style) {
       particles.clear();
     }
 
-    if (oldWidget.enable != widget.enable) {
-      _onEnabledChanged(widget.enable);
+    if (oldWidget.configuration.isEnabled != widget.configuration.isEnabled) {
+      _onEnabledChanged(widget.configuration.isEnabled);
     }
 
     super.didUpdateWidget(oldWidget);
@@ -181,7 +156,8 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget>
     ..onTapUp = (details) {
       fadeOffset = details.localPosition;
 
-      if (widget.enable &&
+      if (widget.configuration.enableGesture &&
+          widget.configuration.selection != null &&
           spoilerRects.any((rect) => rect.contains(fadeOffset))) {
         setState(() {
           _onEnabledChanged(!enabled);
@@ -194,28 +170,23 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget>
     return SpoilerRichText(
       onBoundariesCalculated: initializeOffsets,
       key: UniqueKey(),
-      selection: widget.selection,
+      selection: widget.configuration.selection,
       onPaint: (context, offset, superPaint) {
         if (!enabled) {
           superPaint(context, offset);
           return;
         }
 
-        final isAnimating = fadeAnimationController != null &&
-            fadeAnimationController!.isAnimating;
+        final isAnimating = fadeAnimationController != null && fadeAnimationController!.isAnimating;
 
         late final double radius;
-        late final Offset center;
 
         void updateRadius() {
-          final farthestPoint =
-              spoilerBounds.getFarthestPoint(fadeOffset + offset);
+          final farthestPoint = spoilerBounds.getFarthestPoint(fadeOffset);
 
           final distance = (farthestPoint - (fadeOffset + offset)).distance;
 
           radius = distance * fadeAnimation!.value;
-
-          center = fadeOffset + offset;
         }
 
         if (isAnimating) {
@@ -223,27 +194,29 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget>
         }
 
         for (final point in particles) {
+          final pointWOffset = point + offset;
           final paint = Paint()
             ..strokeWidth = point.size
             ..color = point.color
             ..style = PaintingStyle.fill;
 
           if (isAnimating) {
-            if ((center - point).distance < radius) {
-              if ((center - point).distance > radius - 20) {
-                context.canvas.drawCircle(point + offset, point.size * 1.5,
-                    paint..color = Colors.white);
-              } else {
-                context.canvas.drawCircle(point + offset, point.size, paint);
-              }
+            final distance = (fadeOffset - point).distance;
+
+            if (distance < radius) {
+              context.canvas.drawCircle(
+                pointWOffset,
+                point.size * ((distance > radius - 20) ? 1.5 : 1),
+                paint..color = (distance > radius - 20) ? Colors.white : point.color,
+              );
             }
           } else {
-            context.canvas.drawCircle(point + offset, point.size, paint);
+            context.canvas.drawCircle(pointWOffset, point.size, paint);
           }
         }
 
         void drawSplashAnimation() {
-          final rect = Rect.fromCircle(center: center, radius: radius);
+          final rect = Rect.fromCircle(center: fadeOffset, radius: radius);
 
           final path = Path.combine(
             PathOperation.difference,
@@ -251,29 +224,28 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget>
             Path()..addOval(rect),
           );
 
-          context.pushClipPath(true, offset, rect, path, superPaint);
+          context.pushClipPath(true, offset, spoilerBounds, path, superPaint);
         }
 
         if (isAnimating) {
           drawSplashAnimation();
         }
 
-        if (widget.selection != null) {
+        if (widget.configuration.selection != null) {
           final path = Path.combine(
             PathOperation.difference,
             Path()..addRect(context.estimatedBounds),
             spoilerPath,
           );
 
-          context.pushClipPath(
-              true, offset, context.estimatedBounds, path, superPaint);
+          context.pushClipPath(true, offset, spoilerBounds, path, superPaint);
         }
       },
       initialized: particles.isNotEmpty,
       text: TextSpan(
         text: widget.text,
-        recognizer: widget.enableGesture ? _onTapRecognizer : null,
-        style: widget.style,
+        recognizer: widget.configuration.enableGesture ? _onTapRecognizer : null,
+        style: widget.configuration.style,
       ),
     );
   }

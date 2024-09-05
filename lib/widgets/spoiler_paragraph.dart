@@ -56,12 +56,10 @@ class SpoilerParagraph extends RenderParagraph {
       }
 
       // Get paragraph position
-      final pos = textPainter.getBoxesForSelection(
-          TextSelection(baseOffset: range.start, extentOffset: range.end));
+      final pos = textPainter.getBoxesForSelection(TextSelection(baseOffset: range.start, extentOffset: range.end));
 
       if (pos.isNotEmpty) {
-        textRuns
-            .add(Word(word: substr, rect: pos.first.toRect(), range: range));
+        textRuns.add(Word(word: substr, rect: pos.first.toRect(), range: range));
       }
 
       getAllWordBoundaries(range.end, list);
@@ -73,8 +71,7 @@ class SpoilerParagraph extends RenderParagraph {
       for (final box in boxes) {
         textRuns.add(
           Word(
-            word:
-                text.toPlainText().substring(selection!.start, selection!.end),
+            word: text.toPlainText().substring(selection!.start, selection!.end),
             rect: box.toRect(),
             range: TextRange(start: selection!.start, end: selection!.end),
           ),
@@ -91,7 +88,7 @@ class SpoilerParagraph extends RenderParagraph {
     if (!initialized) {
       final bounds = getWords();
 
-      onBoundariesCalculated(StringDetails(words: bounds));
+      onBoundariesCalculated(StringDetails(words: bounds, offset: offset));
     }
 
     onPaint?.call(context, offset, super.paint);
