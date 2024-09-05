@@ -36,7 +36,9 @@ class ParticleManager {
       final pathLength = metric.length;
       final List<Offset> points = [];
 
-      for (double distance = 0.0; distance < pathLength; distance += pathLength / 4) {
+      for (double distance = 0.0;
+          distance < pathLength;
+          distance += pathLength / 4) {
         final tangent = metric.getTangentForOffset(distance);
         if (tangent != null) {
           points.add(tangent.position);

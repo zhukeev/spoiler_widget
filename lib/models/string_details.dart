@@ -7,6 +7,7 @@ import 'package:flutter/painting.dart' show Offset, Rect, TextRange;
 class StringDetails {
   /// List of words in the string
   final List<Word> words;
+
   /// Offset of canvas
   final Offset offset;
 
