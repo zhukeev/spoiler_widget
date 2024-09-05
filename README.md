@@ -40,6 +40,14 @@ SpoilerTextWidget(
 ),
 ```
 
+Wrap the content you want to hide with a `SpoilerWidget` widget:
+
+```dart
+SpoilerWidget(
+  child: CachedNetworkImage(imageUrl: url),
+),
+```
+
 ## Example
 
 Here's a simple example demonstrating how to use the package:
@@ -53,6 +61,11 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
+  final text = 'This is a spoiler! Tap to reveal.';
+  final url =
+      'https://img.freepik.com/premium-photo/drawing-female-superhero-female-character_1308175-151081.jpg?w=1800';
+  bool enable = true;
+
   @override
   Widget build(BuildContext context) {   
     return MaterialApp(
@@ -60,25 +73,42 @@ class MyApp extends StatelessWidget {
         appBar: AppBar(
           title: Text('Spoiler Animation Example'),
         ),
-        body: Center(
-          child: RepaintBoundary(
-            child: SpoilerTextWidget(
-              enable: true,
-              maxParticleSize: 1.5,
-              particleDensity: .4,
-              speedOfParticles: 0.3,
-              fadeRadius: 1,
-              fadeAnimation: true,
-              enableGesture: true,
-              selection: TextSelection(baseOffset: 0, extentOffset: 18),
-              text: 'This is a spoiler! Tap to reveal.',
-              style: TextStyle(
-                fontSize: 50,
-                fontWeight: FontWeight.bold,
-                color: Colors.red,
+        body: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SpoilerTextWidget(
+              configuration: TextSpoilerConfiguration(
+                isEnabled: enable,
+                maxParticleSize: 0.7,
+                particleDensity: 2.5,
+                speedOfParticles: 0.2,
+                fadeRadius: 3,
+                fadeAnimation: true,
+                enableGesture: true,
+                selection: const TextSelection(baseOffset: 0, extentOffset: 18),
+                style: const TextStyle(
+                  fontSize: 50,
+                  color: Colors.white,
+                ),
+              ),
+              text: text,
+            ),
+            ClipRect(
+              child: SpoilerWidget(
+                configuration: WidgetSpoilerConfiguration(
+                  isEnabled: enable,
+                  maxParticleSize: 0.7,
+                  particleDensity: 5,
+                  speedOfParticles: 0.2,
+                  fadeRadius: 3,
+                  fadeAnimation: true,
+                  enableGesture: true,
+                  imageFilter: ImageFilter.blur(sigmaX: 30.0, sigmaY: 30.0),
+                ),
+                child: CachedNetworkImage(imageUrl: url),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );

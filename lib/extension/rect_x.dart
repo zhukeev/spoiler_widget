@@ -14,24 +14,17 @@ extension RectX on Rect {
   /// ```
   ///
   bool containsOffset(Offset offset) {
-    return bottom >= offset.dy &&
-        top <= offset.dy &&
-        left <= offset.dx &&
-        right >= offset.dx;
+    return bottom >= offset.dy && top <= offset.dy && left <= offset.dx && right >= offset.dx;
   }
 
   (Rect, Rect, Rect, Rect) divideRect() {
     final halfWidth = width / 2;
     final halfHeight = height / 2;
 
-    final topLeft =
-        Rect.fromLTRB(left, top, left + halfWidth, top + halfHeight);
-    final topRight =
-        Rect.fromLTRB(left + halfWidth, top, right, top + halfHeight);
-    final bottomLeft =
-        Rect.fromLTRB(left, top + halfHeight, left + halfWidth, bottom);
-    final bottomRight =
-        Rect.fromLTRB(left + halfWidth, top + halfHeight, right, bottom);
+    final topLeft = Rect.fromLTRB(left, top, left + halfWidth, top + halfHeight);
+    final topRight = Rect.fromLTRB(left + halfWidth, top, right, top + halfHeight);
+    final bottomLeft = Rect.fromLTRB(left, top + halfHeight, left + halfWidth, bottom);
+    final bottomRight = Rect.fromLTRB(left + halfWidth, top + halfHeight, right, bottom);
 
     return (topLeft, topRight, bottomLeft, bottomRight);
   }
@@ -51,6 +44,18 @@ extension RectX on Rect {
     } else {
       return center;
     }
+  }
+
+  /// Get the nearest corner from {offset}
+  Offset getNearestPoint(Offset offset) {
+    // Clamp the x-coordinate of the offset within the rect's horizontal boundaries
+    final nearestX = offset.dx.clamp(left, right);
+
+    // Clamp the y-coordinate of the offset within the rect's vertical boundaries
+    final nearestY = offset.dy.clamp(top, bottom);
+
+    // Return the nearest corner
+    return Offset(nearestX, nearestY);
   }
 
   /// Get random offset inside the rectangle

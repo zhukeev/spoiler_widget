@@ -1,4 +1,4 @@
-import 'dart:math';
+import 'dart:math' hide log;
 import 'dart:ui' show Color, Offset, Rect;
 
 /// Particle class to represent a single particle
@@ -62,19 +62,28 @@ class Particle extends Offset {
   ///
   /// This method is used to move the particle.
   /// It calculates the next position of the particle based on the current position, speed, and angle.
-  Particle move() {
+  Particle moveToRandomAngle() {
+    return moveWithAngle(angle).copyWith(
+      // Random angle
+      angle: angle + (Random().nextDouble() - 0.5),
+    );
+  }
+
+  Particle moveWithAngle(double angle) {
     final next = this + Offset.fromDirection(angle, speed);
 
     final lifetime = life - 0.01;
-    final color = lifetime > .1 ? this.color.withOpacity(lifetime) : this.color;
+    // final opacity = lifetime > 1 ? lifetime - 1 : lifetime;
+    
+    final color = lifetime > .1 ? this.color.withOpacity(lifetime.clamp(0, 1)) : this.color;
 
     return copyWith(
       dx: next.dx,
       dy: next.dy,
       life: lifetime,
       color: color,
-      // Random angle
-      angle: angle + (Random().nextDouble() - 0.5),
+      // Given angle
+      angle: angle,
     );
   }
 }
