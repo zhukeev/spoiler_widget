@@ -19,3 +19,9 @@
 ## 1.0.5
 
 * Added new SpoilerWidget widget to hide widgets below
+
+## 1.0.6
+
+* Gesture issue fixed
+* start with already spoilered state in SpoilerTextWidget
+* import refactor
