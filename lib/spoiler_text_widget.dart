@@ -1,4 +1,6 @@
 import 'dart:math';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +26,7 @@ class SpoilerTextWidget extends StatefulWidget {
 
 class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProviderStateMixin {
   final rng = Random();
+  ui.Image? circleImage;
 
   AnimationController? fadeAnimationController;
   Animation<double>? fadeAnimation;
@@ -89,6 +92,14 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
     if (enabled) {
       particleAnimationController.repeat();
     }
+
+    createCircleImage(color: widget.configuration.particleColor, diameter: widget.configuration.maxParticleSize).then(
+      (val) {
+        setState(() {
+          circleImage = val;
+        });
+      },
+    );
 
     super.initState();
   }
@@ -172,6 +183,93 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
       }
     };
 
+  Future<ui.Image> createCircleImage({
+    required double diameter,
+    required Color color,
+  }) async {
+    assert(diameter.isFinite, 'Diameter cannot be infinite');
+    assert(diameter >= 1, 'Diameter must be greater than or equal to 1');
+
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    final paint = Paint()..color = color;
+
+    final radius = diameter / 2;
+    canvas.drawCircle(Offset.zero, radius, paint);
+
+    final picture = recorder.endRecording();
+    return picture.toImage(diameter.toInt(), diameter.toInt());
+  }
+
+  void _drawRawAtlas(bool isAnimating, Offset offset, Canvas canvas, double radius) {
+    if (circleImage == null) {
+      return;
+    }
+
+    final int count = particles.length;
+    final transforms = Float32List(count * 4);
+    final rects = Float32List(count * 4);
+    final colors = Int32List(count);
+
+    int index = 0;
+    for (final point in particles) {
+      final pointWOffset = point + offset;
+      final transformIndex = index * 4;
+
+      if (isAnimating) {
+        final distance = (fadeOffset - point).distance;
+
+        if (distance < radius) {
+          final scale = (distance > radius - 20) ? 1.5 : 1.0;
+          final color = (distance > radius - 20) ? Colors.white : point.color;
+
+          // Populate transform data
+          transforms[transformIndex] = scale; // scaleX
+          transforms[transformIndex + 1] = 0.0; // rotation
+          transforms[transformIndex + 2] = pointWOffset.dx; // translateX
+          transforms[transformIndex + 3] = pointWOffset.dy; // translateY
+
+          // Populate rect data (assuming the circle texture is square)
+          rects[transformIndex] = 0.0; // left
+          rects[transformIndex + 1] = 0.0; // top
+          rects[transformIndex + 2] = circleImage!.width.toDouble(); // right
+          rects[transformIndex + 3] = circleImage!.height.toDouble(); // bottom
+
+          // Populate color data (ARGB format as Int32)
+          colors[index] = color.value;
+          index++;
+        }
+      } else {
+        // Populate transform data for non-animating particles
+        transforms[transformIndex] = 1.0; // scaleX
+        transforms[transformIndex + 1] = 0.0; // rotation
+        transforms[transformIndex + 2] = pointWOffset.dx; // translateX
+        transforms[transformIndex + 3] = pointWOffset.dy; // translateY
+
+        // Populate rect data (assuming the circle texture is square)
+        rects[transformIndex] = 0.0; // left
+        rects[transformIndex + 1] = 0.0; // top
+        rects[transformIndex + 2] = circleImage!.width.toDouble(); // right
+        rects[transformIndex + 3] = circleImage!.height.toDouble(); // bottom
+
+        // Populate color data (ARGB format as Int32)
+        colors[index] = point.color.value;
+        index++;
+      }
+    }
+
+    // Draw all particles in one batch
+    canvas.drawRawAtlas(
+      circleImage!,
+      transforms,
+      rects,
+      colors,
+      BlendMode.srcOver,
+      null, // CullRect if needed
+      Paint(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SpoilerRichText(
@@ -186,7 +284,7 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
 
         final isAnimating = fadeAnimationController != null && fadeAnimationController!.isAnimating;
 
-        late final double radius;
+        double radius = 0;
 
         void updateRadius() {
           final farthestPoint = spoilerBounds.getFarthestPoint(fadeOffset);
@@ -200,27 +298,7 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
           updateRadius();
         }
 
-        for (final point in particles) {
-          final pointWOffset = point + offset;
-          final paint = Paint()
-            ..strokeWidth = point.size
-            ..color = point.color
-            ..style = PaintingStyle.fill;
-
-          if (isAnimating) {
-            final distance = (fadeOffset - point).distance;
-
-            if (distance < radius) {
-              context.canvas.drawCircle(
-                pointWOffset,
-                point.size * ((distance > radius - 20) ? 1.5 : 1),
-                paint..color = (distance > radius - 20) ? Colors.white : point.color,
-              );
-            }
-          } else {
-            context.canvas.drawCircle(pointWOffset, point.size, paint);
-          }
-        }
+        _drawRawAtlas(isAnimating, offset, context.canvas, radius);
 
         void drawSplashAnimation() {
           final rect = Rect.fromCircle(center: fadeOffset, radius: radius);

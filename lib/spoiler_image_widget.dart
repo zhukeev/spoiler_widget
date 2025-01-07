@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:math' hide log;
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:spoiler_widget/extension/rect_x.dart';
@@ -25,6 +27,7 @@ class _SpoilerWidgetState extends State<SpoilerWidget> with TickerProviderStateM
   AnimationController? fadeAnimationController;
   Animation<double>? fadeAnimation;
   Timer? timer;
+  ui.Image? circleImage;
 
   late final AnimationController particleAnimationController;
   late final Animation<double> particleAnimation;
@@ -102,6 +105,14 @@ class _SpoilerWidgetState extends State<SpoilerWidget> with TickerProviderStateM
     if (enabled) {
       _onEnabledChanged(widget.configuration.isEnabled);
     }
+
+    createCircleImage(color: widget.configuration.particleColor, diameter: widget.configuration.maxParticleSize).then(
+      (val) {
+        setState(() {
+          circleImage = val;
+        });
+      },
+    );
 
     super.initState();
   }
@@ -186,6 +197,24 @@ class _SpoilerWidgetState extends State<SpoilerWidget> with TickerProviderStateM
     _waveAnimation(offset);
   }
 
+  Future<ui.Image> createCircleImage({
+    required double diameter,
+    required Color color,
+  }) async {
+    assert(diameter.isFinite, 'Diameter cannot be infinite');
+    assert(diameter >= 1, 'Diameter must be greater than or equal to 1');
+
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    final paint = Paint()..color = color;
+
+    final radius = diameter / 2;
+    canvas.drawCircle(Offset.zero, radius, paint);
+
+    final picture = recorder.endRecording();
+    return picture.toImage(diameter.toInt(), diameter.toInt());
+  }
+
   void _waveAnimation(Offset offset) {
     if (!enabled || spoilerBounds == Rect.zero) return;
 
@@ -260,15 +289,18 @@ class _SpoilerWidgetState extends State<SpoilerWidget> with TickerProviderStateM
         }
       },
       child: CustomPaint(
-        foregroundPainter: ImageSpoilerPainter(
-          isEnabled: enabled,
-          fadeRadius: fadeRadius,
-          currentRect: spoilerBounds,
-          tapOffset: fadeOffset,
-          particles: particles.values.toList(),
-          onBoundariesCalculated: initializeOffsets,
-          repaint: particleAnimation,
-        ),
+        foregroundPainter: circleImage == null
+            ? null
+            : ImageSpoilerPainter(
+                isEnabled: enabled,
+                fadeRadius: fadeRadius,
+                currentRect: spoilerBounds,
+                tapOffset: fadeOffset,
+                particles: particles.values.toList(),
+                onBoundariesCalculated: initializeOffsets,
+                repaint: particleAnimation,
+                circleImage: circleImage!,
+              ),
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -298,6 +330,7 @@ class ImageSpoilerPainter extends CustomPainter {
   final List<Particle> particles;
   final ValueSetter<Rect> onBoundariesCalculated;
   final bool isEnabled;
+  final ui.Image circleImage;
   const ImageSpoilerPainter({
     required this.isEnabled,
     required this.currentRect,
@@ -305,8 +338,74 @@ class ImageSpoilerPainter extends CustomPainter {
     required this.onBoundariesCalculated,
     required this.tapOffset,
     required this.particles,
+    required this.circleImage,
     super.repaint,
   });
+
+  void _drawRawAtlas(bool isAnimating, Canvas canvas, double radius) {
+    final int count = particles.length;
+    final transforms = Float32List(count * 4);
+    final rects = Float32List(count * 4);
+    final colors = Int32List(count);
+
+    int index = 0;
+    for (final point in particles) {
+      final transformIndex = index * 4;
+
+      if (isAnimating) {
+        final distance = (tapOffset - point).distance;
+
+        if (distance < radius) {
+          final scale = (distance > radius - 20) ? 1.5 : 1.0;
+          final color = (distance > radius - 20) ? Colors.white : point.color;
+
+          // Populate transform data
+          transforms[transformIndex] = scale; // scaleX
+          transforms[transformIndex + 1] = 0.0; // rotation
+          transforms[transformIndex + 2] = point.dx; // translateX
+          transforms[transformIndex + 3] = point.dy; // translateY
+
+          // Populate rect data (assuming the circle texture is square)
+          rects[transformIndex] = 0.0; // left
+          rects[transformIndex + 1] = 0.0; // top
+          rects[transformIndex + 2] = circleImage.width.toDouble(); // right
+          rects[transformIndex + 3] = circleImage.height.toDouble(); // bottom
+
+          // Populate color data (ARGB format as Int32)
+          colors[index] = color.value;
+          index++;
+        }
+      } else {
+        // Populate transform data for non-animating particles
+        transforms[transformIndex] = 1.0; // scaleX
+        transforms[transformIndex + 1] = 0.0; // rotation
+        transforms[transformIndex + 2] = point.dx; // translateX
+        transforms[transformIndex + 3] = point.dy; // translateY
+
+        // Populate rect data (assuming the circle texture is square)
+        rects[transformIndex] = 0.0; // left
+        rects[transformIndex + 1] = 0.0; // top
+        rects[transformIndex + 2] = circleImage.width.toDouble(); // right
+        rects[transformIndex + 3] = circleImage.height.toDouble(); // bottom
+
+        // Populate color data (ARGB format as Int32)
+        colors[index] = point.color.value;
+        index++;
+      }
+    }
+
+    // Draw all particles in one batch
+    canvas.drawRawAtlas(
+      circleImage,
+      transforms,
+      rects,
+      colors,
+      BlendMode.srcOver,
+      null, // CullRect if needed
+      Paint(),
+    );
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
     final currentRect = Rect.fromLTWH(0, 0, size.width, size.height);
@@ -321,24 +420,7 @@ class ImageSpoilerPainter extends CustomPainter {
 
     final isAnimating = fadeRadius != 0 && fadeRadius != 1.0;
 
-    for (final point in particles) {
-      final paint = Paint()
-        ..strokeWidth = point.size
-        ..color = point.color
-        ..style = PaintingStyle.fill;
-
-      if (isAnimating) {
-        if ((tapOffset - point).distance < fadeRadius) {
-          if ((tapOffset - point).distance > fadeRadius - 5) {
-            canvas.drawCircle(point, point.size * 1.1, paint..color = Colors.white);
-          } else {
-            canvas.drawCircle(point, point.size, paint);
-          }
-        }
-      } else if (isEnabled) {
-        canvas.drawCircle(point, point.size, paint);
-      }
-    }
+    _drawRawAtlas(isAnimating, canvas, fadeRadius);
   }
 
   @override

@@ -25,3 +25,7 @@
 * Gesture issue fixed
 * start with already spoilered state in SpoilerTextWidget
 * import refactor
+  
+## 1.0.7
+
+* perf: Refactored particle rendering to use `drawRawAtlas`, significantly improving performance for rendering large numbers of particles

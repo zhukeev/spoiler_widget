@@ -2,8 +2,6 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:spoiler_widget/models/text_spoiler_configs.dart';
-import 'package:spoiler_widget/models/widget_spoiler.dart';
 import 'package:spoiler_widget/spoiler_widget.dart';
 
 void main() {
@@ -36,8 +34,8 @@ class _MainAppState extends State<MainApp> {
             SpoilerTextWidget(
               configuration: TextSpoilerConfiguration(
                 isEnabled: enable,
-                maxParticleSize: 0.7,
-                particleDensity: 2.5,
+                maxParticleSize: 1,
+                particleDensity: 5.5,
                 speedOfParticles: 0.2,
                 fadeRadius: 3,
                 fadeAnimation: true,
@@ -54,7 +52,7 @@ class _MainAppState extends State<MainApp> {
               child: SpoilerWidget(
                 configuration: WidgetSpoilerConfiguration(
                   isEnabled: enable,
-                  maxParticleSize: 0.7,
+                  maxParticleSize: 1,
                   particleDensity: 5,
                   speedOfParticles: 0.2,
                   fadeRadius: 3,
