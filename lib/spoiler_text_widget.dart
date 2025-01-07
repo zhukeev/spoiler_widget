@@ -22,8 +22,7 @@ class SpoilerTextWidget extends StatefulWidget {
   State createState() => _SpoilerTextWidgetState();
 }
 
-class _SpoilerTextWidgetState extends State<SpoilerTextWidget>
-    with TickerProviderStateMixin {
+class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProviderStateMixin {
   final rng = Random();
 
   AnimationController? fadeAnimationController;
@@ -58,16 +57,13 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget>
     particles.clear();
     spoilerPath.reset();
 
-    spoilerRects = details.words
-        .map((e) => e.rect.deflate(widget.configuration.fadeRadius))
-        .toList();
+    spoilerRects = details.words.map((e) => e.rect.deflate(widget.configuration.fadeRadius)).toList();
     spoilerBounds = spoilerRects.getBounds();
 
     for (final word in details.words) {
       spoilerPath.addRect(word.rect);
 
-      final count = (word.rect.width + word.rect.height) *
-          widget.configuration.particleDensity;
+      final count = (word.rect.width + word.rect.height) * widget.configuration.particleDensity;
       for (int index = 0; index < count; index++) {
         particles.add(randomParticle(word.rect));
       }
@@ -76,25 +72,22 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget>
 
   @override
   void initState() {
-    particleAnimationController =
-        AnimationController(duration: const Duration(seconds: 1), vsync: this);
-    particleAnimation = Tween<double>(begin: 0, end: 1)
-        .animate(particleAnimationController)
-      ..addListener(_myListener);
+    particleAnimationController = AnimationController(duration: const Duration(seconds: 1), vsync: this);
+    particleAnimation = Tween<double>(begin: 0, end: 1).animate(particleAnimationController)..addListener(_myListener);
 
     if (widget.configuration.fadeAnimation) {
       fadeAnimationController = AnimationController(
+        value: enabled ? 0 : 1,
         duration: const Duration(milliseconds: 300),
         vsync: this,
       );
-      fadeAnimation =
-          Tween<double>(begin: 0, end: 1).animate(fadeAnimationController!);
+      fadeAnimation = Tween<double>(begin: 0, end: 1).animate(fadeAnimationController!);
     }
 
     enabled = widget.configuration.isEnabled;
 
     if (enabled) {
-      _onEnabledChanged(enabled);
+      particleAnimationController.repeat();
     }
 
     super.initState();
@@ -108,9 +101,7 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget>
 
           // If particle is dead, replace it with a new one
           // Otherwise, move it
-          particles[index] = offset.life <= 0.1
-              ? randomParticle(offset.rect)
-              : offset.moveToRandomAngle();
+          particles[index] = offset.life <= 0.1 ? randomParticle(offset.rect) : offset.moveToRandomAngle();
         }
       },
     );
@@ -139,7 +130,7 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget>
       if (fadeAnimationController == null) {
         stopAnimation();
       } else {
-        fadeAnimationController!.reverse().whenCompleteOrCancel(() {
+        fadeAnimationController!.toggle().whenCompleteOrCancel(() {
           stopAnimation();
         });
       }
@@ -159,19 +150,25 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget>
     particleAnimation.removeListener(_myListener);
     particleAnimationController.dispose();
     fadeAnimationController?.dispose();
+    _onTapRecognizer.dispose();
     super.dispose();
   }
 
   late final TapGestureRecognizer _onTapRecognizer = TapGestureRecognizer()
-    ..onTapUp = (details) {
+    ..onTapDown = (details) {
       fadeOffset = details.localPosition;
 
-      if (widget.configuration.enableGesture &&
-          widget.configuration.selection != null &&
-          spoilerRects.any((rect) => rect.contains(fadeOffset))) {
-        setState(() {
-          _onEnabledChanged(!enabled);
-        });
+      if (widget.configuration.enableGesture) {
+        final hasSelection = widget.configuration.selection != null;
+        if (!hasSelection) {
+          setState(() {
+            _onEnabledChanged(!enabled);
+          });
+        } else if (spoilerRects.any((rect) => rect.contains(fadeOffset))) {
+          setState(() {
+            _onEnabledChanged(!enabled);
+          });
+        }
       }
     };
 
@@ -187,8 +184,7 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget>
           return;
         }
 
-        final isAnimating = fadeAnimationController != null &&
-            fadeAnimationController!.isAnimating;
+        final isAnimating = fadeAnimationController != null && fadeAnimationController!.isAnimating;
 
         late final double radius;
 
@@ -218,9 +214,7 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget>
               context.canvas.drawCircle(
                 pointWOffset,
                 point.size * ((distance > radius - 20) ? 1.5 : 1),
-                paint
-                  ..color =
-                      (distance > radius - 20) ? Colors.white : point.color,
+                paint..color = (distance > radius - 20) ? Colors.white : point.color,
               );
             }
           } else {
@@ -257,8 +251,7 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget>
       initialized: particles.isNotEmpty,
       text: TextSpan(
         text: widget.text,
-        recognizer:
-            widget.configuration.enableGesture ? _onTapRecognizer : null,
+        recognizer: widget.configuration.enableGesture ? _onTapRecognizer : null,
         style: widget.configuration.style,
       ),
     );
