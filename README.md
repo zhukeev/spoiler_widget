@@ -79,7 +79,7 @@ class MyApp extends StatelessWidget {
             SpoilerTextWidget(
               configuration: TextSpoilerConfiguration(
                 isEnabled: enable,
-                maxParticleSize: 0.7,
+                maxParticleSize: 1,
                 particleDensity: 2.5,
                 speedOfParticles: 0.2,
                 fadeRadius: 3,
@@ -97,7 +97,7 @@ class MyApp extends StatelessWidget {
               child: SpoilerWidget(
                 configuration: WidgetSpoilerConfiguration(
                   isEnabled: enable,
-                  maxParticleSize: 0.7,
+                  maxParticleSize: 1,
                   particleDensity: 5,
                   speedOfParticles: 0.2,
                   fadeRadius: 3,
