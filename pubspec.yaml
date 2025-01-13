@@ -15,6 +15,13 @@ platforms:
   macos:
   web:
   windows:
+    
+topics: 
+  - spoiler
+  - text
+  - particle
+  - hidden
+  - hide
 
 dependencies:
   flutter:

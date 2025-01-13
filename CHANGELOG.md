@@ -29,3 +29,8 @@
 ## 1.0.7
 
 * perf: Refactored particle rendering to use `drawRawAtlas`, significantly improving performance for rendering large numbers of particles
+  
+## 1.0.8
+
+* chore: added tags
+* small doc fixes
