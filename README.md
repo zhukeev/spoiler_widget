@@ -4,7 +4,7 @@ A Flutter package to create spoiler animations similar to the one used in Telegr
 
 ## Demo
 
-![Demo animation](https://github.com/zhukeev/spoiler_widget/raw/main/example/lib/demo.gif)
+<img src="https://github.com/zhukeev/spoiler_widget/raw/main/example/lib/demo.gif" alt="Demo animation" width="300" height="620">
 
 ## Features
 
