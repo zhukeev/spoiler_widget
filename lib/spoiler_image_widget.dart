@@ -216,7 +216,7 @@ class _SpoilerWidgetState extends State<SpoilerWidget> with TickerProviderStateM
   }
 
   void _waveAnimation(Offset offset) {
-    if (!enabled || spoilerBounds == Rect.zero) return;
+    if (!enabled || spoilerBounds == Rect.zero || !context.mounted) return;
 
     final maxRadius = spoilerBounds.shortestSide ~/ 4;
     if (maxRadius == 0) return;

@@ -33,4 +33,4 @@
 ## 1.0.8
 
 * chore: added tags
-* small doc fixes
+* small fixes
