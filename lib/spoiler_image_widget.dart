@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:spoiler_widget/extension/rect_x.dart';
 import 'package:spoiler_widget/models/particle.dart';
 import 'package:spoiler_widget/models/widget_spoiler.dart';
+import 'package:spoiler_widget/utils/image_factory.dart';
 
 class SpoilerWidget extends StatefulWidget {
   const SpoilerWidget({
@@ -116,16 +117,18 @@ class _SpoilerWidgetState extends State<SpoilerWidget>
       _onEnabledChanged(widget.configuration.isEnabled);
     }
 
-    createCircleImage(
-            color: widget.configuration.particleColor,
-            diameter: widget.configuration.maxParticleSize)
-        .then(
-      (val) {
-        setState(() {
-          circleImage = val;
-        });
-      },
+    assert(
+      widget.configuration.maxParticleSize.isFinite &&
+          widget.configuration.maxParticleSize >= 1,
+      'Invalid maxParticleSize',
     );
+
+    setState(() {
+      circleImage = CircleImageFactory.create(
+        color: widget.configuration.particleColor,
+        diameter: widget.configuration.maxParticleSize,
+      );
+    });
 
     super.initState();
   }
@@ -210,24 +213,6 @@ class _SpoilerWidgetState extends State<SpoilerWidget>
     final offset = spoilerBounds.randomOffset();
 
     _waveAnimation(offset);
-  }
-
-  Future<ui.Image> createCircleImage({
-    required double diameter,
-    required Color color,
-  }) async {
-    assert(diameter.isFinite, 'Diameter cannot be infinite');
-    assert(diameter >= 1, 'Diameter must be greater than or equal to 1');
-
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
-    final paint = Paint()..color = color;
-
-    final radius = diameter / 2;
-    canvas.drawCircle(Offset.zero, radius, paint);
-
-    final picture = recorder.endRecording();
-    return picture.toImage(diameter.toInt(), diameter.toInt());
   }
 
   void _waveAnimation(Offset offset) {
