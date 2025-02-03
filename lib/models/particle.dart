@@ -69,6 +69,9 @@ class Particle extends Offset {
     );
   }
 
+  /// Move the particle
+  ///
+  /// This method is used to move the particle to given angle.
   Particle moveWithAngle(double angle) {
     final next = this + Offset.fromDirection(angle, speed);
 

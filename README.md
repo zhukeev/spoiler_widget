@@ -1,5 +1,13 @@
 # Spoiler Animation for Flutter
 
+![Pub Likes](https://img.shields.io/pub/likes/spoiler_widget)
+![Pub Points](https://img.shields.io/pub/points/spoiler_widget)
+![Pub Popularity](https://img.shields.io/pub/popularity/spoiler_widget)
+[![Pub Version](https://img.shields.io/pub/v/spoiler_widget.svg)](https://pub.dev/packages/spoiler_widget)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Flutter](https://img.shields.io/badge/Flutter-compatible-blue.svg)](https://flutter.dev)
+[![GitHub stars](https://img.shields.io/github/stars/zhukeev/spoiler_widget?style=social)](https://github.com/zhukeev/spoiler_widget/)
+
 A Flutter package to create spoiler animations similar to the one used in Telegram, allowing you to hide sensitive or spoiler-filled content until it's tapped or clicked.
 
 ## Demo

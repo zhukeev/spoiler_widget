@@ -24,7 +24,8 @@ class SpoilerTextWidget extends StatefulWidget {
   State createState() => _SpoilerTextWidgetState();
 }
 
-class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProviderStateMixin {
+class _SpoilerTextWidgetState extends State<SpoilerTextWidget>
+    with TickerProviderStateMixin {
   final rng = Random();
   ui.Image? circleImage;
 
@@ -60,13 +61,16 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
     particles.clear();
     spoilerPath.reset();
 
-    spoilerRects = details.words.map((e) => e.rect.deflate(widget.configuration.fadeRadius)).toList();
+    spoilerRects = details.words
+        .map((e) => e.rect.deflate(widget.configuration.fadeRadius))
+        .toList();
     spoilerBounds = spoilerRects.getBounds();
 
     for (final word in details.words) {
       spoilerPath.addRect(word.rect);
 
-      final count = (word.rect.width + word.rect.height) * widget.configuration.particleDensity;
+      final count = (word.rect.width + word.rect.height) *
+          widget.configuration.particleDensity;
       for (int index = 0; index < count; index++) {
         particles.add(randomParticle(word.rect));
       }
@@ -75,8 +79,11 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
 
   @override
   void initState() {
-    particleAnimationController = AnimationController(duration: const Duration(seconds: 1), vsync: this);
-    particleAnimation = Tween<double>(begin: 0, end: 1).animate(particleAnimationController)..addListener(_myListener);
+    particleAnimationController =
+        AnimationController(duration: const Duration(seconds: 1), vsync: this);
+    particleAnimation = Tween<double>(begin: 0, end: 1)
+        .animate(particleAnimationController)
+      ..addListener(_myListener);
 
     if (widget.configuration.fadeAnimation) {
       fadeAnimationController = AnimationController(
@@ -84,7 +91,8 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
         duration: const Duration(milliseconds: 300),
         vsync: this,
       );
-      fadeAnimation = Tween<double>(begin: 0, end: 1).animate(fadeAnimationController!);
+      fadeAnimation =
+          Tween<double>(begin: 0, end: 1).animate(fadeAnimationController!);
     }
 
     enabled = widget.configuration.isEnabled;
@@ -93,7 +101,10 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
       particleAnimationController.repeat();
     }
 
-    createCircleImage(color: widget.configuration.particleColor, diameter: widget.configuration.maxParticleSize).then(
+    createCircleImage(
+            color: widget.configuration.particleColor,
+            diameter: widget.configuration.maxParticleSize)
+        .then(
       (val) {
         setState(() {
           circleImage = val;
@@ -112,7 +123,9 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
 
           // If particle is dead, replace it with a new one
           // Otherwise, move it
-          particles[index] = offset.life <= 0.1 ? randomParticle(offset.rect) : offset.moveToRandomAngle();
+          particles[index] = offset.life <= 0.1
+              ? randomParticle(offset.rect)
+              : offset.moveToRandomAngle();
         }
       },
     );
@@ -201,7 +214,8 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
     return picture.toImage(diameter.toInt(), diameter.toInt());
   }
 
-  void _drawRawAtlas(bool isAnimating, Offset offset, Canvas canvas, double radius) {
+  void _drawRawAtlas(
+      bool isAnimating, Offset offset, Canvas canvas, double radius) {
     if (circleImage == null) {
       return;
     }
@@ -282,7 +296,8 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
           return;
         }
 
-        final isAnimating = fadeAnimationController != null && fadeAnimationController!.isAnimating;
+        final isAnimating = fadeAnimationController != null &&
+            fadeAnimationController!.isAnimating;
 
         double radius = 0;
 
@@ -329,7 +344,8 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
       initialized: particles.isNotEmpty,
       text: TextSpan(
         text: widget.text,
-        recognizer: widget.configuration.enableGesture ? _onTapRecognizer : null,
+        recognizer:
+            widget.configuration.enableGesture ? _onTapRecognizer : null,
         style: widget.configuration.style,
       ),
     );
