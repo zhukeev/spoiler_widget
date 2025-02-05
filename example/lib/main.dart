@@ -2,7 +2,11 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:spoiler_widget/spoiler_widget.dart';
+import 'package:spoiler_widget/models/text_spoiler_configs.dart';
+import 'package:spoiler_widget/models/widget_spoiler.dart';
+import 'package:spoiler_widget/spoiler_image_widget2.dart';
+import 'package:spoiler_widget/spoiler_text_widget2.dart';
+// import 'package:spoiler_widget/spoiler_widget.dart';
 
 void main() {
   runApp(const MainApp());
@@ -40,7 +44,7 @@ class _MainAppState extends State<MainApp> {
                 fadeRadius: 3,
                 fadeAnimation: true,
                 enableGesture: true,
-                selection: const TextSelection(baseOffset: 0, extentOffset: 18),
+                selection: const TextSelection(baseOffset: 0, extentOffset: 22),
                 style: const TextStyle(
                   fontSize: 50,
                   color: Colors.white,
@@ -54,13 +58,15 @@ class _MainAppState extends State<MainApp> {
                   isEnabled: enable,
                   maxParticleSize: 1,
                   particleDensity: 5,
-                  speedOfParticles: 0.2,
+                  speedOfParticles: .6,
                   fadeRadius: 3,
                   fadeAnimation: true,
                   enableGesture: true,
                   imageFilter: ImageFilter.blur(sigmaX: 30.0, sigmaY: 30.0),
                 ),
-                child: CachedNetworkImage(imageUrl: url),
+                child: CachedNetworkImage(
+                  imageUrl: url,
+                ),
               ),
             ),
           ],

@@ -37,7 +37,7 @@ class CircleImageFactory {
     final radius = diameter / 2;
 
     // Draw a circle on the canvas
-    canvas.drawCircle(ui.Offset(radius, radius), radius, paint);
+    canvas.drawCircle(ui.Offset.zero, radius, paint);
 
     // End recording and convert it to an image
     final picture = recorder.endRecording();
