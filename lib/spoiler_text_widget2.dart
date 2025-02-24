@@ -27,8 +27,7 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
   void initializeOffsets(StringDetails details) {
     spoilerRects = details.words.map((e) => e.rect).toList();
 
-    // _controller.initializeParticles(spoilerRects);
-    _controller.initializeParticles([Offset.zero & const Size.square(100)]);
+    _controller.initializeParticles(spoilerRects);
   }
 
   @override
@@ -100,11 +99,12 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
                 return;
               }
 
-              _controller.drawParticles(offset, context.canvas);
-
               if (_controller.isFading) {
                 context.pushClipPath(true, offset, _controller.spoilerBounds, _controller.splashPath, superPaint);
               }
+
+              _controller.drawParticles(offset, context.canvas);
+
               // if we have a selection, draw the unselected path
               if (widget.configuration.selection != null) {
                 context.pushClipPath(

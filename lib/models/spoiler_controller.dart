@@ -78,13 +78,13 @@ class SpoilerController extends ChangeNotifier {
         PathOperation.difference,
         Path()..addRect(spoilerBounds),
         Path()..addOval(Rect.fromCircle(center: fadeCenterOffset, radius: fadeRadius)),
-      )..reset();
+      );
 
   Path get excludeUnselectedPath => Path.combine(
         PathOperation.xor,
         _spoilerPath,
         Path()..addRect(spoilerBounds),
-      )..reset();
+      );
 
   /// Initialization of animations. Called from the constructor.
   void _initAnimations() {
