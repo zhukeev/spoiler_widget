@@ -64,6 +64,10 @@ class SpoilerController extends ChangeNotifier {
     required this.vsync,
     bool initiallyEnabled = false,
   }) {
+    assert(
+      maxParticleSize.isFinite && maxParticleSize >= 1,
+      'Invalid maxParticleSize',
+    );
     _isEnabled = initiallyEnabled;
     _initAnimations();
     _initParticlesIfNeeded();
@@ -79,6 +83,16 @@ class SpoilerController extends ChangeNotifier {
         Path()..addRect(spoilerBounds),
         Path()..addOval(Rect.fromCircle(center: fadeCenterOffset, radius: fadeRadius)),
       );
+
+  Path get splashPathClipper {
+    if (fadeRadius == 0) return Path()..addRect(Rect.largest);
+
+    return Path.combine(
+      PathOperation.intersect,
+      Path()..addRect(spoilerBounds),
+      Path()..addOval(Rect.fromCircle(center: fadeCenterOffset, radius: fadeRadius)),
+    );
+  }
 
   Path get excludeUnselectedPath => Path.combine(
         PathOperation.xor,
@@ -153,7 +167,6 @@ class SpoilerController extends ChangeNotifier {
         particles.add(_randomParticle(rect));
       }
     }
-    // notifyListeners();
   }
 
   /// Builds a new random particle in the given rect.
@@ -208,13 +221,12 @@ class SpoilerController extends ChangeNotifier {
   void _stopAll() {
     _isEnabled = false;
     fadeRadius = 0;
-    particles.clear();
-    _spoilerBounds = Rect.zero;
     _particleAnimationController.reset();
     notifyListeners();
   }
 
   void drawParticles(Offset offset, Canvas canvas) {
+    if (_particleAnimationController.status.isDismissed) return;
     _drawRawAtlas(offset, canvas);
   }
 

@@ -8,8 +8,10 @@ import 'package:spoiler_widget/models/spoiler_configs.dart';
 @immutable
 class WidgetSpoilerConfiguration extends SpoilerConfiguration {
   final ImageFilter imageFilter;
+  final int maxActiveWaves;
   const WidgetSpoilerConfiguration({
     required this.imageFilter,
+    this.maxActiveWaves = 4,
     super.particleDensity = 20,
     super.speedOfParticles = 0.2,
     super.particleColor = Colors.white70,

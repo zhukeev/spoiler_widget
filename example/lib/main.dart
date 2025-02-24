@@ -33,7 +33,7 @@ class _MainAppState extends State<MainApp> {
       home: Scaffold(
         backgroundColor: Colors.black,
         body: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
             SpoilerTextWidget(
               configuration: TextSpoilerConfiguration(
@@ -57,8 +57,8 @@ class _MainAppState extends State<MainApp> {
                 configuration: WidgetSpoilerConfiguration(
                   isEnabled: enable,
                   maxParticleSize: 1,
-                  particleDensity: 5,
-                  speedOfParticles: .6,
+                  particleDensity: 15,
+                  speedOfParticles: .2,
                   fadeRadius: 3,
                   fadeAnimation: true,
                   enableGesture: true,

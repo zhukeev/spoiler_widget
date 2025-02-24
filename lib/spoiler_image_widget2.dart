@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:spoiler_widget/models/spoiler_controller.dart';
+import 'package:spoiler_widget/models/spoiler_spots_controller.dart';
 import 'package:spoiler_widget/models/widget_spoiler.dart';
 
 class SpoilerWidget extends StatefulWidget {
@@ -16,15 +16,21 @@ class SpoilerWidget extends StatefulWidget {
 }
 
 class _SpoilerWidgetState extends State<SpoilerWidget> with TickerProviderStateMixin {
-  late final SpoilerController _controller;
+  late final SpoilerSpotsController _controller;
+
+  Rect spoilerBounds = Rect.zero;
+
+  Offset fadeOffset = Offset.zero;
 
   void initializeOffsets(Rect rect) {
-    _controller.initializeParticles([rect]);
+    spoilerBounds = rect;
+
+    _controller.initParticles(rect);
   }
 
   @override
   void initState() {
-    _controller = SpoilerController(
+    _controller = SpoilerSpotsController(
       particleColor: widget.configuration.particleColor,
       maxParticleSize: widget.configuration.maxParticleSize,
       fadeRadiusDeflate: widget.configuration.fadeRadius,
@@ -33,6 +39,7 @@ class _SpoilerWidgetState extends State<SpoilerWidget> with TickerProviderStateM
       fadeAnimationEnabled: widget.configuration.fadeAnimation,
       enableGesture: widget.configuration.enableGesture,
       initiallyEnabled: widget.configuration.isEnabled,
+      maxActiveWaves: widget.configuration.maxActiveWaves,
       vsync: this,
     );
 
@@ -41,10 +48,6 @@ class _SpoilerWidgetState extends State<SpoilerWidget> with TickerProviderStateM
 
   @override
   void didUpdateWidget(covariant SpoilerWidget oldWidget) {
-    if (oldWidget != widget) {
-      _controller.disable();
-    }
-
     if (oldWidget.configuration.isEnabled != widget.configuration.isEnabled) {
       _controller.onEnabledChanged(widget.configuration.isEnabled);
     }
@@ -64,35 +67,39 @@ class _SpoilerWidgetState extends State<SpoilerWidget> with TickerProviderStateM
       behavior: HitTestBehavior.opaque,
       onTapDown: (details) {
         if (widget.configuration.enableGesture) {
-          _controller.toggle(details.localPosition);
+          fadeOffset = details.localPosition;
+
+          _controller.toggle(fadeOffset);
         }
       },
-      child: CustomPaint(
-        painter: ImageSpoilerPainter(
-          isEnabled: _controller.isEnabled,
-          currentRect: _controller.spoilerBounds,
-          onDrawParticles: (canvas) => _controller.drawParticles(Offset.zero, canvas),
-          onBoundariesCalculated: initializeOffsets,
-          repaint: _controller,
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            widget.child,
-         
-            ImageFiltered(
-              imageFilter: widget.configuration.imageFilter,
-              enabled: _controller.fadeRadius > 0 || _controller.isEnabled,
-              child: CustomPaint(
-                foregroundPainter: HolePainter(
-                  radius: _controller.fadeRadius,
-                  center: _controller.fadeCenterOffset,
-                ),
-                child: widget.child,
-              ),
+      child: ListenableBuilder(
+        listenable: _controller,
+        builder: (context, snapshot) {
+          return CustomPaint(
+            foregroundPainter: ImageSpoilerPainter(
+              currentRect: spoilerBounds,
+              onBoundariesCalculated: initializeOffsets,
+              onPaint: (canvas) {
+                _controller.drawParticles(Offset.zero, canvas);
+              },
             ),
-          ],
-        ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                widget.child,
+                ClipPath(
+                  clipper: OvalClipper(_controller.splashPathClipper),
+                  child: ImageFiltered(
+                    imageFilter: widget.configuration.imageFilter,
+                    enabled: _controller.isEnabled,
+                    child: snapshot!,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+        child: widget.child,
       ),
     );
   }
@@ -101,29 +108,23 @@ class _SpoilerWidgetState extends State<SpoilerWidget> with TickerProviderStateM
 class ImageSpoilerPainter extends CustomPainter {
   final Rect currentRect;
   final ValueSetter<Rect> onBoundariesCalculated;
-  final bool isEnabled;
-  final void Function(Canvas canvas) onDrawParticles;
+  final ValueSetter<Canvas> onPaint;
   const ImageSpoilerPainter({
-    required this.isEnabled,
     required this.currentRect,
     required this.onBoundariesCalculated,
-    required this.onDrawParticles,
+    required this.onPaint,
     super.repaint,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final currentRect = Offset.zero & size;
-
-    if (!isEnabled) {
-      return;
-    }
+    final currentRect = Rect.fromLTWH(0, 0, size.width, size.height);
 
     if (this.currentRect != currentRect) {
       onBoundariesCalculated(currentRect);
     }
 
-    onDrawParticles.call(canvas);
+    onPaint(canvas);
   }
 
   @override
@@ -133,32 +134,12 @@ class ImageSpoilerPainter extends CustomPainter {
   bool shouldRebuildSemantics(ImageSpoilerPainter oldDelegate) => false;
 }
 
-/// [HolePainter] provides a custom painter for leaving a circular hole with some
-/// fuziness.
-class HolePainter extends CustomPainter {
-  final double radius;
-  final Offset center;
-
-  HolePainter({super.repaint, required this.radius, required this.center});
+class OvalClipper extends CustomClipper<Path> {
+  final Path path;
+  const OvalClipper(this.path);
   @override
-  void paint(Canvas canvas, Size size) {
-    if (radius == 0) {
-      return;
-    }
-
-    final path1 = Path()
-      ..addOval(Rect.fromCircle(center: center, radius: size.longestSide))
-      ..close();
-
-    final path2 = Path()
-      ..addOval(Rect.fromCircle(center: center, radius: radius))
-      ..close();
-
-    final path3 = Path.combine(PathOperation.difference, path1, path2);
-
-    canvas.drawPath(path3..close(), Paint()..blendMode = BlendMode.clear);
-  }
+  Path getClip(Size size) => path;
 
   @override
-  bool shouldRepaint(HolePainter oldDelegate) => oldDelegate.radius != radius || oldDelegate.center != center;
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => this != oldClipper;
 }
