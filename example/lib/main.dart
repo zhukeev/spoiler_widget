@@ -30,17 +30,18 @@ class _MainAppState extends State<MainApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      showPerformanceOverlay: true,
       home: Scaffold(
         backgroundColor: Colors.black,
         body: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SpoilerTextWidget(
               configuration: TextSpoilerConfiguration(
                 isEnabled: enable,
                 maxParticleSize: 1,
                 particleDensity: 5.5,
-                speedOfParticles: 0.2,
+                speedOfParticles: .2,
                 fadeRadius: 3,
                 fadeAnimation: true,
                 enableGesture: true,
@@ -52,23 +53,24 @@ class _MainAppState extends State<MainApp> {
               ),
               text: text,
             ),
-            ClipRect(
-              child: SpoilerWidget(
-                configuration: WidgetSpoilerConfiguration(
-                  isEnabled: enable,
-                  maxParticleSize: 1,
-                  particleDensity: 15,
-                  speedOfParticles: .2,
-                  fadeRadius: 3,
-                  fadeAnimation: true,
-                  enableGesture: true,
-                  imageFilter: ImageFilter.blur(sigmaX: 30.0, sigmaY: 30.0),
+            // const SizedBox() ??
+                RepaintBoundary(
+                  child: SpoilerWidget(
+                    configuration: WidgetSpoilerConfiguration(
+                      isEnabled: enable,
+                      maxParticleSize: 1,
+                      particleDensity: 25,
+                      speedOfParticles: .2,
+                      fadeRadius: 3,
+                      fadeAnimation: true,
+                      enableGesture: true,
+                      imageFilter: ImageFilter.blur(sigmaX: 30.0, sigmaY: 30.0),
+                    ),
+                    child: CachedNetworkImage(
+                      imageUrl: url,
+                    ),
+                  ),
                 ),
-                child: CachedNetworkImage(
-                  imageUrl: url,
-                ),
-              ),
-            ),
           ],
         ),
       ),

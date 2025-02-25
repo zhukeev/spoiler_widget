@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:flutter/widgets.dart';
 import 'package:spoiler_widget/extension/rect_x.dart';
@@ -8,9 +7,8 @@ import 'package:spoiler_widget/models/spoiler_controller.dart';
 
 class SpoilerSpotsController extends SpoilerController {
   final Random _random = Random();
-  Timer? periodicTimer;
+  Timer? _periodicTimer;
   final List<Timer> _delayedTimers = [];
-  // Track active AnimationControllers.
   final List<AnimationController> _activeWaveControllers = [];
 
   final int maxActiveWaves;
@@ -31,7 +29,7 @@ class SpoilerSpotsController extends SpoilerController {
 
   void initParticles(Rect rect) {
     initializeParticles([rect]);
-    periodicTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _periodicTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       _scheduleWaveAnimation();
       _scheduleWaveAnimation();
       _scheduleWaveAnimation();
@@ -52,12 +50,9 @@ class SpoilerSpotsController extends SpoilerController {
   void toggle([Offset? fadeOffset]) {
     super.toggle(fadeOffset);
 
-    debugPrint('toggle isEnabled $isEnabled');
-
     if (isEnabled) {
       initParticles(spoilerBounds);
     } else {
-      debugPrint('toggle $spoilerBounds');
       _disposeTimersAndControllers();
     }
   }
@@ -85,6 +80,7 @@ class SpoilerSpotsController extends SpoilerController {
       parent: animationController,
       curve: Curves.easeInOutCubic,
     );
+    const margin = 10.0;
 
     // Animate every particle within the wave's reach.
     for (int index = 0; index < particles.length; index++) {
@@ -104,7 +100,6 @@ class SpoilerSpotsController extends SpoilerController {
       if (!spoilerBounds.containsOffset(possibleEndPoint) ||
           (possibleEndPoint.dx <= spoilerBounds.left || possibleEndPoint.dx >= spoilerBounds.right) ||
           (possibleEndPoint.dy <= spoilerBounds.top || possibleEndPoint.dy >= spoilerBounds.bottom)) {
-        const margin = 20.0;
         possibleEndPoint = Offset(
           spoilerBounds.left + margin + _random.nextDouble() * (spoilerBounds.width - 2 * margin),
           spoilerBounds.top + margin + _random.nextDouble() * (spoilerBounds.height - 2 * margin),
@@ -113,17 +108,12 @@ class SpoilerSpotsController extends SpoilerController {
 
       // Add extra randomness.
       final randomAngle = _random.nextDouble() * 2 * pi;
-      final additionalOffset = 10.0 + _random.nextDouble() * 10;
+      final additionalOffset = margin + _random.nextDouble() * margin;
       final randomEndPoint = possibleEndPoint.translate(
         additionalOffset * cos(randomAngle),
         additionalOffset * sin(randomAngle),
       );
-      final finalEndpoint = spoilerBounds.containsOffset(randomEndPoint)
-          ? randomEndPoint
-          : Offset(
-              spoilerBounds.left + 20.0 + _random.nextDouble() * (spoilerBounds.width - 40.0),
-              spoilerBounds.top + 20.0 + _random.nextDouble() * (spoilerBounds.height - 40.0),
-            );
+      final finalEndpoint = spoilerBounds.containsOffset(randomEndPoint) ? randomEndPoint : possibleEndPoint;
 
       // Create a two-phase tween.
       final anim = TweenSequence<Offset>([
@@ -156,7 +146,7 @@ class SpoilerSpotsController extends SpoilerController {
 
   void _disposeTimersAndControllers() {
     // Cancel timers.
-    periodicTimer?.cancel();
+    _periodicTimer?.cancel();
     for (final timer in _delayedTimers) {
       timer.cancel();
     }
