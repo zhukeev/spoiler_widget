@@ -84,8 +84,8 @@ class SpoilerController extends ChangeNotifier {
         Path()..addOval(Rect.fromCircle(center: fadeCenterOffset, radius: fadeRadius)),
       );
 
-  Path get splashPathClipper {
-    if (fadeRadius == 0) return Path()..addRect(Rect.largest);
+  Path  splashPathClipper(Size size) {
+    if (fadeRadius == 0) return Path()..addRect(Offset.zero & size);
 
     return Path.combine(
       PathOperation.intersect,

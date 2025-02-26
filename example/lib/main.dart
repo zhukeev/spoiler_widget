@@ -36,41 +36,42 @@ class _MainAppState extends State<MainApp> {
         body: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SpoilerTextWidget(
-              configuration: TextSpoilerConfiguration(
-                isEnabled: enable,
-                maxParticleSize: 1,
-                particleDensity: 5.5,
-                speedOfParticles: .2,
-                fadeRadius: 3,
-                fadeAnimation: true,
-                enableGesture: true,
-                selection: const TextSelection(baseOffset: 0, extentOffset: 22),
-                style: const TextStyle(
-                  fontSize: 50,
-                  color: Colors.white,
-                ),
-              ),
-              text: text,
-            ),
-            // const SizedBox() ??
-                RepaintBoundary(
-                  child: SpoilerWidget(
-                    configuration: WidgetSpoilerConfiguration(
-                      isEnabled: enable,
-                      maxParticleSize: 1,
-                      particleDensity: 25,
-                      speedOfParticles: .2,
-                      fadeRadius: 3,
-                      fadeAnimation: true,
-                      enableGesture: true,
-                      imageFilter: ImageFilter.blur(sigmaX: 30.0, sigmaY: 30.0),
-                    ),
-                    child: CachedNetworkImage(
-                      imageUrl: url,
-                    ),
+            RepaintBoundary(
+              child: SpoilerTextWidget(
+                configuration: TextSpoilerConfiguration(
+                  isEnabled: enable,
+                  maxParticleSize: 1,
+                  particleDensity: 5.5,
+                  speedOfParticles: .2,
+                  fadeRadius: 3,
+                  fadeAnimation: true,
+                  enableGesture: true,
+                  selection: const TextSelection(baseOffset: 0, extentOffset: 22),
+                  style: const TextStyle(
+                    fontSize: 50,
+                    color: Colors.white,
                   ),
                 ),
+                text: text,
+              ),
+            ),
+            RepaintBoundary(
+              child: SpoilerWidget(
+                configuration: WidgetSpoilerConfiguration(
+                  isEnabled: enable,
+                  maxParticleSize: 1,
+                  particleDensity: 25,
+                  speedOfParticles: .2,
+                  fadeRadius: 3,
+                  fadeAnimation: true,
+                  enableGesture: true,
+                  imageFilter: ImageFilter.blur(sigmaX: 30.0, sigmaY: 30.0),
+                ),
+                child: CachedNetworkImage(
+                  imageUrl: url,
+                ),
+              ),
+            ),
           ],
         ),
       ),

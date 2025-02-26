@@ -61,6 +61,10 @@ class _SpoilerWidgetState extends State<SpoilerWidget> with TickerProviderStateM
     super.dispose();
   }
 
+  void _onPaint(Canvas canvas) {
+    _controller.drawParticles(Offset.zero, canvas);
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -79,9 +83,7 @@ class _SpoilerWidgetState extends State<SpoilerWidget> with TickerProviderStateM
             foregroundPainter: ImageSpoilerPainter(
               currentRect: spoilerBounds,
               onBoundariesCalculated: initializeOffsets,
-              onPaint: (canvas) {
-                _controller.drawParticles(Offset.zero, canvas);
-              },
+              onPaint: _onPaint,
             ),
             child: Stack(
               alignment: Alignment.center,
@@ -134,11 +136,13 @@ class ImageSpoilerPainter extends CustomPainter {
   bool shouldRebuildSemantics(ImageSpoilerPainter oldDelegate) => false;
 }
 
+typedef OnClip = Path Function(Size size);
+
 class OvalClipper extends CustomClipper<Path> {
-  final Path path;
-  const OvalClipper(this.path);
+  final OnClip onClip;
+  const OvalClipper(this.onClip);
   @override
-  Path getClip(Size size) => path;
+  Path getClip(Size size) => onClip.call(size);
 
   @override
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => this != oldClipper;

@@ -97,9 +97,7 @@ class SpoilerSpotsController extends SpoilerController {
       );
 
       // If endpoint is outside or too close to the bounds, choose a random interior point.
-      if (!spoilerBounds.containsOffset(possibleEndPoint) ||
-          (possibleEndPoint.dx <= spoilerBounds.left || possibleEndPoint.dx >= spoilerBounds.right) ||
-          (possibleEndPoint.dy <= spoilerBounds.top || possibleEndPoint.dy >= spoilerBounds.bottom)) {
+      if (!spoilerBounds.containsOffset(possibleEndPoint) ) {
         possibleEndPoint = Offset(
           spoilerBounds.left + margin + _random.nextDouble() * (spoilerBounds.width - 2 * margin),
           spoilerBounds.top + margin + _random.nextDouble() * (spoilerBounds.height - 2 * margin),
