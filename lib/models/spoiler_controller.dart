@@ -16,7 +16,7 @@ import '../models/particle.dart';
 class SpoilerController extends ChangeNotifier {
   final Random _random = Random();
 
-  final TickerProvider vsync;
+  final TickerProvider _vsync;
 
   // Animation controllers for particles & fade.
   AnimationController? _fadeAnimationController;
@@ -24,15 +24,18 @@ class SpoilerController extends ChangeNotifier {
 
   late AnimationController _particleAnimationController;
 
-  late final ui.Image _circleImage = CircleImageFactory.create(diameter: maxParticleSize, color: particleColor);
-  Rect get fadeRect => Rect.fromCircle(center: fadeCenterOffset, radius: fadeRadius);
+  late final ui.Image _circleImage = CircleImageFactory.create(diameter: _maxParticleSize, color: _particleColor);
+  Rect get fadeRect => Rect.fromCircle(center: _fadeCenterOffset, radius: _fadeRadius);
 
-  bool get isInitialized => particles.isNotEmpty;
+  bool get isInitialized => _particles.isNotEmpty;
 
   bool get isEnabled => _isEnabled;
 
   // Particle data.
-  final particles = <Particle>[];
+  @protected
+  List<Particle> get particles => _particles;
+
+  final _particles = <Particle>[];
   bool _isEnabled = false;
 
   // Bounds and offsets.
@@ -40,30 +43,35 @@ class SpoilerController extends ChangeNotifier {
   Rect _spoilerBounds = Rect.zero;
   final _spoilerPath = Path();
 
-  double fadeRadius = 0;
-  Offset fadeCenterOffset = Offset.zero;
+  double _fadeRadius = 0;
+  Offset _fadeCenterOffset = Offset.zero;
 
   // External configuration. (We keep it generic so that
   // the same controller can be used for text or widgets.)
-  final Color particleColor;
-  final double maxParticleSize;
-  final double fadeRadiusDeflate;
-  final double speedOfParticles;
-  final double particleDensity;
-  final bool fadeAnimationEnabled;
-  final bool enableGesture;
+  final Color _particleColor;
+  final double _maxParticleSize;
+  final double _fadeRadiusDeflate;
+  final double _speedOfParticles;
+  final double _particleDensity;
+  final bool _fadeAnimationEnabled;
 
   SpoilerController({
-    required this.particleColor,
-    required this.maxParticleSize,
-    required this.fadeRadiusDeflate,
-    required this.speedOfParticles,
-    required this.particleDensity,
-    required this.fadeAnimationEnabled,
-    required this.enableGesture,
-    required this.vsync,
+    required Color particleColor,
+    required double maxParticleSize,
+    required double fadeRadiusDeflate,
+    required double speedOfParticles,
+    required double particleDensity,
+    required bool fadeAnimationEnabled,
+    required bool enableGesture,
+    required TickerProvider vsync,
     bool initiallyEnabled = false,
-  }) {
+  })  : _particleColor = particleColor,
+        _maxParticleSize = maxParticleSize,
+        _fadeRadiusDeflate = fadeRadiusDeflate,
+        _speedOfParticles = speedOfParticles,
+        _particleDensity = particleDensity,
+        _fadeAnimationEnabled = fadeAnimationEnabled,
+        _vsync = vsync {
     assert(
       maxParticleSize.isFinite && maxParticleSize >= 1,
       'Invalid maxParticleSize',
@@ -73,24 +81,22 @@ class SpoilerController extends ChangeNotifier {
     _initParticlesIfNeeded();
   }
 
-  AnimationStatus get fadeStatus => _fadeAnimationController?.status ?? AnimationStatus.dismissed;
-
   bool get isFading =>
-      fadeAnimationEnabled && _fadeAnimationController != null && _fadeAnimationController!.isAnimating;
+      _fadeAnimationEnabled && _fadeAnimationController != null && _fadeAnimationController!.isAnimating;
 
   Path get splashPath => Path.combine(
         PathOperation.difference,
         Path()..addRect(spoilerBounds),
-        Path()..addOval(Rect.fromCircle(center: fadeCenterOffset, radius: fadeRadius)),
+        Path()..addOval(Rect.fromCircle(center: _fadeCenterOffset, radius: _fadeRadius)),
       );
 
-  Path  splashPathClipper(Size size) {
-    if (fadeRadius == 0) return Path()..addRect(Offset.zero & size);
+  Path splashPathClipper(Size size) {
+    if (_fadeRadius == 0) return Path()..addRect(Offset.zero & size);
 
     return Path.combine(
       PathOperation.intersect,
       Path()..addRect(spoilerBounds),
-      Path()..addOval(Rect.fromCircle(center: fadeCenterOffset, radius: fadeRadius)),
+      Path()..addOval(Rect.fromCircle(center: _fadeCenterOffset, radius: _fadeRadius)),
     );
   }
 
@@ -102,18 +108,17 @@ class SpoilerController extends ChangeNotifier {
 
   /// Initialization of animations. Called from the constructor.
   void _initAnimations() {
-    // Particle animation (e.g., 1 second, repeated).
     _particleAnimationController = AnimationController(
       duration: const Duration(seconds: 1),
-      vsync: vsync,
+      vsync: _vsync,
     )..addListener(_onParticleTick);
 
     // Fade animation if enabled
-    if (fadeAnimationEnabled) {
+    if (_fadeAnimationEnabled) {
       _fadeAnimationController = AnimationController(
         value: isEnabled ? 1 : 0,
         duration: const Duration(milliseconds: 300),
-        vsync: vsync,
+        vsync: _vsync,
       );
       _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(_fadeAnimationController!)
         ..addListener(_updateFadeRadius);
@@ -125,22 +130,22 @@ class SpoilerController extends ChangeNotifier {
     if (spoilerBounds == Rect.zero || _fadeAnimation == null) {
       return;
     }
-    final farthestPoint = spoilerBounds.getFarthestPoint(fadeCenterOffset);
-    final distance = (farthestPoint - fadeCenterOffset).distance;
-    fadeRadius = distance * _fadeAnimation!.value;
+    final farthestPoint = spoilerBounds.getFarthestPoint(_fadeCenterOffset);
+    final distance = (farthestPoint - _fadeCenterOffset).distance;
+    _fadeRadius = distance * _fadeAnimation!.value;
     notifyListeners();
   }
 
   /// Particle tick: move or respawn dead particles.
   void _onParticleTick() {
-    if (particles.isEmpty) return;
+    if (_particles.isEmpty) return;
 
-    for (int index = 0; index < particles.length; index++) {
-      final offset = particles[index];
+    for (int index = 0; index < _particles.length; index++) {
+      final offset = _particles[index];
 
       // If particle is dead, replace it with a new one
       // Otherwise, move it
-      particles[index] = offset.life <= 0.1 ? _randomParticle(offset.rect) : offset.moveToRandomAngle();
+      _particles[index] = offset.life <= 0.1 ? _randomParticle(offset.rect) : offset.moveToRandomAngle();
     }
 
     notifyListeners();
@@ -156,29 +161,29 @@ class SpoilerController extends ChangeNotifier {
   /// Initialize all particles for the bounding rectangle.
   void initializeParticles(List<Rect> rects) {
     _spoilerBounds = rects.getBounds();
-    particles.clear();
+    _particles.clear();
     _spoilerPath.reset();
 
     for (final rect in rects) {
       _spoilerPath.addRect(rect);
-      final count = (rect.width + rect.height) * particleDensity;
+      final count = (rect.width + rect.height) * _particleDensity;
 
       for (int index = 0; index < count; index++) {
-        particles.add(_randomParticle(rect));
+        _particles.add(_randomParticle(rect));
       }
     }
   }
 
   /// Builds a new random particle in the given rect.
   Particle _randomParticle(Rect rect) {
-    final offset = rect.deflate(fadeRadiusDeflate).randomOffset();
+    final offset = rect.deflate(_fadeRadiusDeflate).randomOffset();
     return Particle(
       offset.dx,
       offset.dy,
-      maxParticleSize,
-      particleColor,
+      _maxParticleSize,
+      _particleColor,
       _random.nextDouble(),
-      speedOfParticles,
+      _speedOfParticles,
       _random.nextDouble() * 2 * pi,
       rect,
     );
@@ -205,7 +210,7 @@ class SpoilerController extends ChangeNotifier {
   /// Toggle spoiler effect on/off.
   // void toggle() => isEnabled ? disable() : enable();
   void toggle([Offset? fadeOffset]) {
-    fadeCenterOffset = fadeOffset ?? Offset.zero;
+    _fadeCenterOffset = fadeOffset ?? Offset.zero;
     onEnabledChanged(!_isEnabled);
   }
 
@@ -220,7 +225,7 @@ class SpoilerController extends ChangeNotifier {
   /// Stop all timers/animations and clear data.
   void _stopAll() {
     _isEnabled = false;
-    fadeRadius = 0;
+    _fadeRadius = 0;
     _particleAnimationController.reset();
     notifyListeners();
   }
@@ -231,22 +236,22 @@ class SpoilerController extends ChangeNotifier {
   }
 
   void _drawRawAtlas(Offset offset, Canvas canvas) {
-    final int count = particles.length;
+    final int count = _particles.length;
     final transforms = Float32List(count * 4);
     final rects = Float32List(count * 4);
     final colors = Int32List(count);
 
     int index = 0;
-    for (final point in particles) {
+    for (final point in _particles) {
       final pointWOffset = point + offset;
       final transformIndex = index * 4;
 
       if (isFading) {
-        final distance = (fadeCenterOffset - point).distance;
+        final distance = (_fadeCenterOffset - point).distance;
 
-        if (distance < fadeRadius) {
-          final scale = (distance > fadeRadius - 20) ? 1.5 : 1.0;
-          final color = (distance > fadeRadius - 20) ? Colors.white : point.color;
+        if (distance < _fadeRadius) {
+          final scale = (distance > _fadeRadius - 20) ? 1.5 : 1.0;
+          final color = (distance > _fadeRadius - 20) ? Colors.white : point.color;
 
           // Populate transform data
           transforms[transformIndex] = scale; // scaleX

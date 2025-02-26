@@ -11,8 +11,9 @@ class SpoilerSpotsController extends SpoilerController {
   final List<Timer> _delayedTimers = [];
   final List<AnimationController> _activeWaveControllers = [];
 
-  final int maxActiveWaves;
+  final int _maxActiveWaves;
   int _activeWaves = 0;
+  final TickerProvider _vsync;
 
   SpoilerSpotsController({
     required super.particleColor,
@@ -22,11 +23,12 @@ class SpoilerSpotsController extends SpoilerController {
     required super.particleDensity,
     required super.fadeAnimationEnabled,
     required super.enableGesture,
-    required super.vsync,
-    this.maxActiveWaves = 3,
+    required TickerProvider vsync,
+    int maxActiveWaves = 3,
     super.initiallyEnabled = false,
-  });
-
+  })  : _vsync = vsync,
+        _maxActiveWaves = maxActiveWaves,
+        super(vsync: vsync);
   void initParticles(Rect rect) {
     initializeParticles([rect]);
     _periodicTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -59,7 +61,7 @@ class SpoilerSpotsController extends SpoilerController {
 
   void _startWaveAnimation() {
     if (!isEnabled || spoilerBounds == Rect.zero) return;
-    if (_activeWaves >= maxActiveWaves) return;
+    if (_activeWaves >= _maxActiveWaves) return;
     _activeWaves++;
 
     // Choose a random origin for the wave.
@@ -71,7 +73,7 @@ class SpoilerSpotsController extends SpoilerController {
     // Create a new AnimationController for this wave.
     final animationController = AnimationController(
       duration: const Duration(seconds: 3),
-      vsync: vsync,
+      vsync: _vsync,
     );
     // Add the controller to our tracking list.
     _activeWaveControllers.add(animationController);
@@ -97,7 +99,7 @@ class SpoilerSpotsController extends SpoilerController {
       );
 
       // If endpoint is outside or too close to the bounds, choose a random interior point.
-      if (!spoilerBounds.containsOffset(possibleEndPoint) ) {
+      if (!spoilerBounds.containsOffset(possibleEndPoint)) {
         possibleEndPoint = Offset(
           spoilerBounds.left + margin + _random.nextDouble() * (spoilerBounds.width - 2 * margin),
           spoilerBounds.top + margin + _random.nextDouble() * (spoilerBounds.height - 2 * margin),
