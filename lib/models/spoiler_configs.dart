@@ -1,6 +1,4 @@
-import 'dart:ui';
-
-import 'package:flutter/foundation.dart' show immutable;
+import 'package:flutter/material.dart';
 
 /// Configuration for the spoiler widget
 /// [particleDensity] is the density of the particles / count of particles
@@ -32,4 +30,15 @@ class SpoilerConfiguration {
     required this.isEnabled,
     required this.enableGesture,
   });
+
+  factory SpoilerConfiguration.defaultConfig() => const SpoilerConfiguration(
+        particleDensity: 5.5,
+        speedOfParticles: 0.2,
+        particleColor: Colors.white,
+        maxParticleSize: 1,
+        fadeAnimation: true,
+        fadeRadius: 3,
+        isEnabled: true,
+        enableGesture: true,
+      );
 }

@@ -27,35 +27,20 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
   void initializeOffsets(StringDetails details) {
     spoilerRects = details.words.map((e) => e.rect).toList();
 
-    _controller.initializeParticles(spoilerRects);
+    _controller.initializeParticles(spoilerRects, widget.configuration);
   }
 
   @override
   void initState() {
-    _controller = SpoilerController(
-      particleColor: widget.configuration.particleColor,
-      maxParticleSize: widget.configuration.maxParticleSize,
-      fadeRadiusDeflate: widget.configuration.fadeRadius,
-      speedOfParticles: widget.configuration.speedOfParticles,
-      particleDensity: widget.configuration.particleDensity,
-      fadeAnimationEnabled: widget.configuration.fadeAnimation,
-      enableGesture: widget.configuration.enableGesture,
-      initiallyEnabled: widget.configuration.isEnabled,
-      vsync: this,
-    );
+    _controller = SpoilerController(vsync: this);
 
     super.initState();
   }
 
   @override
   void didUpdateWidget(covariant SpoilerTextWidget oldWidget) {
-    if (oldWidget.configuration.selection != widget.configuration.selection ||
-        oldWidget.configuration.style != widget.configuration.style) {
-      _controller.disable();
-    }
-
-    if (oldWidget.configuration.isEnabled != widget.configuration.isEnabled) {
-      _controller.onEnabledChanged(widget.configuration.isEnabled);
+    if (oldWidget.configuration != widget.configuration) {
+      _controller.initializeParticles(spoilerRects, widget.configuration);
     }
 
     super.didUpdateWidget(oldWidget);

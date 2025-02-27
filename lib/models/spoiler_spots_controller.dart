@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/widgets.dart';
 import 'package:spoiler_widget/extension/rect_x.dart';
 import 'package:spoiler_widget/models/spoiler_controller.dart';
+import 'package:spoiler_widget/spoiler_widget.dart';
 
 class SpoilerSpotsController extends SpoilerController {
   final Random _random = Random();
@@ -11,26 +12,17 @@ class SpoilerSpotsController extends SpoilerController {
   final List<Timer> _delayedTimers = [];
   final List<AnimationController> _activeWaveControllers = [];
 
-  final int _maxActiveWaves;
   int _activeWaves = 0;
   final TickerProvider _vsync;
+  late WidgetSpoilerConfiguration _configuration;
 
   SpoilerSpotsController({
-    required super.particleColor,
-    required super.maxParticleSize,
-    required super.fadeRadiusDeflate,
-    required super.speedOfParticles,
-    required super.particleDensity,
-    required super.fadeAnimationEnabled,
-    required super.enableGesture,
     required TickerProvider vsync,
-    int maxActiveWaves = 3,
-    super.initiallyEnabled = false,
   })  : _vsync = vsync,
-        _maxActiveWaves = maxActiveWaves,
         super(vsync: vsync);
-  void initParticles(Rect rect) {
-    initializeParticles([rect]);
+  void initParticles(Rect rect, WidgetSpoilerConfiguration configuration) {
+    _configuration = configuration;
+    initializeParticles([rect], configuration);
     _periodicTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       _scheduleWaveAnimation();
       _scheduleWaveAnimation();
@@ -53,7 +45,7 @@ class SpoilerSpotsController extends SpoilerController {
     super.toggle(fadeOffset);
 
     if (isEnabled) {
-      initParticles(spoilerBounds);
+      initParticles(spoilerBounds, _configuration);
     } else {
       _disposeTimersAndControllers();
     }
@@ -61,7 +53,7 @@ class SpoilerSpotsController extends SpoilerController {
 
   void _startWaveAnimation() {
     if (!isEnabled || spoilerBounds == Rect.zero) return;
-    if (_activeWaves >= _maxActiveWaves) return;
+    if (_activeWaves >= _configuration.maxActiveWaves) return;
     _activeWaves++;
 
     // Choose a random origin for the wave.

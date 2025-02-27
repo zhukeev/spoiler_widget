@@ -20,36 +20,22 @@ class _SpoilerWidgetState extends State<SpoilerWidget> with TickerProviderStateM
 
   Rect spoilerBounds = Rect.zero;
 
-  Offset fadeOffset = Offset.zero;
-
   void initializeOffsets(Rect rect) {
     spoilerBounds = rect;
 
-    _controller.initParticles(rect);
+    _controller.initParticles(rect, widget.configuration);
   }
 
   @override
   void initState() {
-    _controller = SpoilerSpotsController(
-      particleColor: widget.configuration.particleColor,
-      maxParticleSize: widget.configuration.maxParticleSize,
-      fadeRadiusDeflate: widget.configuration.fadeRadius,
-      speedOfParticles: widget.configuration.speedOfParticles,
-      particleDensity: widget.configuration.particleDensity,
-      fadeAnimationEnabled: widget.configuration.fadeAnimation,
-      enableGesture: widget.configuration.enableGesture,
-      initiallyEnabled: widget.configuration.isEnabled,
-      maxActiveWaves: widget.configuration.maxActiveWaves,
-      vsync: this,
-    );
-
+    _controller = SpoilerSpotsController(vsync: this);
     super.initState();
   }
 
   @override
   void didUpdateWidget(covariant SpoilerWidget oldWidget) {
-    if (oldWidget.configuration.isEnabled != widget.configuration.isEnabled) {
-      _controller.onEnabledChanged(widget.configuration.isEnabled);
+    if (oldWidget.configuration != widget.configuration) {
+      initializeOffsets(spoilerBounds);
     }
 
     super.didUpdateWidget(oldWidget);
@@ -71,16 +57,14 @@ class _SpoilerWidgetState extends State<SpoilerWidget> with TickerProviderStateM
       behavior: HitTestBehavior.opaque,
       onTapDown: (details) {
         if (widget.configuration.enableGesture) {
-          fadeOffset = details.localPosition;
-
-          _controller.toggle(fadeOffset);
+          _controller.toggle(details.localPosition);
         }
       },
       child: ListenableBuilder(
         listenable: _controller,
         builder: (context, snapshot) {
           return CustomPaint(
-            foregroundPainter: ImageSpoilerPainter(
+            foregroundPainter: _ImageSpoilerPainter(
               currentRect: spoilerBounds,
               onBoundariesCalculated: initializeOffsets,
               onPaint: _onPaint,
@@ -90,7 +74,7 @@ class _SpoilerWidgetState extends State<SpoilerWidget> with TickerProviderStateM
               children: [
                 widget.child,
                 ClipPath(
-                  clipper: OvalClipper(_controller.splashPathClipper),
+                  clipper: _OvalClipper(_controller.splashPathClipper),
                   child: ImageFiltered(
                     imageFilter: widget.configuration.imageFilter,
                     enabled: _controller.isEnabled,
@@ -107,15 +91,14 @@ class _SpoilerWidgetState extends State<SpoilerWidget> with TickerProviderStateM
   }
 }
 
-class ImageSpoilerPainter extends CustomPainter {
+class _ImageSpoilerPainter extends CustomPainter {
   final Rect currentRect;
   final ValueSetter<Rect> onBoundariesCalculated;
   final ValueSetter<Canvas> onPaint;
-  const ImageSpoilerPainter({
+  const _ImageSpoilerPainter({
     required this.currentRect,
     required this.onBoundariesCalculated,
     required this.onPaint,
-    super.repaint,
   });
 
   @override
@@ -130,17 +113,17 @@ class ImageSpoilerPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(ImageSpoilerPainter oldDelegate) => true;
+  bool shouldRepaint(_ImageSpoilerPainter oldDelegate) => true;
 
   @override
-  bool shouldRebuildSemantics(ImageSpoilerPainter oldDelegate) => false;
+  bool shouldRebuildSemantics(_ImageSpoilerPainter oldDelegate) => false;
 }
 
 typedef OnClip = Path Function(Size size);
 
-class OvalClipper extends CustomClipper<Path> {
+class _OvalClipper extends CustomClipper<Path> {
   final OnClip onClip;
-  const OvalClipper(this.onClip);
+  const _OvalClipper(this.onClip);
   @override
   Path getClip(Size size) => onClip.call(size);
 

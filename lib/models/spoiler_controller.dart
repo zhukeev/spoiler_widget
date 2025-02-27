@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:spoiler_widget/models/spoiler_configs.dart';
 import 'package:spoiler_widget/utils/image_factory.dart';
 
 import '../extension/rect_x.dart';
@@ -24,7 +25,8 @@ class SpoilerController extends ChangeNotifier {
 
   late AnimationController _particleAnimationController;
 
-  late final ui.Image _circleImage = CircleImageFactory.create(diameter: _maxParticleSize, color: _particleColor);
+  late ui.Image _circleImage =
+      CircleImageFactory.create(diameter: _config.maxParticleSize, color: _config.particleColor);
   Rect get fadeRect => Rect.fromCircle(center: _fadeCenterOffset, radius: _fadeRadius);
 
   bool get isInitialized => _particles.isNotEmpty;
@@ -46,43 +48,16 @@ class SpoilerController extends ChangeNotifier {
   double _fadeRadius = 0;
   Offset _fadeCenterOffset = Offset.zero;
 
-  // External configuration. (We keep it generic so that
-  // the same controller can be used for text or widgets.)
-  final Color _particleColor;
-  final double _maxParticleSize;
-  final double _fadeRadiusDeflate;
-  final double _speedOfParticles;
-  final double _particleDensity;
-  final bool _fadeAnimationEnabled;
+  late SpoilerConfiguration _config;
 
   SpoilerController({
-    required Color particleColor,
-    required double maxParticleSize,
-    required double fadeRadiusDeflate,
-    required double speedOfParticles,
-    required double particleDensity,
-    required bool fadeAnimationEnabled,
-    required bool enableGesture,
     required TickerProvider vsync,
-    bool initiallyEnabled = false,
-  })  : _particleColor = particleColor,
-        _maxParticleSize = maxParticleSize,
-        _fadeRadiusDeflate = fadeRadiusDeflate,
-        _speedOfParticles = speedOfParticles,
-        _particleDensity = particleDensity,
-        _fadeAnimationEnabled = fadeAnimationEnabled,
-        _vsync = vsync {
-    assert(
-      maxParticleSize.isFinite && maxParticleSize >= 1,
-      'Invalid maxParticleSize',
-    );
-    _isEnabled = initiallyEnabled;
+  }) : _vsync = vsync {
     _initAnimations();
-    _initParticlesIfNeeded();
   }
 
   bool get isFading =>
-      _fadeAnimationEnabled && _fadeAnimationController != null && _fadeAnimationController!.isAnimating;
+      _config.fadeAnimation && _fadeAnimationController != null && _fadeAnimationController!.isAnimating;
 
   Path get splashPath => Path.combine(
         PathOperation.difference,
@@ -112,9 +87,11 @@ class SpoilerController extends ChangeNotifier {
       duration: const Duration(seconds: 1),
       vsync: _vsync,
     )..addListener(_onParticleTick);
+  }
 
+  void _initFadeIfNeeded() {
     // Fade animation if enabled
-    if (_fadeAnimationEnabled) {
+    if (_config.fadeAnimation && _fadeAnimationController == null) {
       _fadeAnimationController = AnimationController(
         value: isEnabled ? 1 : 0,
         duration: const Duration(milliseconds: 300),
@@ -152,38 +129,45 @@ class SpoilerController extends ChangeNotifier {
   }
 
   /// Create or clear particles if needed.
-  void _initParticlesIfNeeded() {
+  void _startIfNeeded() {
     if (_isEnabled) {
       _particleAnimationController.repeat();
     }
   }
 
   /// Initialize all particles for the bounding rectangle.
-  void initializeParticles(List<Rect> rects) {
+  void initializeParticles(List<Rect> rects, SpoilerConfiguration config) {
     _spoilerBounds = rects.getBounds();
     _particles.clear();
     _spoilerPath.reset();
+    _config = config;
+    _circleImage = CircleImageFactory.create(diameter: _config.maxParticleSize, color: _config.particleColor);
+    _isEnabled = config.isEnabled;
+
+    _initFadeIfNeeded();
 
     for (final rect in rects) {
       _spoilerPath.addRect(rect);
-      final count = (rect.width + rect.height) * _particleDensity;
+      final count = (rect.width + rect.height) * _config.particleDensity;
 
       for (int index = 0; index < count; index++) {
         _particles.add(_randomParticle(rect));
       }
     }
+
+    _startIfNeeded();
   }
 
   /// Builds a new random particle in the given rect.
   Particle _randomParticle(Rect rect) {
-    final offset = rect.deflate(_fadeRadiusDeflate).randomOffset();
+    final offset = rect.deflate(_config.fadeRadius).randomOffset();
     return Particle(
       offset.dx,
       offset.dy,
-      _maxParticleSize,
-      _particleColor,
+      _config.maxParticleSize,
+      _config.particleColor,
       _random.nextDouble(),
-      _speedOfParticles,
+      _config.speedOfParticles,
       _random.nextDouble() * 2 * pi,
       rect,
     );
