@@ -22,7 +22,7 @@ class SpoilerSpotsController extends SpoilerController {
         super(vsync: vsync);
   void initParticles(Rect rect, WidgetSpoilerConfiguration configuration) {
     _configuration = configuration;
-    initializeParticles([rect], configuration);
+    initializeParticles(Path()..addRect(rect), configuration);
     _periodicTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       _scheduleWaveAnimation();
       _scheduleWaveAnimation();

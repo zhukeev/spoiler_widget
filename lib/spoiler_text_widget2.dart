@@ -21,26 +21,27 @@ class SpoilerTextWidget extends StatefulWidget {
 
 class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProviderStateMixin {
   late final SpoilerController _controller;
-
-  List<Rect> spoilerRects = [];
+  final Path _spoilerPath = Path();
 
   void initializeOffsets(StringDetails details) {
-    spoilerRects = details.words.map((e) => e.rect).toList();
+    _spoilerPath.reset();
 
-    _controller.initializeParticles(spoilerRects, widget.configuration);
+    for (final e in details.words) {
+      _spoilerPath.addRect(e.rect);
+    }
+    _controller.initializeParticles(_spoilerPath, widget.configuration);
   }
 
   @override
   void initState() {
     _controller = SpoilerController(vsync: this);
-
     super.initState();
   }
 
   @override
   void didUpdateWidget(covariant SpoilerTextWidget oldWidget) {
     if (oldWidget.configuration != widget.configuration) {
-      _controller.initializeParticles(spoilerRects, widget.configuration);
+      _controller.initializeParticles(_spoilerPath, widget.configuration);
     }
 
     super.didUpdateWidget(oldWidget);
@@ -48,9 +49,11 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
 
   @override
   void dispose() {
+    super.dispose();
+
     _controller.dispose();
     _onTapRecognizer.dispose();
-    super.dispose();
+    _spoilerPath.reset();
   }
 
   late final TapGestureRecognizer _onTapRecognizer = TapGestureRecognizer()
@@ -61,7 +64,7 @@ class _SpoilerTextWidgetState extends State<SpoilerTextWidget> with TickerProvid
           setState(() {
             _controller.toggle(details.localPosition);
           });
-        } else if (spoilerRects.any((rect) => rect.contains(details.localPosition))) {
+        } else if (_spoilerPath.contains(details.localPosition)) {
           setState(() {
             _controller.toggle(details.localPosition);
           });

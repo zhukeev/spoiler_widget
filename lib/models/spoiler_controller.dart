@@ -25,9 +25,7 @@ class SpoilerController extends ChangeNotifier {
 
   late AnimationController _particleAnimationController;
 
-  late ui.Image _circleImage =
-      CircleImageFactory.create(diameter: _config.maxParticleSize, color: _config.particleColor);
-  Rect get fadeRect => Rect.fromCircle(center: _fadeCenterOffset, radius: _fadeRadius);
+  late ui.Image _circleImage;
 
   bool get isInitialized => _particles.isNotEmpty;
 
@@ -135,17 +133,32 @@ class SpoilerController extends ChangeNotifier {
     }
   }
 
+
+
+  List<Rect> _getRects(Path path) {
+    final rects = <Rect>[];
+
+    for (final metric in path.computeMetrics()) {
+      final Path contourPath = metric.extractPath(0, metric.length);
+      rects.add(contourPath.getBounds());
+      debugPrint('Rect: ${contourPath.getBounds()}');
+    }
+
+    return rects;
+  }
+
   /// Initialize all particles for the bounding rectangle.
-  void initializeParticles(List<Rect> rects, SpoilerConfiguration config) {
-    _spoilerBounds = rects.getBounds();
+  void initializeParticles(Path path, SpoilerConfiguration config) {
+    assert(config.maxParticleSize >= 1, 'Max particle size must be greater than 1 or equal to 1');
+    _spoilerBounds = path.getBounds();
+
     _particles.clear();
     _spoilerPath.reset();
     _config = config;
     _circleImage = CircleImageFactory.create(diameter: _config.maxParticleSize, color: _config.particleColor);
     _isEnabled = config.isEnabled;
-
     _initFadeIfNeeded();
-
+    final rects = _getRects(path);
     for (final rect in rects) {
       _spoilerPath.addRect(rect);
       final count = (rect.width + rect.height) * _config.particleDensity;
