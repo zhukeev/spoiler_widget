@@ -62,6 +62,45 @@ class SpoilerController extends ChangeNotifier {
   Rect get spoilerBounds => _spoilerBounds;
   Rect _spoilerBounds = Rect.zero;
 
+  /// The path used for the "splash" reveal effect—i.e., a circle cut out of the rectangular spoiler area.
+  /// This is used in your ClipPath or any custom painting that needs to represent the revealed region.
+  Path get splashPath => Path.combine(
+        PathOperation.difference,
+        Path()..addRect(spoilerBounds),
+        Path()
+          ..addOval(
+            Rect.fromCircle(
+              center: _fadeCenterOffset,
+              radius: _fadeRadius,
+            ),
+          ),
+      );
+
+  /// A path function that clips only the circular fade area if there’s a non-zero fadeRadius.
+  Path splashPathClipper(Size size) {
+    if (_fadeRadius == 0) {
+      return Path()..addRect(Offset.zero & size);
+    }
+    return Path.combine(
+      PathOperation.intersect,
+      Path()..addRect(spoilerBounds),
+      Path()
+        ..addOval(
+          Rect.fromCircle(
+            center: _fadeCenterOffset,
+            radius: _fadeRadius,
+          ),
+        ),
+    );
+  }
+
+  /// A path that excludes the unselected area (XOR with the spoiler bounds).
+  Path get excludeUnselectedPath => Path.combine(
+        PathOperation.xor,
+        _spoilerPath,
+        Path()..addRect(spoilerBounds),
+      );
+
   /// The path containing the bounding region of the spoiler.
   final _spoilerPath = Path();
 

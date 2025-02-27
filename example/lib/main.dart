@@ -4,8 +4,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:spoiler_widget/models/text_spoiler_configs.dart';
 import 'package:spoiler_widget/models/widget_spoiler.dart';
-import 'package:spoiler_widget/spoiler_image_widget2.dart';
-import 'package:spoiler_widget/spoiler_text_widget2.dart';
+import 'package:spoiler_widget/spoiler_image_widget.dart';
+import 'package:spoiler_widget/spoiler_text_widget.dart';
 // import 'package:spoiler_widget/spoiler_widget.dart';
 
 void main() {
