@@ -112,6 +112,11 @@ class SpoilerController extends ChangeNotifier {
   /// [toggle(fadeOffset)] to set this point.
   Offset _fadeCenterOffset = Offset.zero;
 
+  // Reusable atlas buffers to reduce allocations
+  Float32List? _transforms;
+  Float32List? _rects;
+  Int32List? _colors;
+
   /// The config object used for both fade animations and particle generation.
   SpoilerConfiguration _config = SpoilerConfiguration.defaultConfig();
 
@@ -232,8 +237,17 @@ class SpoilerController extends ChangeNotifier {
       }
     }
 
+    _reallocAtlasBuffers(); // create or update atlas buffers
+
     // If config says it’s enabled, start particle updates.
     _startIfNeeded();
+  }
+
+  void _reallocAtlasBuffers() {
+    final count = _particles.length;
+    _transforms = Float32List(count * 4);
+    _rects = Float32List(count * 4);
+    _colors = Int32List(count);
   }
 
   /// Creates a new [Particle] with random location/velocity inside [rect].
@@ -264,11 +278,11 @@ class SpoilerController extends ChangeNotifier {
   /// - If fade animation is present, we animate it back to 0 and then stop everything.
   /// - Otherwise, we stop immediately.
   void disable() {
-    if (_fadeAnimationController == null) {
+    if (_config.fadeAnimation == false) {
       // If no fade is configured, stop right away.
       _stopAll();
     } else {
-      _fadeAnimationController!.toggle().whenCompleteOrCancel(() => _stopAll());
+      _fadeAnimationController!.reverse().whenCompleteOrCancel(() => _stopAll());
     }
   }
 
@@ -279,6 +293,8 @@ class SpoilerController extends ChangeNotifier {
   ///
   /// Subclasses may override this to intercept or add extra logic.
   void toggle([Offset? fadeOffset]) {
+    if (isFading) return;
+
     _fadeCenterOffset = fadeOffset ?? Offset.zero;
     onEnabledChanged(!_isEnabled);
   }
@@ -286,8 +302,6 @@ class SpoilerController extends ChangeNotifier {
   /// Called by [toggle] to handle the actual on/off logic.
   /// If [isFading] is true, we skip toggling to avoid mid-fade conflicts.
   void onEnabledChanged(bool value) {
-    if (isFading) return;
-
     if (value) {
       enable();
     } else {
@@ -311,16 +325,14 @@ class SpoilerController extends ChangeNotifier {
   void drawParticles(Offset offset, Canvas canvas) {
     // If the particle controller isn’t animating, skip.
     if (_particleAnimationController.status.isDismissed) return;
+    // If the atlas buffers haven’t been created, skip.
+    if (_transforms == null || _rects == null || _colors == null) return;
     _drawRawAtlas(offset, canvas);
   }
 
   /// Internal: populates [transforms], [rects], and [colors] arrays, then calls
   /// [canvas.drawRawAtlas] to render all particles.
   void _drawRawAtlas(Offset offset, Canvas canvas) {
-    final count = _particles.length;
-    final transforms = Float32List(count * 4);
-    final rects = Float32List(count * 4);
-    final colors = Int32List(count);
 
     int index = 0;
     for (final point in _particles) {
@@ -336,46 +348,51 @@ class SpoilerController extends ChangeNotifier {
           final scale = (distance > _fadeRadius - 20) ? 1.5 : 1.0;
           final color = (distance > _fadeRadius - 20) ? Colors.white : point.color;
 
-          transforms[transformIndex] = scale; // scaleX
-          transforms[transformIndex + 1] = 0.0; // rotation
-          transforms[transformIndex + 2] = pointWOffset.dx; // translateX
-          transforms[transformIndex + 3] = pointWOffset.dy; // translateY
+          _transforms![transformIndex] = scale; // scaleX
+          _transforms![transformIndex + 1] = 0.0; // rotation
+          _transforms![transformIndex + 2] = pointWOffset.dx; // translateX
+          _transforms![transformIndex + 3] = pointWOffset.dy; // translateY
 
-          rects[transformIndex] = 0.0; // left
-          rects[transformIndex + 1] = 0.0; // top
-          rects[transformIndex + 2] = _circleImage.width.toDouble(); // right
-          rects[transformIndex + 3] = _circleImage.height.toDouble(); // bottom
+          _rects![transformIndex] = 0.0; // left
+          _rects![transformIndex + 1] = 0.0; // top
+          _rects![transformIndex + 2] = _circleImage.width.toDouble(); // right
+          _rects![transformIndex + 3] = _circleImage.height.toDouble(); // bottom
 
-          colors[index] = color.value;
+          _colors![index] = color.value;
+          index++;
+        } else {
+          _colors![index] = Colors.transparent.value;
           index++;
         }
       } else {
         // If not fading, draw it normally.
-        transforms[transformIndex] = 1.0;
-        transforms[transformIndex + 1] = 0.0;
-        transforms[transformIndex + 2] = pointWOffset.dx;
-        transforms[transformIndex + 3] = pointWOffset.dy;
+        _transforms![transformIndex] = 1.0;
+        _transforms![transformIndex + 1] = 0.0;
+        _transforms![transformIndex + 2] = pointWOffset.dx;
+        _transforms![transformIndex + 3] = pointWOffset.dy;
 
-        rects[transformIndex] = 0.0;
-        rects[transformIndex + 1] = 0.0;
-        rects[transformIndex + 2] = _circleImage.width.toDouble();
-        rects[transformIndex + 3] = _circleImage.height.toDouble();
+        _rects![transformIndex] = 0.0;
+        _rects![transformIndex + 1] = 0.0;
+        _rects![transformIndex + 2] = _circleImage.width.toDouble();
+        _rects![transformIndex + 3] = _circleImage.height.toDouble();
 
-        colors[index] = point.color.value;
+        _colors![index] = point.color.value;
         index++;
       }
     }
 
-    // Draw the final batch of active particles
-    canvas.drawRawAtlas(
-      _circleImage,
-      transforms,
-      rects,
-      colors,
-      BlendMode.srcOver,
-      null, // cullRect
-      Paint(),
-    );
+    if (index > 0) {
+      // Draw the final batch of active particles
+      canvas.drawRawAtlas(
+        _circleImage,
+        _transforms!,
+        _rects!,
+        _colors!,
+        BlendMode.srcOver,
+        null, // cullRect
+        Paint(),
+      );
+    }
   }
 
   @override

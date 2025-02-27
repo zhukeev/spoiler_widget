@@ -21,4 +21,8 @@ class WidgetSpoilerConfiguration extends SpoilerConfiguration {
     super.isEnabled = true,
     super.enableGesture = false,
   });
+
+  factory WidgetSpoilerConfiguration.defaultConfig() => WidgetSpoilerConfiguration(
+        imageFilter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+      );
 }

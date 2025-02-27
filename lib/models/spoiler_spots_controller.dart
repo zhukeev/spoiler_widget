@@ -31,7 +31,7 @@ class SpoilerSpotsController extends SpoilerController {
   final TickerProvider _vsync;
 
   /// Stores the spoiler configuration to know max waves, fade options, etc.
-  late WidgetSpoilerConfiguration _configuration;
+  WidgetSpoilerConfiguration _configuration = WidgetSpoilerConfiguration.defaultConfig();
 
   /// Creates a new [SpoilerSpotsController].
   ///
