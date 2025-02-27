@@ -42,6 +42,8 @@ class SpoilerSpotsController extends SpoilerController {
 
   @override
   void toggle([Offset? fadeOffset]) {
+    if (isFading)  return;
+    
     super.toggle(fadeOffset);
 
     if (isEnabled) {

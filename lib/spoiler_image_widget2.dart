@@ -22,7 +22,7 @@ class _SpoilerWidgetState extends State<SpoilerWidget> with TickerProviderStateM
 
   void initializeOffsets(Rect rect) {
     spoilerBounds = rect;
-    
+
     _controller.initParticles(rect, widget.configuration);
   }
 

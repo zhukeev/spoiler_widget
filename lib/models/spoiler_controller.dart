@@ -46,7 +46,7 @@ class SpoilerController extends ChangeNotifier {
   double _fadeRadius = 0;
   Offset _fadeCenterOffset = Offset.zero;
 
-  late SpoilerConfiguration _config;
+  SpoilerConfiguration _config = SpoilerConfiguration.defaultConfig();
 
   SpoilerController({
     required TickerProvider vsync,
@@ -133,15 +133,12 @@ class SpoilerController extends ChangeNotifier {
     }
   }
 
-
-
   List<Rect> _getRects(Path path) {
     final rects = <Rect>[];
 
     for (final metric in path.computeMetrics()) {
       final Path contourPath = metric.extractPath(0, metric.length);
       rects.add(contourPath.getBounds());
-      debugPrint('Rect: ${contourPath.getBounds()}');
     }
 
     return rects;
@@ -212,6 +209,8 @@ class SpoilerController extends ChangeNotifier {
   }
 
   void onEnabledChanged(bool value) {
+    if (isFading) return;
+
     if (value) {
       enable();
     } else {
