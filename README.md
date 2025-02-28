@@ -109,9 +109,9 @@ class WaveDemo extends StatefulWidget {
     super.dispose();
   }
 
-  @toverride
-  Widget build( Buildcontext context) {
-    return SpoilerUidget(
+  @override
+  Widget build(BuildContext context) {
+    return SpoilerWidget(
       controller: _controller,
       configuration: WidgetSpoilerConfiguration( 
         isEnabled: true,
