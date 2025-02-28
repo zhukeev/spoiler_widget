@@ -2,7 +2,11 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:spoiler_widget/spoiler_widget.dart';
+import 'package:spoiler_widget/models/text_spoiler_configs.dart';
+import 'package:spoiler_widget/models/widget_spoiler.dart';
+import 'package:spoiler_widget/spoiler_image_widget.dart';
+import 'package:spoiler_widget/spoiler_text_widget.dart';
+// import 'package:spoiler_widget/spoiler_widget.dart';
 
 void main() {
   runApp(const MainApp());
@@ -26,35 +30,40 @@ class _MainAppState extends State<MainApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      showPerformanceOverlay: true,
       home: Scaffold(
         backgroundColor: Colors.black,
         body: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SpoilerTextWidget(
-              configuration: TextSpoilerConfiguration(
-                isEnabled: enable,
-                maxParticleSize: 1,
-                particleDensity: 5.5,
-                speedOfParticles: 0.2,
-                fadeRadius: 3,
-                fadeAnimation: true,
-                enableGesture: true,
-                selection: const TextSelection(baseOffset: 0, extentOffset: 18),
-                style: const TextStyle(
-                  fontSize: 50,
-                  color: Colors.white,
+    RepaintBoundary(
+              child: SpoilerTextWidget(
+                configuration: TextSpoilerConfiguration(
+                  isEnabled: enable,
+                  maxParticleSize: 1,
+                  particleColor: Colors.white,
+                  particleDensity: 5.5,
+                  speedOfParticles: .2,
+                  fadeRadius: 3,
+                  fadeAnimation: true,
+                  enableGesture: true,
+                  selection: const TextSelection(baseOffset: 0, extentOffset: 22),
+                  style: const TextStyle(
+                    fontSize: 50,
+                    color: Colors.white,
+                  ),
                 ),
+                text: text,
               ),
-              text: text,
             ),
-            ClipRect(
+            RepaintBoundary(
               child: SpoilerWidget(
                 configuration: WidgetSpoilerConfiguration(
                   isEnabled: enable,
                   maxParticleSize: 1,
-                  particleDensity: 5,
-                  speedOfParticles: 0.2,
+                  particleDensity: 25,
+                  speedOfParticles: .2,
+                  particleColor: Colors.white,
                   fadeRadius: 3,
                   fadeAnimation: true,
                   enableGesture: true,
