@@ -2,7 +2,6 @@
 
 ![Pub Likes](https://img.shields.io/pub/likes/spoiler_widget)
 ![Pub Points](https://img.shields.io/pub/points/spoiler_widget)
-![Pub Popularity](https://img.shields.io/pub/popularity/spoiler_widget)
 [![Pub Version](https://img.shields.io/pub/v/spoiler_widget.svg)](https://pub.dev/packages/spoiler_widget)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Flutter](https://img.shields.io/badge/Flutter-compatible-blue.svg)](https://flutter.dev)
@@ -10,152 +9,243 @@
 
 A Flutter package to create spoiler animations similar to the one used in Telegram, allowing you to hide sensitive or spoiler-filled content until it's tapped or clicked.
 
+<img src="https://github.com/zhukeev/spoiler_widget/raw/main/assets/spoiler_widget.jpg" alt="logo">
+
 ## Demo
 
 <img src="https://github.com/zhukeev/spoiler_widget/raw/main/example/lib/demo.gif" alt="Demo animation" width="300" height="620">
 
 ## Features
 
-- **Spoiler Animation:** Blur effect hides content until revealed.
-- **Customizable:** Adjust blur intensity, animation duration, and more.
-- **Easy Integration:** Simple API for adding spoiler animations to your Flutter applications.
-- **Platform Agnostic:** Works seamlessly across different platforms supported by Flutter.
+- **Spoiler Animation**: Blur effect to hide content until tapped or hidden
+
+- **Wave Effects**: Optional wave/ripple expansions with `SpoilerSpotsController`
+
+- **Particle System**: Configure particle density, size, speed, color, etc.
+
+- **Fade Animation**: Smooth circular reveal/cover transitions
+
+- **Gesture Control**: Enable or disable gestures to users can tap toggle the spoiler.
+
+- **Platform Agnostic**: Works on iOS, Android, Web and more
+
+---
 
 ## Installation
 
-To use this package, add `spoiler_widget` as a dependency in your `pubspec.yaml` file.
+In your `pubspec.yaml`:
 
-```yaml
+```aap
 dependencies:
   spoiler_widget: latest
 ```
 
-Then, run `flutter pub get` to install the package.
+Then run:
+
+```bash
+flutter pub get
+```
+
+---
 
 ## Usage
 
-Import the package into your Dart code:
+### 1. Basic Spoiler Usage
+
+Import the package:
 
 ```dart
 import 'package:spoiler_widget/spoiler_widget.dart';
 ```
 
-Wrap the content you want to hide with a `SpoilerTextWidget` widget:
-
-```dart
-SpoilerTextWidget(
-  text: 'This is a spoiler! Tap to reveal.',
-),
-```
-
-Wrap the content you want to hide with a `SpoilerWidget` widget:
+Wrap **text* or **widgets** you want to hide in a spoiler:
 
 ```dart
 SpoilerWidget(
-  child: CachedNetworkImage(imageUrl: url),
-),
+  configuration: WidgetSpoilerConfiguration(
+    isEnabled: true,
+    fadeRadius: 3,
+    fadeAnimation: true,
+    enableGesture: true,
+    imageFilter: ImageFilter.blur(sigmaX:30, sigmaY:30),
+  ),
+  child: Text('Hidden Content'),
+);
+
 ```
 
-## Example
+Or use the text-specific widget:
 
-Here's a simple example demonstrating how to use the package:
+```dart
+SpoilerTextWidget(
+  text: 'Tap me to reveal secret text!',
+  configuration: TextSpoilerConfiguration(
+    isEnabled: true,
+    fadeAnimation: true,
+    enableGesture: true,
+    style: TextStyle(fontSize: 16, color: Colors.black),
+  ),
+);
+
+```
+
+### 2. Wave Animations (SpoilerSpotsController)
+
+For **dynamic "wave"** effects:
+
+```dart
+class WaveDemo extends StatefulWidget {
+  late SpoilerSpotsController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = SpoilerSpotsController(vsyn: this);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @toverride
+  Widget build( Buildcontext context) {
+    return SpoilerUidget(
+      controller: _controller,
+      configuration: WidgetSpoilerConfiguration( 
+        isEnabled: true,
+        maxActiveWaves: 3,
+        fadeAnimation: true,
+        enableGesture: true,
+        imageFilter: ImageFilter.blur(sigmaX:30, sigmaY:20),
+      ),
+      child: Image.network('https://your-image-url'),
+    );
+  }
+}
+
+```
+
+You’d call `_controller.initParticles(...)` once you know the widget size. Any time the spoiler is enabled, random wave effects will move particles outward until they fade.
+
+#### 3. Example
+
+Below is a minimalist code sample:
 
 ```dart
 import 'package:flutter/material.dart';
 import 'package:spoiler_widget/spoiler_widget.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
-void main() {
-  runApp(MyApp());
-}
+
+void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
-  final text = 'This is a spoiler! Tap to reveal.';
-  final url =
+  final String text = 'Tap to reveal a surprise spoiler!';
+  final String imageUrl =
       'https://img.freepik.com/premium-photo/drawing-female-superhero-female-character_1308175-151081.jpg?w=1800';
-  bool enable = true;
 
   @override
-  Widget build(BuildContext context) {   
+  Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text('Spoiler Animation Example'),
-        ),
-        body: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      home: Scaffold
+      appBar: AppBar(
+        title: Text('Spoiler Widget Demo',
+      ),
+      body: SingleChildScrollView(
+        child: Column(
           children: [
+
+            // Text-based spoiler
             SpoilerTextWidget(
               configuration: TextSpoilerConfiguration(
-                isEnabled: enable,
+                isEnabled: true,
                 maxParticleSize: 1,
                 particleDensity: 2.5,
                 speedOfParticles: 0.2,
                 fadeRadius: 3,
                 fadeAnimation: true,
                 enableGesture: true,
-                selection: const TextSelection(baseOffset: 0, extentOffset: 18),
-                style: const TextStyle(
-                  fontSize: 50,
-                  color: Colors.white,
-                ),
+                selection: const TextSelection(baseOffset: 0, extentOffset: 30),
+                style: const TextStyle(fontSize: 28, color: Colors.black),
               ),
-              text: text,
-            ),
+            text: text,
+          ),
+
+          // Widget-based spoiler
             ClipRect(
               child: SpoilerWidget(
                 configuration: WidgetSpoilerConfiguration(
-                  isEnabled: enable,
+                  isEnabled: true,
                   maxParticleSize: 1,
                   particleDensity: 5,
                   speedOfParticles: 0.2,
                   fadeRadius: 3,
                   fadeAnimation: true,
                   enableGesture: true,
-                  imageFilter: ImageFilter.blur(sigmaX: 30.0, sigmaY: 30.0),
+                  imageFilter: ImageFilter.blur(sigmaX:30, sigmaY:30),
                 ),
-                child: CachedNetworkImage(imageUrl: url),
-              ),
+              child: CachedNetworkImage(imageUrl: imageUrl),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+     ),
+    ),
     );
   }
 }
+
 ```
 
-## API Reference
+#### Configuration
 
-### SpoilerAnimation
+##### Common Fields
 
-A widget that creates a spoiler animation to hide content until revealed.
+Table showing common config parameters for both TextSpoilerConfiguration and WidgetSpoilerConfiguration.
 
-## SpoilerAnimation Properties
+| Field            | Type            | Description                                            |
+|-----------------|----------------|--------------------------------------------------------|
+| `isEnabled`     | bool            | Whether the spoiler starts covered `true`.           |
+| `fadeAnimation` | bool            | Whether to animate the spoiler fade in/out.          |
+| `fadeRadius`    | double          | The circle radius for radial fade.                   |
+| `particleDensity` | double        | The density of particles in the spoiler.             |
+| `maxParticleSize` | double        | The maximum size of particles.                       |
+| `speedOfParticles` | double       | Speed factor for particle movement.                  |
+| `enableGesture` | bool            | Whether tapped toggle should be out of the box.      |
 
-| Property           | Type            | Description                                            |
-|--------------------|-----------------|--------------------------------------------------------|
-| `particleDensity`  | `double`        | The density of particles used in the animation.        |
-| `speedOfParticles` | `double`        | The speed of particles in the animation.               |
-| `particleColor`    | `Color`         | The color of particles in the animation.               |
-| `maxParticleSize`  | `double`        | The maximum size of particles in the animation.        |
-| `fadeAnimation`    | `bool`          | Determines whether to apply a fade animation effect.   |
-| `fadeRadius`       | `double`        | The radius of the fade effect.                         |
-| `enable`           | `bool`          | Determines whether the animation is enabled.           |
-| `enableGesture`    | `bool`          | Determines whether gesture recognition is enabled.     |
-| `style`            | `TextStyle?`    | The text style to be applied to the spoiler text.      |
-| `text`             | `String`        | The text content to be hidden by the spoiler animation.|
-| `selection`        | `TextSelection?`| The text selection within the spoiler text.            |
+#### TextSpoilerConfiguration
 
-## FAQ
+| Field       | Type           | Description                                 |
+|------------|---------------|---------------------------------------------|
+| `style`    | TextStyle?     | The text style applied to the spoiler text. |
+| `selection` | TextSelection? | Range of text to apply the spoiler.        |
 
-**Q: Can I customize the appearance of the spoiler animation?**
+#### WidgetSpoilerConfiguration
 
-A: Yes, you can adjust parameters like blur intensity and animation duration to customize the appearance and behavior of the spoiler animation.
+| Field            | Type         | Description                                  |
+|-----------------|-------------|----------------------------------------------|
+| `imageFilter`   | ImageFilter? | Blur filter used to hide the child.         |
+| `maxActiveWaves` | int         | Max concurrent waves for wave-based effects. |
 
-**Q: Does this package work on all Flutter platforms?**
+#### FAQ
 
-A: Yes, the package works on iOS, Android, and web platforms without any additional configuration.
+1) How can I animate the blur or wave concurrency?
+Adjust the properties in your configuration object at runtime. For instance, set a new imageFilter or call methods on the wave controller to dynamically tune the effect.
 
-## License
+2) Can I skip the wave logic?
+Yes—by default, you get a basic spoiler with fade. Use SpoilerSpotsController only if you want wave animations.
 
-This package is licensed under the MIT License. See the [LICENSE](https://github.com/zhukeev/spoiler_widget/LICENSE) file for details.
+3) Does this work on the web?
+Yes! It’s entirely in Flutter/Dart. Just ensure you handle any platform quirks with gesture input.
+
+### Contributing
+
+Contributions are welcome! Whether it’s bug fixes, new features, or documentation improvements, open a [Pull Request](https://github.com/zhukeev/spoiler_widget/pulls) or [Issue](https://github.com/zhukeev/spoiler_widget/issues).
+
+---
+
+### License
+
+Licensed under the [MIT License](https://github.com/zhukeev/spoiler_widget/blob/main/LICENSE). Enjoy building your spoiler effects!
