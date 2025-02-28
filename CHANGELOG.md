@@ -34,3 +34,9 @@
 
 * chore: added tags
 * small fixes
+
+## 1.0.9
+
+* A new `SpoilerSpotsController` class can schedule "wave" or "ripple" effects, causing particles to move outward from random origins within the spoiler bounds.
+* Reusable buffers in `drawRawAtlas` reduce per-frame allocations, providing smoother animations.
+* Reorganized Core. Clearer Names & Docs.
