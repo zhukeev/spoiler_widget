@@ -36,7 +36,7 @@ class _MainAppState extends State<MainApp> {
         body: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-    RepaintBoundary(
+            RepaintBoundary(
               child: SpoilerTextWidget(
                 configuration: TextSpoilerConfiguration(
                   isEnabled: enable,

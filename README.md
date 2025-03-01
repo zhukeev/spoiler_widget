@@ -58,7 +58,7 @@ Import the package:
 import 'package:spoiler_widget/spoiler_widget.dart';
 ```
 
-Wrap **text* or **widgets** you want to hide in a spoiler:
+Wrap **text** or **widgets** you want to hide in a spoiler:
 
 ```dart
 SpoilerWidget(
@@ -95,6 +95,12 @@ For **dynamic "wave"** effects:
 
 ```dart
 class WaveDemo extends StatefulWidget {
+  const WaveDemo({super.key});
+  @override
+  State<WaveDemo> createState() => _WaveDemoState();
+}
+
+class _WaveDemoState extends State<WaveDemo> {
   late SpoilerSpotsController _controller;
 
   @override
