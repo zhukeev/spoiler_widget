@@ -123,7 +123,7 @@ class SpoilerController extends ChangeNotifier {
 
   /// A path function that clips only the circular fade area if there’s a non-zero fade radius.
   Path splashPathClipper(Size size) {
-    if (_fadeRadius == 0) {
+    if (_fadeCenter == Offset.zero) {
       return Path()..addRect(Offset.zero & size);
     }
     return Path.combine(
