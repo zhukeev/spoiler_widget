@@ -20,14 +20,13 @@ class SpoilerText extends StatefulWidget {
 
 class _SpoilerTextState extends State<SpoilerText> with TickerProviderStateMixin {
   late final SpoilerController _spoilerController = SpoilerController(vsync: this);
-  final Path _spoilerMaskPath = Path();
 
   void _setSpoilerRegions(List<Rect> regions) {
-    _spoilerMaskPath.reset();
+  final Path spoilerMaskPath = Path();
     for (final rect in regions) {
-      _spoilerMaskPath.addRect(rect);
+      spoilerMaskPath.addRect(rect);
     }
-    _spoilerController.initializeParticles(_spoilerMaskPath, widget.config);
+    _spoilerController.initializeParticles(spoilerMaskPath, widget.config);
   }
 
   @override
