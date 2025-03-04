@@ -113,33 +113,35 @@ class SpoilerController extends ChangeNotifier {
   /// The bounding rectangle for the spoiler region.
   Rect get spoilerBounds => _spoilerBounds;
 
-  /// A path that represents a "cut out" circle in the rectangular spoiler,
-  /// used by ClipPath or custom painting for reveal effects.
-  Path get splashPath => Path.combine(
-        PathOperation.difference,
-        Path()..addRect(_spoilerBounds),
-        Path()..addOval(Rect.fromCircle(center: _fadeCenter, radius: _fadeRadius)),
-      );
+  Rect get _splashRect => Rect.fromCircle(center: _fadeCenter, radius: _fadeRadius);
 
   /// A path function that clips only the circular fade area if there’s a non-zero fade radius.
-  Path splashPathClipper(Size size) {
+  Path createClipPath(Size size) {
     if (_fadeCenter == Offset.zero) {
       return Path()..addRect(Offset.zero & size);
     }
     return Path.combine(
       PathOperation.intersect,
       Path()..addRect(_spoilerBounds),
-      Path()..addOval(Rect.fromCircle(center: _fadeCenter, radius: _fadeRadius)),
+      Path()..addOval(_splashRect),
     );
   }
 
-  /// A path that excludes the unselected area (XOR with the spoiler bounds).
-  /// You can use this to invert the spoiler region for certain visual effects.
-  Path get excludeUnselectedPath => Path.combine(
-        PathOperation.xor,
-        _spoilerPath,
-        Path()..addRect(_spoilerBounds),
-      );
+  Path createSplashPathMaskClipper(Size size) {
+    final clippedSpoilerPath = Path.combine(
+      PathOperation.intersect,
+      _splashRect == Rect.zero ? (Path()..addRect(spoilerBounds)) : (Path()..addOval(_splashRect)),
+      _spoilerPath,
+    );
+
+    final finalClipPath = Path.combine(
+      PathOperation.difference,
+      Path()..addRect(Offset.zero & size),
+      clippedSpoilerPath,
+    );
+
+    return finalClipPath;
+  }
 
   // ---------------------------------------------------------------------------
   // Setup & Particle Initialization
@@ -188,7 +190,7 @@ class SpoilerController extends ChangeNotifier {
     // 6) Decompose the path into bounding rectangles and populate the particle list
     for (final rect in _extractRectanglesFromPath(path)) {
       _spoilerPath.addRect(rect);
-      final particleCount = (rect.width + rect.height) * _config.particleDensity;
+      final particleCount = (rect.width * rect.height) * _config.particleDensity;
       for (int i = 0; i < particleCount; i++) {
         particles.add(_createRandomParticle(rect));
       }
@@ -199,6 +201,10 @@ class SpoilerController extends ChangeNotifier {
 
     // 8) If the spoiler starts enabled, begin the particle animation
     _startParticleAnimationIfNeeded();
+  }
+
+  void updateConfiguration(SpoilerConfiguration config) {
+    initializeParticles(_spoilerPath, config);
   }
 
   /// If fade animation is enabled, create the controller (once).
@@ -271,12 +277,12 @@ class SpoilerController extends ChangeNotifier {
   }
 
   /// Toggle the spoiler effect on/off. Optional [fadeOffset] for the radial center.
-  void toggle([Offset? fadeOffset]) {
+  void toggle(Offset fadeOffset) {
     // If we’re mid-fade, skip to avoid partial toggles.
-    if (isFading) return;
+    if (isFading || !_spoilerPath.contains(fadeOffset)) return;
 
     // Record the offset from which the radial fade expands.
-    _fadeCenter = fadeOffset ?? Offset.zero;
+    _fadeCenter = fadeOffset;
 
     onEnabledChanged(!_isEnabled);
   }

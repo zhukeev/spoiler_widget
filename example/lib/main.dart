@@ -6,7 +6,6 @@ import 'package:spoiler_widget/models/text_spoiler_configs.dart';
 import 'package:spoiler_widget/models/widget_spoiler.dart';
 import 'package:spoiler_widget/spoiler_image_widget.dart';
 import 'package:spoiler_widget/spoiler_text_widget.dart';
-// import 'package:spoiler_widget/spoiler_widget.dart';
 
 void main() {
   runApp(const MainApp());
@@ -30,19 +29,18 @@ class _MainAppState extends State<MainApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      showPerformanceOverlay: true,
       home: Scaffold(
         backgroundColor: Colors.black,
         body: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             RepaintBoundary(
-              child: SpoilerTextWidget(
-                configuration: TextSpoilerConfiguration(
+              child: SpoilerText(
+                config: TextSpoilerConfiguration(
                   isEnabled: enable,
                   maxParticleSize: 1,
                   particleColor: Colors.white,
-                  particleDensity: 5.5,
+                  particleDensity: .1,
                   speedOfParticles: .2,
                   fadeRadius: 3,
                   fadeAnimation: true,
@@ -61,8 +59,8 @@ class _MainAppState extends State<MainApp> {
                 configuration: WidgetSpoilerConfiguration(
                   isEnabled: enable,
                   maxParticleSize: 1,
-                  particleDensity: 25,
-                  speedOfParticles: .2,
+                  particleDensity: .1,
+                  speedOfParticles: .4,
                   particleColor: Colors.white,
                   fadeRadius: 3,
                   fadeAnimation: true,

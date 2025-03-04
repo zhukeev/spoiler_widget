@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:spoiler_widget/models/spoiler_spots_controller.dart';
 import 'package:spoiler_widget/models/widget_spoiler.dart';
+import 'package:spoiler_widget/widgets/canvas_callback_painter.dart';
 
 class SpoilerWidget extends StatefulWidget {
   const SpoilerWidget({
@@ -16,7 +17,7 @@ class SpoilerWidget extends StatefulWidget {
 }
 
 class _SpoilerWidgetState extends State<SpoilerWidget> with TickerProviderStateMixin {
-  late final SpoilerSpotsController _controller;
+  late final SpoilerSpotsController _controller = SpoilerSpotsController(vsync: this);
 
   Rect spoilerBounds = Rect.zero;
 
@@ -24,12 +25,6 @@ class _SpoilerWidgetState extends State<SpoilerWidget> with TickerProviderStateM
     spoilerBounds = rect;
 
     _controller.initParticles(rect, widget.configuration);
-  }
-
-  @override
-  void initState() {
-    _controller = SpoilerSpotsController(vsync: this);
-    super.initState();
   }
 
   @override
@@ -47,7 +42,11 @@ class _SpoilerWidgetState extends State<SpoilerWidget> with TickerProviderStateM
     super.dispose();
   }
 
-  void _onPaint(Canvas canvas) {
+  void _onPaint(Canvas canvas, Size size) {
+    final currentRect = Rect.fromLTWH(0, 0, size.width, size.height);
+    if (spoilerBounds != currentRect) {
+      initializeOffsets(currentRect);
+    }
     _controller.drawParticles(Offset.zero, canvas);
   }
 
@@ -64,17 +63,12 @@ class _SpoilerWidgetState extends State<SpoilerWidget> with TickerProviderStateM
         listenable: _controller,
         builder: (context, snapshot) {
           return CustomPaint(
-            foregroundPainter: _ImageSpoilerPainter(
-              currentRect: spoilerBounds,
-              onBoundariesCalculated: initializeOffsets,
-              onPaint: _onPaint,
-            ),
+            foregroundPainter: CustomPainterCanvasCallback(onPaint: _onPaint),
             child: Stack(
-              alignment: Alignment.center,
               children: [
                 widget.child,
                 ClipPath(
-                  clipper: _OvalClipper(_controller.splashPathClipper),
+                  clipper: _OvalClipper(_controller.createClipPath),
                   child: ImageFiltered(
                     imageFilter: widget.configuration.imageFilter,
                     enabled: _controller.isEnabled,
@@ -89,34 +83,6 @@ class _SpoilerWidgetState extends State<SpoilerWidget> with TickerProviderStateM
       ),
     );
   }
-}
-
-class _ImageSpoilerPainter extends CustomPainter {
-  final Rect currentRect;
-  final ValueSetter<Rect> onBoundariesCalculated;
-  final ValueSetter<Canvas> onPaint;
-  const _ImageSpoilerPainter({
-    required this.currentRect,
-    required this.onBoundariesCalculated,
-    required this.onPaint,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final currentRect = Rect.fromLTWH(0, 0, size.width, size.height);
-
-    if (this.currentRect != currentRect) {
-      onBoundariesCalculated(currentRect);
-    }
-
-    onPaint(canvas);
-  }
-
-  @override
-  bool shouldRepaint(_ImageSpoilerPainter oldDelegate) => true;
-
-  @override
-  bool shouldRebuildSemantics(_ImageSpoilerPainter oldDelegate) => false;
 }
 
 typedef OnClip = Path Function(Size size);

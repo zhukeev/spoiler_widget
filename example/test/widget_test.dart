@@ -16,6 +16,6 @@ void main() {
     await tester.pumpWidget(const MainApp());
 
     // Verify that SpoilerTextWidget is present
-    expect(find.byType(SpoilerTextWidget), findsOneWidget);
+    expect(find.byType(SpoilerText), findsOneWidget);
   });
 }
