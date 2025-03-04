@@ -55,8 +55,8 @@ class _MainAppState extends State<MainApp> {
               ),
             ),
             RepaintBoundary(
-              child: SpoilerWidget(
-                configuration: WidgetSpoilerConfiguration(
+              child: SpoilerOverlay(
+                config: WidgetSpoilerConfiguration(
                   isEnabled: enable,
                   maxParticleSize: 1,
                   particleDensity: .1,

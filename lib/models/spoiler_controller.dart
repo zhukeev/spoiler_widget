@@ -359,21 +359,18 @@ class SpoilerController extends ChangeNotifier {
   // ---------------------------------------------------------------------------
 
   /// Draws the current set of particles via [canvas.drawRawAtlas].
-  ///
-  /// [offset] is typically the global offset of the widget or zero if you’re
-  /// already in local coordinates.
-  void drawParticles(Offset offset, Canvas canvas) {
+  void drawParticles(Canvas canvas) {
     // If particle updates aren’t running, skip drawing
     if (_particleCtrl.status.isDismissed) return;
 
     // If atlas buffers are uninitialized, skip
     if (_atlasTransforms == null || _atlasRects == null || _atlasColors == null) return;
 
-    _drawParticlesWithRawAtlas(offset, canvas);
+    _drawParticlesWithRawAtlas(canvas);
   }
 
   /// Populates [transforms], [rects], [colors] for each particle, then calls [canvas.drawRawAtlas].
-  void _drawParticlesWithRawAtlas(Offset offset, Canvas canvas) {
+  void _drawParticlesWithRawAtlas(Canvas canvas) {
     final transforms = _atlasTransforms!;
     final rects = _atlasRects!;
     final colors = _atlasColors!;
@@ -381,7 +378,7 @@ class SpoilerController extends ChangeNotifier {
     int index = 0;
     for (final p in particles) {
       final transformIndex = index * 4;
-      final pointOffset = p + offset;
+      final pointOffset = p;
 
       if (isFading) {
         // If we have a fade, check if the particle is inside the fade circle

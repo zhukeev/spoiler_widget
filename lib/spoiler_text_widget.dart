@@ -62,7 +62,7 @@ class _SpoilerTextState extends State<SpoilerText> with TickerProviderStateMixin
             textSelection: widget.config.selection,
             style: widget.config.style,
             onPaint: (canvas, size) {
-              _spoilerController.drawParticles(Offset.zero, canvas);
+              _spoilerController.drawParticles(canvas);
               canvas.clipPath(_spoilerController.createSplashPathMaskClipper(size));
             },
             onInit: _setSpoilerRegions,
