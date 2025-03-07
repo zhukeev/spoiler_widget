@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'dart:typed_data';
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:spoiler_widget/models/spoiler_configs.dart';
@@ -70,7 +69,7 @@ class SpoilerController extends ChangeNotifier {
   Rect _spoilerBounds = Rect.zero;
 
   /// A Path describing the spoiler region (may be multiple rectangles).
-  final Path _spoilerPath = Path();
+  Path _spoilerPath = Path();
 
   /// A radial fade reveals or hides content starting from this center offset.
   Offset _fadeCenter = Offset.zero;
@@ -79,7 +78,7 @@ class SpoilerController extends ChangeNotifier {
   double _fadeRadius = 0;
 
   /// A 2D texture to draw each particle (a circle image).
-  late ui.Image _circleImage;
+  CircleImage _circleImage = CircleImageFactory.create(diameter: 1, color: Colors.white);
 
   // ---------------------------
   // Configuration
@@ -166,40 +165,34 @@ class SpoilerController extends ChangeNotifier {
     // Ensure maxParticleSize is valid
     assert(config.maxParticleSize >= 1, 'maxParticleSize must be >= 1');
     _config = config;
-
-    // 1) Clear old data
     particles.clear();
-    _spoilerPath.reset();
 
-    // 2) Update bounding rect and path
-    _spoilerBounds = path.getBounds();
-    _spoilerCenterAnimationCheck();
+    if (_spoilerPath != path) {
+      _spoilerPath.reset();
+      _spoilerPath = path;
+      _spoilerBounds = _spoilerPath.getBounds();
+    }
 
-    // 3) Create or reuse the fade animation controller if needed
     _initFadeIfNeeded();
 
-    // 4) Create the circle texture for the particles
-    _circleImage = CircleImageFactory.create(
-      diameter: _config.maxParticleSize,
-      color: _config.particleColor,
-    );
+    if (_circleImage.color != _config.particleColor || _circleImage.dimension != _config.maxParticleSize) {
+      _circleImage = CircleImageFactory.create(
+        diameter: _config.maxParticleSize,
+        color: _config.particleColor,
+      );
+    }
 
-    // 5) Set isEnabled based on config
-    _isEnabled = config.isEnabled;
-
-    // 6) Decompose the path into bounding rectangles and populate the particle list
-    for (final rect in _extractRectanglesFromPath(path)) {
-      _spoilerPath.addRect(rect);
+    for (final rect in _extractRectanglesFromPath(_spoilerPath)) {
       final particleCount = (rect.width * rect.height) * _config.particleDensity;
       for (int i = 0; i < particleCount; i++) {
         particles.add(_createRandomParticle(rect));
       }
     }
 
-    // 7) Prepare or resize the rawAtlas buffers
+    _isEnabled = config.isEnabled;
+
     _reallocAtlasBuffers();
 
-    // 8) If the spoiler starts enabled, begin the particle animation
     _startParticleAnimationIfNeeded();
   }
 
@@ -396,8 +389,8 @@ class SpoilerController extends ChangeNotifier {
 
           rects[transformIndex + 0] = 0.0;
           rects[transformIndex + 1] = 0.0;
-          rects[transformIndex + 2] = _circleImage.width.toDouble();
-          rects[transformIndex + 3] = _circleImage.height.toDouble();
+          rects[transformIndex + 2] = _circleImage.dimension.toDouble();
+          rects[transformIndex + 3] = _circleImage.dimension.toDouble();
 
           colors[index] = color.value;
           index++;
@@ -417,8 +410,8 @@ class SpoilerController extends ChangeNotifier {
 
         rects[transformIndex + 0] = 0.0;
         rects[transformIndex + 1] = 0.0;
-        rects[transformIndex + 2] = _circleImage.width.toDouble();
-        rects[transformIndex + 3] = _circleImage.height.toDouble();
+        rects[transformIndex + 2] = _circleImage.dimension.toDouble();
+        rects[transformIndex + 3] = _circleImage.dimension.toDouble();
 
         colors[index] = p.color.value;
         index++;
@@ -428,7 +421,7 @@ class SpoilerController extends ChangeNotifier {
     // If index>0, we have something to draw
     if (index > 0) {
       canvas.drawRawAtlas(
-        _circleImage,
+        _circleImage.image,
         transforms,
         rects,
         colors,

@@ -18,13 +18,13 @@ class MainApp extends StatefulWidget {
 class _MainAppState extends State<MainApp> {
   bool enable = true;
 
-  final text = 'This is a spoiler! Tap to reveal.';
-
   final url =
       'https://img.freepik.com/premium-photo/drawing-female-superhero-female-character_1308175-151081.jpg?w=1800';
 
   @override
   Widget build(BuildContext context) {
+    const text = 'This is a spoiler! Tap to reveal';
+
     return MaterialApp(
       home: Scaffold(
         backgroundColor: Colors.black,
@@ -42,7 +42,7 @@ class _MainAppState extends State<MainApp> {
                   fadeRadius: 3,
                   fadeAnimation: true,
                   enableGesture: true,
-                  selection: const TextSelection(baseOffset: 0, extentOffset: 22),
+                  selection: const TextSelection(baseOffset: 0, extentOffset: 14),
                   style: const TextStyle(
                     fontSize: 50,
                     color: Colors.white,

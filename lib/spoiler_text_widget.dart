@@ -22,7 +22,7 @@ class _SpoilerTextState extends State<SpoilerText> with TickerProviderStateMixin
   late final SpoilerController _spoilerController = SpoilerController(vsync: this);
 
   void _setSpoilerRegions(List<Rect> regions) {
-  final Path spoilerMaskPath = Path();
+    final Path spoilerMaskPath = Path();
     for (final rect in regions) {
       spoilerMaskPath.addRect(rect);
     }
@@ -32,10 +32,8 @@ class _SpoilerTextState extends State<SpoilerText> with TickerProviderStateMixin
   @override
   void didUpdateWidget(covariant SpoilerText oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.config != widget.config) {
+    if (oldWidget.config.selection != widget.config.selection) {
       _spoilerController.updateConfiguration(widget.config);
-    } else if (oldWidget.text != widget.text || oldWidget.config.style != widget.config.style) {
-      _spoilerController.disable();
     }
   }
 
@@ -125,6 +123,18 @@ class _SpoilerTextPainterState extends State<SpoilerTextPainter> {
       _spoilerRegions.add(wordBoxes.first.toRect());
     }
     _extractTextBoundaries(textPainter, wordRange.end);
+  }
+
+  @override
+  void didUpdateWidget(covariant SpoilerTextPainter oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.style != widget.style ||
+        oldWidget.text != widget.text ||
+        oldWidget.textAlign != widget.textAlign ||
+        oldWidget.textSelection != widget.textSelection) {
+      _previousSize = Size.zero;
+    }
   }
 
   @override
