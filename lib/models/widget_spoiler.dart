@@ -12,9 +12,9 @@ class WidgetSpoilerConfiguration extends SpoilerConfiguration {
   const WidgetSpoilerConfiguration({
     required this.imageFilter,
     this.maxActiveWaves = 4,
-    super.particleDensity = 20,
+    super.particleDensity = .1,
     super.speedOfParticles = 0.2,
-    super.particleColor = Colors.white70,
+    super.particleColor = Colors.white,
     super.maxParticleSize = 1,
     super.fadeAnimation = false,
     super.fadeRadius = 10,

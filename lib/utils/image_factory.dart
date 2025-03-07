@@ -1,5 +1,20 @@
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
+
+@immutable
+class CircleImage {
+  final ui.Image image;
+  final ui.Color color;
+  final double dimension;
+
+  const CircleImage({
+    required this.image,
+    required this.color,
+    required this.dimension,
+  });
+}
+
 /// A factory class for creating circular images using Flutter's low-level
 /// [dart:ui] drawing APIs.
 class CircleImageFactory {
@@ -22,7 +37,7 @@ class CircleImageFactory {
   ///   color: ui.Color(0xFFFF0000), // Red color
   /// );
   /// ```
-  static ui.Image create({
+  static CircleImage create({
     required double diameter,
     required ui.Color color,
   }) {
@@ -41,6 +56,10 @@ class CircleImageFactory {
 
     // End recording and convert it to an image
     final picture = recorder.endRecording();
-    return picture.toImageSync(diameter.toInt(), diameter.toInt());
+    return CircleImage(
+      image: picture.toImageSync(diameter.toInt(), diameter.toInt()),
+      color: color,
+      dimension: diameter,
+    );
   }
 }

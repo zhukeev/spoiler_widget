@@ -40,3 +40,15 @@
 * A new `SpoilerSpotsController` class can schedule "wave" or "ripple" effects, causing particles to move outward from random origins within the spoiler bounds.
 * Reusable buffers in `drawRawAtlas` reduce per-frame allocations, providing smoother animations.
 * Reorganized Core. Clearer Names & Docs.
+
+## 1.0.10
+
+### **Breaking Changes**
+
+* **Class Renames:**
+  * `SpoilerWidget` renamed to `SpoilerOverlay`
+  * `SpoilerTextWidget` renamed to `SpoilerText`
+* **Parameter Renaming:**
+  * `configuration` parameter changed to `config`
+* **Rendering Update:**
+  * Replaced `RenderParagraph` with `TextPainter` for better canvas performance

@@ -192,7 +192,7 @@ class SpoilerSpotsController extends SpoilerController {
 
       // Update the particle's position on each frame
       offsetTween.addListener(() {
-        if (!isEnabled || particles.isEmpty) return;
+        if (!isEnabled || particles.isEmpty || i >= particles.length) return;
         // Because i might be out of range if particles changed, be mindful in real code
         particles[i] = current.copyWith(
           dx: offsetTween.value.dx,
@@ -216,7 +216,7 @@ class SpoilerSpotsController extends SpoilerController {
   /// Extends [toggle] to ensure we don't toggle mid-fade, and re-initialize
   /// wave scheduling if we just enabled.
   @override
-  void toggle([Offset? fadeOffset]) {
+  void toggle(Offset fadeOffset) {
     // If mid-fade, skip
     if (isFading) return;
 

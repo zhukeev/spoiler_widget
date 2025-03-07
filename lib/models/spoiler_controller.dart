@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'dart:typed_data';
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:spoiler_widget/models/spoiler_configs.dart';
@@ -70,7 +69,7 @@ class SpoilerController extends ChangeNotifier {
   Rect _spoilerBounds = Rect.zero;
 
   /// A Path describing the spoiler region (may be multiple rectangles).
-  final Path _spoilerPath = Path();
+  Path _spoilerPath = Path();
 
   /// A radial fade reveals or hides content starting from this center offset.
   Offset _fadeCenter = Offset.zero;
@@ -79,7 +78,7 @@ class SpoilerController extends ChangeNotifier {
   double _fadeRadius = 0;
 
   /// A 2D texture to draw each particle (a circle image).
-  late ui.Image _circleImage;
+  CircleImage _circleImage = CircleImageFactory.create(diameter: 1, color: Colors.white);
 
   // ---------------------------
   // Configuration
@@ -113,33 +112,35 @@ class SpoilerController extends ChangeNotifier {
   /// The bounding rectangle for the spoiler region.
   Rect get spoilerBounds => _spoilerBounds;
 
-  /// A path that represents a "cut out" circle in the rectangular spoiler,
-  /// used by ClipPath or custom painting for reveal effects.
-  Path get splashPath => Path.combine(
-        PathOperation.difference,
-        Path()..addRect(_spoilerBounds),
-        Path()..addOval(Rect.fromCircle(center: _fadeCenter, radius: _fadeRadius)),
-      );
+  Rect get _splashRect => Rect.fromCircle(center: _fadeCenter, radius: _fadeRadius);
 
   /// A path function that clips only the circular fade area if there’s a non-zero fade radius.
-  Path splashPathClipper(Size size) {
+  Path createClipPath(Size size) {
     if (_fadeCenter == Offset.zero) {
       return Path()..addRect(Offset.zero & size);
     }
     return Path.combine(
       PathOperation.intersect,
       Path()..addRect(_spoilerBounds),
-      Path()..addOval(Rect.fromCircle(center: _fadeCenter, radius: _fadeRadius)),
+      Path()..addOval(_splashRect),
     );
   }
 
-  /// A path that excludes the unselected area (XOR with the spoiler bounds).
-  /// You can use this to invert the spoiler region for certain visual effects.
-  Path get excludeUnselectedPath => Path.combine(
-        PathOperation.xor,
-        _spoilerPath,
-        Path()..addRect(_spoilerBounds),
-      );
+  Path createSplashPathMaskClipper(Size size) {
+    final clippedSpoilerPath = Path.combine(
+      PathOperation.intersect,
+      _splashRect == Rect.zero ? (Path()..addRect(spoilerBounds)) : (Path()..addOval(_splashRect)),
+      _spoilerPath,
+    );
+
+    final finalClipPath = Path.combine(
+      PathOperation.difference,
+      Path()..addRect(Offset.zero & size),
+      clippedSpoilerPath,
+    );
+
+    return finalClipPath;
+  }
 
   // ---------------------------------------------------------------------------
   // Setup & Particle Initialization
@@ -164,41 +165,39 @@ class SpoilerController extends ChangeNotifier {
     // Ensure maxParticleSize is valid
     assert(config.maxParticleSize >= 1, 'maxParticleSize must be >= 1');
     _config = config;
-
-    // 1) Clear old data
     particles.clear();
-    _spoilerPath.reset();
 
-    // 2) Update bounding rect and path
-    _spoilerBounds = path.getBounds();
-    _spoilerCenterAnimationCheck();
+    if (_spoilerPath != path) {
+      _spoilerPath.reset();
+      _spoilerPath = path;
+      _spoilerBounds = _spoilerPath.getBounds();
+    }
 
-    // 3) Create or reuse the fade animation controller if needed
     _initFadeIfNeeded();
 
-    // 4) Create the circle texture for the particles
-    _circleImage = CircleImageFactory.create(
-      diameter: _config.maxParticleSize,
-      color: _config.particleColor,
-    );
+    if (_circleImage.color != _config.particleColor || _circleImage.dimension != _config.maxParticleSize) {
+      _circleImage = CircleImageFactory.create(
+        diameter: _config.maxParticleSize,
+        color: _config.particleColor,
+      );
+    }
 
-    // 5) Set isEnabled based on config
-    _isEnabled = config.isEnabled;
-
-    // 6) Decompose the path into bounding rectangles and populate the particle list
-    for (final rect in _extractRectanglesFromPath(path)) {
-      _spoilerPath.addRect(rect);
-      final particleCount = (rect.width + rect.height) * _config.particleDensity;
+    for (final rect in _extractRectanglesFromPath(_spoilerPath)) {
+      final particleCount = (rect.width * rect.height) * _config.particleDensity;
       for (int i = 0; i < particleCount; i++) {
         particles.add(_createRandomParticle(rect));
       }
     }
 
-    // 7) Prepare or resize the rawAtlas buffers
+    _isEnabled = config.isEnabled;
+
     _reallocAtlasBuffers();
 
-    // 8) If the spoiler starts enabled, begin the particle animation
     _startParticleAnimationIfNeeded();
+  }
+
+  void updateConfiguration(SpoilerConfiguration config) {
+    initializeParticles(_spoilerPath, config);
   }
 
   /// If fade animation is enabled, create the controller (once).
@@ -271,12 +270,12 @@ class SpoilerController extends ChangeNotifier {
   }
 
   /// Toggle the spoiler effect on/off. Optional [fadeOffset] for the radial center.
-  void toggle([Offset? fadeOffset]) {
+  void toggle(Offset fadeOffset) {
     // If we’re mid-fade, skip to avoid partial toggles.
-    if (isFading) return;
+    if (isFading || !_spoilerPath.contains(fadeOffset)) return;
 
     // Record the offset from which the radial fade expands.
-    _fadeCenter = fadeOffset ?? Offset.zero;
+    _fadeCenter = fadeOffset;
 
     onEnabledChanged(!_isEnabled);
   }
@@ -353,21 +352,18 @@ class SpoilerController extends ChangeNotifier {
   // ---------------------------------------------------------------------------
 
   /// Draws the current set of particles via [canvas.drawRawAtlas].
-  ///
-  /// [offset] is typically the global offset of the widget or zero if you’re
-  /// already in local coordinates.
-  void drawParticles(Offset offset, Canvas canvas) {
+  void drawParticles(Canvas canvas) {
     // If particle updates aren’t running, skip drawing
     if (_particleCtrl.status.isDismissed) return;
 
     // If atlas buffers are uninitialized, skip
     if (_atlasTransforms == null || _atlasRects == null || _atlasColors == null) return;
 
-    _drawParticlesWithRawAtlas(offset, canvas);
+    _drawParticlesWithRawAtlas(canvas);
   }
 
   /// Populates [transforms], [rects], [colors] for each particle, then calls [canvas.drawRawAtlas].
-  void _drawParticlesWithRawAtlas(Offset offset, Canvas canvas) {
+  void _drawParticlesWithRawAtlas(Canvas canvas) {
     final transforms = _atlasTransforms!;
     final rects = _atlasRects!;
     final colors = _atlasColors!;
@@ -375,7 +371,7 @@ class SpoilerController extends ChangeNotifier {
     int index = 0;
     for (final p in particles) {
       final transformIndex = index * 4;
-      final pointOffset = p + offset;
+      final pointOffset = p;
 
       if (isFading) {
         // If we have a fade, check if the particle is inside the fade circle
@@ -393,8 +389,8 @@ class SpoilerController extends ChangeNotifier {
 
           rects[transformIndex + 0] = 0.0;
           rects[transformIndex + 1] = 0.0;
-          rects[transformIndex + 2] = _circleImage.width.toDouble();
-          rects[transformIndex + 3] = _circleImage.height.toDouble();
+          rects[transformIndex + 2] = _circleImage.dimension.toDouble();
+          rects[transformIndex + 3] = _circleImage.dimension.toDouble();
 
           colors[index] = color.value;
           index++;
@@ -414,8 +410,8 @@ class SpoilerController extends ChangeNotifier {
 
         rects[transformIndex + 0] = 0.0;
         rects[transformIndex + 1] = 0.0;
-        rects[transformIndex + 2] = _circleImage.width.toDouble();
-        rects[transformIndex + 3] = _circleImage.height.toDouble();
+        rects[transformIndex + 2] = _circleImage.dimension.toDouble();
+        rects[transformIndex + 3] = _circleImage.dimension.toDouble();
 
         colors[index] = p.color.value;
         index++;
@@ -425,7 +421,7 @@ class SpoilerController extends ChangeNotifier {
     // If index>0, we have something to draw
     if (index > 0) {
       canvas.drawRawAtlas(
-        _circleImage,
+        _circleImage.image,
         transforms,
         rects,
         colors,

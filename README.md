@@ -61,7 +61,7 @@ import 'package:spoiler_widget/spoiler_widget.dart';
 Wrap **text** or **widgets** you want to hide in a spoiler:
 
 ```dart
-SpoilerWidget(
+SpoilerOverlay(
   configuration: WidgetSpoilerConfiguration(
     isEnabled: true,
     fadeRadius: 3,
@@ -77,7 +77,7 @@ SpoilerWidget(
 Or use the text-specific widget:
 
 ```dart
-SpoilerTextWidget(
+SpoilerText(
   text: 'Tap me to reveal secret text!',
   configuration: TextSpoilerConfiguration(
     isEnabled: true,
@@ -117,7 +117,7 @@ class _WaveDemoState extends State<WaveDemo> {
 
   @override
   Widget build(BuildContext context) {
-    return SpoilerWidget(
+    return SpoilerOverlay(
       controller: _controller,
       configuration: WidgetSpoilerConfiguration( 
         isEnabled: true,
@@ -164,11 +164,11 @@ class MyApp extends StatelessWidget {
           children: [
 
             // Text-based spoiler
-            SpoilerTextWidget(
-              configuration: TextSpoilerConfiguration(
+            SpoilerText(
+              config: TextSpoilerConfiguration(
                 isEnabled: true,
                 maxParticleSize: 1,
-                particleDensity: 2.5,
+                particleDensity: .2,
                 speedOfParticles: 0.2,
                 fadeRadius: 3,
                 fadeAnimation: true,
@@ -181,11 +181,11 @@ class MyApp extends StatelessWidget {
 
           // Widget-based spoiler
             ClipRect(
-              child: SpoilerWidget(
-                configuration: WidgetSpoilerConfiguration(
+              child: SpoilerOverlay(
+                config: WidgetSpoilerConfiguration(
                   isEnabled: true,
                   maxParticleSize: 1,
-                  particleDensity: 5,
+                  particleDensity: 0.2,
                   speedOfParticles: 0.2,
                   fadeRadius: 3,
                   fadeAnimation: true,

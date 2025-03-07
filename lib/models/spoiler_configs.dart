@@ -32,7 +32,7 @@ class SpoilerConfiguration {
   });
 
   factory SpoilerConfiguration.defaultConfig() => const SpoilerConfiguration(
-        particleDensity: 5.5,
+        particleDensity: .1,
         speedOfParticles: 0.2,
         particleColor: Colors.white,
         maxParticleSize: 1,
