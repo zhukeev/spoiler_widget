@@ -42,7 +42,7 @@ class _MainAppState extends State<MainApp> {
                   fadeRadius: 3,
                   fadeAnimation: true,
                   enableGesture: true,
-                  selection: const TextSelection(baseOffset: 0, extentOffset: 14),
+                  // selection: const TextSelection(baseOffset: 0, extentOffset: 19),
                   style: const TextStyle(
                     fontSize: 50,
                     color: Colors.white,
