@@ -326,14 +326,6 @@ class SpoilerController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Confirms _fadeCenter is inside or near the bounding rectangle. This is optional
-  /// if you want a default behavior when the user toggles with no offset.
-  void _spoilerCenterAnimationCheck() {
-    // For example, you might clamp _fadeCenter to the rect if you want to ensure
-    // we only fade from an actual point inside the region.
-    // (Currently left empty.)
-  }
-
   // ---------------------------------------------------------------------------
   // Stopping Everything
   // ---------------------------------------------------------------------------
