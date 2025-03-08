@@ -52,3 +52,24 @@
   * `configuration` parameter changed to `config`
 * **Rendering Update:**
   * Replaced `RenderParagraph` with `TextPainter` for better canvas performance
+
+## 1.0.11
+
+### **Breaking Changes**
+
+* **Class Renames:**
+  * `SpoilerConfiguration` renamed to `SpoilerConfig`
+  * `WidgetSpoilerConfiguration` renamed to `WidgetSpoilerConfig`
+  * `TextSpoilerConfiguration` renamed to `TextSpoilerConfig`
+
+* **Parameter Renaming:**
+  * `speedOfParticles` renamed to `particleSpeed`
+  * `fadeAnimation` renamed to `enableFadeAnimation`
+  * `enableGesture` renamed to `enableGestureReveal`
+  * `style` renamed to `textStyle` in `TextSpoilerConfig`
+  * `selection` renamed to `textSelection` in `TextSpoilerConfig`
+
+* **New Feature: Masking Configuration**
+  * Added `maskConfig` to allow advanced masking of the spoiler effect.
+  * Uses the `SpoilerMask` class, which enables defining a custom mask with a `Path` and `PathOperation`.
+  * Supports various masking effects, such as revealing only specific areas or excluding parts of the content.

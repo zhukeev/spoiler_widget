@@ -1,5 +1,5 @@
 import 'dart:math' hide log;
-import 'dart:ui' show Color, Offset, Rect;
+import 'dart:ui' show Color, Offset, Path;
 
 /// Particle class to represent a single particle
 ///
@@ -21,8 +21,8 @@ class Particle extends Offset {
   /// Value representing the angle of the particle in radians.
   final double angle;
 
-  /// The rect where the particle is located.
-  final Rect rect;
+  /// The path of the particle. Used to calculate the next position of the particle.
+  final Path path;
 
   const Particle(
     super.dx,
@@ -32,7 +32,7 @@ class Particle extends Offset {
     this.life,
     this.speed,
     this.angle,
-    this.rect,
+    this.path,
   );
 
   /// Copy the particle with new values
@@ -44,7 +44,7 @@ class Particle extends Offset {
     double? life,
     double? speed,
     double? angle,
-    Rect? rect,
+    Path? path,
   }) {
     return Particle(
       dx ?? this.dx,
@@ -54,7 +54,7 @@ class Particle extends Offset {
       life ?? this.life,
       speed ?? this.speed,
       angle ?? this.angle,
-      rect ?? this.rect,
+      path ?? this.path,
     );
   }
 

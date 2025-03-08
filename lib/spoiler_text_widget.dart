@@ -11,7 +11,7 @@ class SpoilerText extends StatefulWidget {
     required this.config,
   });
 
-  final TextSpoilerConfiguration config;
+  final TextSpoilerConfig config;
   final String text;
 
   @override
@@ -32,7 +32,7 @@ class _SpoilerTextState extends State<SpoilerText> with TickerProviderStateMixin
   @override
   void didUpdateWidget(covariant SpoilerText oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.config.selection != widget.config.selection) {
+    if (oldWidget.config.textSelection != widget.config.textSelection) {
       _spoilerController.updateConfiguration(widget.config);
     }
   }
@@ -50,14 +50,14 @@ class _SpoilerTextState extends State<SpoilerText> with TickerProviderStateMixin
       builder: (context, _) {
         return GestureDetector(
           onTapDown: (details) {
-            if (widget.config.enableGesture) {
+            if (widget.config.enableGestureReveal) {
               _spoilerController.toggle(details.localPosition);
             }
           },
           child: SpoilerTextPainter(
             text: widget.text,
-            textSelection: widget.config.selection,
-            style: widget.config.style,
+            textSelection: widget.config.textSelection,
+            style: widget.config.textStyle,
             onPaint: (canvas, size) {
               _spoilerController.drawParticles(canvas);
               canvas.clipPath(_spoilerController.createSplashPathMaskClipper(size));
