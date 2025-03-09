@@ -18,7 +18,7 @@ import 'package:spoiler_widget/spoiler_widget.dart';
 /// The frequency and concurrency of waves is governed by:
 ///  - A periodic timer firing every second (by default).
 ///  - Randomized delayed timers for each wave (up to 3 per second).
-///  - [WidgetSpoilerConfiguration.maxActiveWaves] limiting simultaneous waves.
+///  - [WidgetSpoilerConfig.maxActiveWaves] limiting simultaneous waves.
 class SpoilerSpotsController extends SpoilerController {
   // ---------------------------------------------------------------------------
   // Fields
