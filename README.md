@@ -16,7 +16,7 @@ A Flutter package to create spoiler animations similar to the one used in Telegr
 
 | Spoiler Example | Masked Spoiler Example |
 |----------------------|------------------------|
-| <img src="https://github.com/zhukeev/spoiler_widget/raw/main/example/lib/demo.gif" alt="Text Spoiler Demo" width="300" height="620"> | <img src="https://github.com/zhukeev/spoiler_widget/raw/main/example/lib/demo2.gif" alt="Widget Spoiler Demo" width="300" height="620"> |
+| <img src="https://github.com/zhukeev/spoiler_widget/raw/main/example/lib/demo.gif" alt="Spoiler Demo" width="300" height="620"> | <img src="https://github.com/zhukeev/spoiler_widget/raw/main/example/lib/demo2.gif" alt="Masked Spoiler Demo" width="300" height="620"> |
 
 ## Features
 
