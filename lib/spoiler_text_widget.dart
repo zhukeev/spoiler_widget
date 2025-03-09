@@ -57,6 +57,7 @@ class _SpoilerTextState extends State<SpoilerText> with TickerProviderStateMixin
           child: SpoilerTextPainter(
             text: widget.text,
             textSelection: widget.config.textSelection,
+            textAlign: widget.config.textAlign ?? TextAlign.start,
             style: widget.config.textStyle,
             onPaint: (canvas, size) {
               _spoilerController.drawParticles(canvas);
@@ -76,9 +77,9 @@ class SpoilerTextPainter extends StatefulWidget {
     required this.text,
     required this.onInit,
     required this.onPaint,
+    required this.textAlign,
     this.style,
     this.textSelection,
-    this.textAlign = TextAlign.start,
     Key? key,
   }) : super(key: key);
 

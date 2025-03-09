@@ -76,6 +76,17 @@ class SpoilerMask {
   /// The operation defining how the mask interacts with the spoiler content.
   final PathOperation maskOperation;
 
-  /// Creates a mask configuration with the given path and operation.
-  SpoilerMask({required this.maskPath, required this.maskOperation});
+  /// The offset to shift the mask position.
+  ///
+  /// This allows dynamic positioning of the mask relative to its original placement.
+  final Offset offset;
+
+  /// Creates a mask configuration with the given path, operation, and optional offset.
+  ///
+  /// The [offset] parameter defaults to `Offset.zero`, meaning no shift in position.
+  SpoilerMask({
+    required this.maskPath,
+    required this.maskOperation,
+    this.offset = Offset.zero,
+  });
 }

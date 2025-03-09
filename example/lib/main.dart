@@ -23,7 +23,7 @@ class _MainAppState extends State<MainApp> {
   final url =
       'https://img.freepik.com/premium-photo/drawing-female-superhero-female-character_1308175-151081.jpg?w=1800';
 
-  SpoilerMask createStarPath(Size size) {
+  SpoilerMask createStarPath(Size size, Offset offset) {
     Path path = Path();
     final cx = size.width / 2;
     final cy = size.height / 3;
@@ -42,14 +42,15 @@ class _MainAppState extends State<MainApp> {
     }
     path.close();
 
-    const rotationAngle = pi / 3;
-
-    // Rotate the path using a transformation matrix
     final Matrix4 matrix = Matrix4.identity()
-      ..translate(cx + 280, cy)
-      ..rotateZ(rotationAngle)
+      ..translate(cx, cy)
+      ..rotateZ(1)
       ..translate(-cx, -cy);
-    return SpoilerMask(maskPath: path.transform(matrix.storage), maskOperation: PathOperation.union);
+    return SpoilerMask(
+      maskPath: path.transform(matrix.storage),
+      maskOperation: PathOperation.intersect,
+      offset: offset,
+    );
   }
 
   @override
@@ -72,12 +73,12 @@ class _MainAppState extends State<MainApp> {
                   fadeRadius: 3,
                   enableFadeAnimation: true,
                   enableGestureReveal: true,
-                  // textSelection: const TextSelection(baseOffset: 0, extentOffset: 12),
                   textStyle: const TextStyle(
                     fontSize: 50,
                     color: Colors.white,
+                    
                   ),
-                  maskConfig: createStarPath(const Size.square(80)),
+                  maskConfig: createStarPath(const Size.square(80), const Offset(230, 30)),
                 ),
                 text: text,
               ),
@@ -94,6 +95,7 @@ class _MainAppState extends State<MainApp> {
                   enableFadeAnimation: true,
                   enableGestureReveal: true,
                   imageFilter: ImageFilter.blur(sigmaX: 30.0, sigmaY: 30.0),
+                  maskConfig: createStarPath(const Size.square(80), const Offset(200, 90)),
                 ),
                 child: CachedNetworkImage(imageUrl: url),
               ),

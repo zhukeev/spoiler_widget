@@ -117,13 +117,13 @@ class SpoilerController extends ChangeNotifier {
 
   /// A path function that clips only the circular fade area if there’s a non-zero fade radius.
   Path createClipPath(Size size) {
-    if (_fadeCenter == Offset.zero) {
-      return Path()..addRect(Offset.zero & size);
-    }
     return Path.combine(
       PathOperation.intersect,
-      Path()..addRect(_spoilerBounds),
-      Path()..addOval(_splashRect),
+      _spoilerPath,
+      Path()
+        ..addOval(
+          _fadeCenter == Offset.zero ? Offset.zero & size : _splashRect,
+        ),
     );
   }
 
@@ -171,7 +171,13 @@ class SpoilerController extends ChangeNotifier {
     if (_spoilerPath != path) {
       _spoilerPath.reset();
       if (config.maskConfig != null) {
-        final newPath = Path.combine(config.maskConfig!.maskOperation, path, config.maskConfig!.maskPath);
+        final newPath = Path.combine(
+          config.maskConfig!.maskOperation,
+          path,
+          config.maskConfig!.maskPath.shift(
+            config.maskConfig!.offset,
+          ),
+        );
         _spoilerPath.addPath(newPath, Offset.zero);
       } else {
         _spoilerPath.addPath(path, Offset.zero);
