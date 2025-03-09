@@ -13,7 +13,10 @@ A Flutter package to create spoiler animations similar to the one used in Telegr
 
 ## Demo
 
-<img src="https://github.com/zhukeev/spoiler_widget/raw/main/example/lib/demo.gif" alt="Demo animation" width="300" height="620">
+
+| Spoiler Example | Masked Spoiler Example |
+|----------------------|------------------------|
+| <img src="https://github.com/zhukeev/spoiler_widget/raw/main/example/lib/demo.gif" alt="Text Spoiler Demo" width="300" height="620"> | <img src="https://github.com/zhukeev/spoiler_widget/raw/main/example/lib/demo2.gif" alt="Widget Spoiler Demo" width="300" height="620"> |
 
 ## Features
 
@@ -26,6 +29,8 @@ A Flutter package to create spoiler animations similar to the one used in Telegr
 - **Fade Animation**: Smooth circular reveal/cover transitions
 
 - **Gesture Control**: Enable or disable gestures to users can tap toggle the spoiler.
+
+- **Masking Support**: Use custom `Path` + `PathOperation` via `maskConfig`.
 
 - **Platform Agnostic**: Works on iOS, Android, Web and more
 
@@ -62,11 +67,11 @@ Wrap **text** or **widgets** you want to hide in a spoiler:
 
 ```dart
 SpoilerOverlay(
-  configuration: WidgetSpoilerConfiguration(
+  config: WidgetSpoilerConfig(
     isEnabled: true,
     fadeRadius: 3,
-    fadeAnimation: true,
-    enableGesture: true,
+    enableFadeAnimation: true,
+    enableGestureReveal: true,
     imageFilter: ImageFilter.blur(sigmaX:30, sigmaY:30),
   ),
   child: Text('Hidden Content'),
@@ -79,11 +84,11 @@ Or use the text-specific widget:
 ```dart
 SpoilerText(
   text: 'Tap me to reveal secret text!',
-  configuration: TextSpoilerConfiguration(
+  config: TextSpoilerConfig(
     isEnabled: true,
-    fadeAnimation: true,
-    enableGesture: true,
-    style: TextStyle(fontSize: 16, color: Colors.black),
+    enableFadeAnimation: true,
+    enableGestureReveal: true,
+    textStyle: TextStyle(fontSize: 16, color: Colors.black),
   ),
 );
 
@@ -94,36 +99,15 @@ SpoilerText(
 For **dynamic "wave"** effects:
 
 ```dart
-class WaveDemo extends StatefulWidget {
-  const WaveDemo({super.key});
-  @override
-  State<WaveDemo> createState() => _WaveDemoState();
-}
-
-class _WaveDemoState extends State<WaveDemo> {
-  late SpoilerSpotsController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = SpoilerSpotsController(vsyn: this);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
+class WaveDemo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SpoilerOverlay(
-      controller: _controller,
-      configuration: WidgetSpoilerConfiguration( 
+      config: WidgetSpoilerConfig( 
         isEnabled: true,
         maxActiveWaves: 3,
-        fadeAnimation: true,
-        enableGesture: true,
+        enableFadeAnimation: true,
+        enableGestureReveal: true,
         imageFilter: ImageFilter.blur(sigmaX:30, sigmaY:20),
       ),
       child: Image.network('https://your-image-url'),
@@ -133,7 +117,28 @@ class _WaveDemoState extends State<WaveDemo> {
 
 ```
 
-You’d call `_controller.initParticles(...)` once you know the widget size. Any time the spoiler is enabled, random wave effects will move particles outward until they fade.
+### 3. Custom Path Masking
+
+You can apply a custom-shaped mask using `maskConfig` in both `TextSpoilerConfig` and `WidgetSpoilerConfig`.
+This allows the spoiler effect to only appear inside specific areas defined by a `Path`.
+
+```dart
+SpoilerText(
+  text: 'Masked spoiler!',
+  config: TextSpoilerConfig(
+    isEnabled: true,
+    enableGestureReveal: true,
+    particleDensity: 0.1,
+    textStyle: TextStyle(fontSize: 24, color: Colors.white),
+    maskConfig: SpoilerMask(
+      maskPath: myCustomPath,
+      maskOperation: PathOperation.intersect,
+      offset: Offset(50, 30),
+    ),
+  ),
+);
+
+```
 
 #### 3. Example
 
@@ -165,16 +170,16 @@ class MyApp extends StatelessWidget {
 
             // Text-based spoiler
             SpoilerText(
-              config: TextSpoilerConfiguration(
+              config: TextSpoilerConfig(
                 isEnabled: true,
                 maxParticleSize: 1,
                 particleDensity: .2,
-                speedOfParticles: 0.2,
+                particleSpeed: 0.2,
                 fadeRadius: 3,
-                fadeAnimation: true,
-                enableGesture: true,
-                selection: const TextSelection(baseOffset: 0, extentOffset: 30),
-                style: const TextStyle(fontSize: 28, color: Colors.black),
+                enableFadeAnimation: true,
+                enableGestureReveal: true,
+                textSelection: const TextSelection(baseOffset: 0, extentOffset: 30),
+                textStyle: const TextStyle(fontSize: 28, color: Colors.black),
               ),
             text: text,
           ),
@@ -182,14 +187,14 @@ class MyApp extends StatelessWidget {
           // Widget-based spoiler
             ClipRect(
               child: SpoilerOverlay(
-                config: WidgetSpoilerConfiguration(
+                config: WidgetSpoilerConfig(
                   isEnabled: true,
                   maxParticleSize: 1,
-                  particleDensity: 0.2,
-                  speedOfParticles: 0.2,
+                  particleDensity: .2,
+                  particleSpeed: 0.2,
                   fadeRadius: 3,
-                  fadeAnimation: true,
-                  enableGesture: true,
+                  enableFadeAnimation: true,
+                  enableGestureReveal: true,
                   imageFilter: ImageFilter.blur(sigmaX:30, sigmaY:30),
                 ),
               child: CachedNetworkImage(imageUrl: imageUrl),
@@ -214,19 +219,21 @@ Table showing common config parameters for both TextSpoilerConfiguration and Wid
 | Field            | Type            | Description                                            |
 |-----------------|----------------|--------------------------------------------------------|
 | `isEnabled`     | bool            | Whether the spoiler starts covered `true`.           |
-| `fadeAnimation` | bool            | Whether to animate the spoiler fade in/out.          |
+| `enableFadeAnimation` | bool            | Enables smooth fade-in/out.          |
 | `fadeRadius`    | double          | The circle radius for radial fade.                   |
 | `particleDensity` | double        | The density of particles in the spoiler.             |
 | `maxParticleSize` | double        | The maximum size of particles.                       |
-| `speedOfParticles` | double       | Speed factor for particle movement.                  |
-| `enableGesture` | bool            | Whether tapped toggle should be out of the box.      |
+| `particleSpeed` | double       | Speed factor for particle movement.                  |
+| `enableGestureReveal` | bool            | Whether tapped toggle should be out of the box.      |
+| `maskConfig` | SpoilerMask?            | Optional mask to apply using a `Path`.     |
 
 #### TextSpoilerConfiguration
 
 | Field       | Type           | Description                                 |
 |------------|---------------|---------------------------------------------|
-| `style`    | TextStyle?     | The text style applied to the spoiler text. |
-| `selection` | TextSelection? | Range of text to apply the spoiler.        |
+| `textStyle`    | TextStyle?     | The text style applied to the spoiler text. |
+| `textSelection` | TextSelection? | Range of text to apply the spoiler.        |
+| `textAlign` | TextAlign? | Text alignment inside the widget.        |
 
 #### WidgetSpoilerConfiguration
 

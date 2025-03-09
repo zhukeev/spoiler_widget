@@ -76,7 +76,6 @@ class _MainAppState extends State<MainApp> {
                   textStyle: const TextStyle(
                     fontSize: 50,
                     color: Colors.white,
-                    
                   ),
                   maskConfig: createStarPath(const Size.square(80), const Offset(230, 30)),
                 ),
