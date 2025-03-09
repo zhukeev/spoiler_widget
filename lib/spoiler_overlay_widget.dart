@@ -10,7 +10,7 @@ class SpoilerOverlay extends StatefulWidget {
     required this.config,
   });
   final Widget child;
-  final WidgetSpoilerConfiguration config;
+  final WidgetSpoilerConfig config;
 
   @override
   State<SpoilerOverlay> createState() => _SpoilerOverlayState();
@@ -52,7 +52,7 @@ class _SpoilerOverlayState extends State<SpoilerOverlay> with TickerProviderStat
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTapDown: (details) {
-        if (widget.config.enableGesture) {
+        if (widget.config.enableGestureReveal) {
           _spoilerController.toggle(details.localPosition);
         }
       },

@@ -1,45 +1,24 @@
 # Changelog
 
-## 1.0.0
+## 1.0.11
 
-* Initial release.
-  
-## 1.0.1
+### **Breaking Changes**
 
-* Added docs
+* **Class Renames:**
+  * `SpoilerConfiguration` renamed to `SpoilerConfig`
+  * `WidgetSpoilerConfiguration` renamed to `WidgetSpoilerConfig`
+  * `TextSpoilerConfiguration` renamed to `TextSpoilerConfig`
 
-## 1.0.3
+* **Parameter Renaming:**
+  * `speedOfParticles` renamed to `particleSpeed`
+  * `fadeAnimation` renamed to `enableFadeAnimation`
+  * `enableGesture` renamed to `enableGestureReveal`
+  * `style` renamed to `textStyle` in `TextSpoilerConfig`
+  * `selection` renamed to `textSelection` in `TextSpoilerConfig`
 
-* Position fix
-
-## 1.0.4
-
-* Added docs
-
-## 1.0.5
-
-* Added new SpoilerWidget widget to hide widgets below
-
-## 1.0.6
-
-* Gesture issue fixed
-* start with already spoilered state in SpoilerTextWidget
-* import refactor
-  
-## 1.0.7
-
-* perf: Refactored particle rendering to use `drawRawAtlas`, significantly improving performance for rendering large numbers of particles
-  
-## 1.0.8
-
-* chore: added tags
-* small fixes
-
-## 1.0.9
-
-* A new `SpoilerSpotsController` class can schedule "wave" or "ripple" effects, causing particles to move outward from random origins within the spoiler bounds.
-* Reusable buffers in `drawRawAtlas` reduce per-frame allocations, providing smoother animations.
-* Reorganized Core. Clearer Names & Docs.
+* **New Features:**
+  * Added `maskConfig` to support advanced masking with `Path`, `PathOperation`, and `offset`.
+  * Added `textAlign` to `TextSpoilerConfig` for custom text alignment control.
 
 ## 1.0.10
 
@@ -52,3 +31,44 @@
   * `configuration` parameter changed to `config`
 * **Rendering Update:**
   * Replaced `RenderParagraph` with `TextPainter` for better canvas performance
+
+## 1.0.9
+
+* A new `SpoilerSpotsController` class can schedule "wave" or "ripple" effects, causing particles to move outward from random origins within the spoiler bounds.
+* Reusable buffers in `drawRawAtlas` reduce per-frame allocations, providing smoother animations.
+* Reorganized Core. Clearer Names & Docs.
+
+## 1.0.8
+
+* chore: added tags
+* small fixes
+
+## 1.0.7
+
+* perf: Refactored particle rendering to use `drawRawAtlas`, significantly improving performance for rendering large numbers of particles
+
+## 1.0.6
+
+* Gesture issue fixed
+* start with already spoilered state in SpoilerTextWidget
+* import refactor
+
+## 1.0.5
+
+* Added new SpoilerWidget widget to hide widgets below
+
+## 1.0.4
+
+* Added docs
+
+## 1.0.3
+
+* Position fix
+
+## 1.0.1
+
+* Added docs
+
+## 1.0.0
+
+* Initial release.

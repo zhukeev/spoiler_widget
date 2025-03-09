@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:spoiler_widget/extension/path_x.dart';
 import 'package:spoiler_widget/models/spoiler_configs.dart';
 import 'package:spoiler_widget/utils/image_factory.dart';
 
@@ -69,7 +70,7 @@ class SpoilerController extends ChangeNotifier {
   Rect _spoilerBounds = Rect.zero;
 
   /// A Path describing the spoiler region (may be multiple rectangles).
-  Path _spoilerPath = Path();
+  final Path _spoilerPath = Path();
 
   /// A radial fade reveals or hides content starting from this center offset.
   Offset _fadeCenter = Offset.zero;
@@ -83,7 +84,7 @@ class SpoilerController extends ChangeNotifier {
   // ---------------------------
   // Configuration
   // ---------------------------
-  SpoilerConfiguration _config = SpoilerConfiguration.defaultConfig();
+  SpoilerConfig _config = SpoilerConfig.defaultConfig();
 
   // ---------------------------------------------------------------------------
   // Constructor
@@ -107,7 +108,7 @@ class SpoilerController extends ChangeNotifier {
   bool get isEnabled => _isEnabled;
 
   /// True if the fade animation is active.
-  bool get isFading => _config.fadeAnimation && _fadeCtrl != null && _fadeCtrl!.isAnimating;
+  bool get isFading => _config.enableFadeAnimation && _fadeCtrl != null && _fadeCtrl!.isAnimating;
 
   /// The bounding rectangle for the spoiler region.
   Rect get spoilerBounds => _spoilerBounds;
@@ -116,13 +117,13 @@ class SpoilerController extends ChangeNotifier {
 
   /// A path function that clips only the circular fade area if there’s a non-zero fade radius.
   Path createClipPath(Size size) {
-    if (_fadeCenter == Offset.zero) {
-      return Path()..addRect(Offset.zero & size);
-    }
     return Path.combine(
       PathOperation.intersect,
-      Path()..addRect(_spoilerBounds),
-      Path()..addOval(_splashRect),
+      _spoilerPath,
+      Path()
+        ..addOval(
+          _fadeCenter == Offset.zero ? Offset.zero & size : _splashRect,
+        ),
     );
   }
 
@@ -161,7 +162,7 @@ class SpoilerController extends ChangeNotifier {
   ///
   /// [path] is the shape describing where particles should exist.
   /// [config] includes fade, density, maxParticleSize, etc.
-  void initializeParticles(Path path, SpoilerConfiguration config) {
+  void initializeParticles(Path path, SpoilerConfig config) {
     // Ensure maxParticleSize is valid
     assert(config.maxParticleSize >= 1, 'maxParticleSize must be >= 1');
     _config = config;
@@ -169,7 +170,18 @@ class SpoilerController extends ChangeNotifier {
 
     if (_spoilerPath != path) {
       _spoilerPath.reset();
-      _spoilerPath = path;
+      if (config.maskConfig != null) {
+        final newPath = Path.combine(
+          config.maskConfig!.maskOperation,
+          path,
+          config.maskConfig!.maskPath.shift(
+            config.maskConfig!.offset,
+          ),
+        );
+        _spoilerPath.addPath(newPath, Offset.zero);
+      } else {
+        _spoilerPath.addPath(path, Offset.zero);
+      }
       _spoilerBounds = _spoilerPath.getBounds();
     }
 
@@ -182,10 +194,13 @@ class SpoilerController extends ChangeNotifier {
       );
     }
 
-    for (final rect in _extractRectanglesFromPath(_spoilerPath)) {
+    final subPaths = _spoilerPath.subPaths;
+
+    for (final path in subPaths) {
+      final rect = path.getBounds();
       final particleCount = (rect.width * rect.height) * _config.particleDensity;
       for (int i = 0; i < particleCount; i++) {
-        particles.add(_createRandomParticle(rect));
+        particles.add(_createRandomParticlePath(path));
       }
     }
 
@@ -196,13 +211,13 @@ class SpoilerController extends ChangeNotifier {
     _startParticleAnimationIfNeeded();
   }
 
-  void updateConfiguration(SpoilerConfiguration config) {
+  void updateConfiguration(SpoilerConfig config) {
     initializeParticles(_spoilerPath, config);
   }
 
   /// If fade animation is enabled, create the controller (once).
   void _initFadeIfNeeded() {
-    if (_config.fadeAnimation && _fadeCtrl == null) {
+    if (_config.enableFadeAnimation && _fadeCtrl == null) {
       _fadeCtrl = AnimationController(
         value: _config.isEnabled ? 1 : 0,
         duration: const Duration(milliseconds: 300),
@@ -220,29 +235,17 @@ class SpoilerController extends ChangeNotifier {
     _atlasColors = Int32List(count);
   }
 
-  /// Breaks a Path into individual bounding [Rect]s (using path metrics).
-  List<Rect> _extractRectanglesFromPath(Path path) {
-    final rects = <Rect>[];
-    for (final metric in path.computeMetrics()) {
-      final subPath = metric.extractPath(0, metric.length);
-      rects.add(subPath.getBounds());
-    }
-    return rects;
-  }
-
-  /// Create a single random particle inside [rect], with random position,
-  /// direction, and life.
-  Particle _createRandomParticle(Rect rect) {
-    final offset = rect.deflate(_config.fadeRadius).randomOffset();
+  Particle _createRandomParticlePath(Path path) {
+    final offset = path.getRandomPoint();
     return Particle(
       offset.dx,
       offset.dy,
       _config.maxParticleSize,
       _config.particleColor,
       _random.nextDouble(), // life
-      _config.speedOfParticles, // velocity
+      _config.particleSpeed, // velocity
       _random.nextDouble() * 2 * pi, // angle
-      rect,
+      path,
     );
   }
 
@@ -261,7 +264,7 @@ class SpoilerController extends ChangeNotifier {
 
   /// Turn off the spoiler effect: fade from 1→0, then stop the animation entirely.
   void disable() {
-    if (!_config.fadeAnimation) {
+    if (!_config.enableFadeAnimation) {
       // If fade is disabled, just stop everything now.
       _stopAll();
     } else {
@@ -270,14 +273,16 @@ class SpoilerController extends ChangeNotifier {
   }
 
   /// Toggle the spoiler effect on/off. Optional [fadeOffset] for the radial center.
-  void toggle(Offset fadeOffset) {
+  bool toggle(Offset fadeOffset) {
     // If we’re mid-fade, skip to avoid partial toggles.
-    if (isFading || !_spoilerPath.contains(fadeOffset)) return;
+    if (isFading || !_spoilerPath.contains(fadeOffset)) return false;
 
     // Record the offset from which the radial fade expands.
     _fadeCenter = fadeOffset;
 
     onEnabledChanged(!_isEnabled);
+
+    return true;
   }
 
   /// Called by [toggle] after setting [_fadeCenter].
@@ -308,7 +313,8 @@ class SpoilerController extends ChangeNotifier {
     for (int i = 0; i < particles.length; i++) {
       final p = particles[i];
       // If near end of life, spawn a new particle. Otherwise, keep moving.
-      particles[i] = (p.life <= 0.1) ? _createRandomParticle(p.rect) : p.moveToRandomAngle();
+      // particles[i] = (p.life <= 0.1) ? _createRandomParticle(p.rect) : p.moveToRandomAngle();
+      particles[i] = (p.life <= 0.1) ? _createRandomParticlePath(p.path) : p.moveToRandomAngle();
     }
     notifyListeners();
   }
