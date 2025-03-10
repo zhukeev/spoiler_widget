@@ -9,14 +9,13 @@
 
 A Flutter package to create spoiler animations similar to the one used in Telegram, allowing you to hide sensitive or spoiler-filled content until it's tapped or clicked.
 
-<img src="https://github.com/zhukeev/spoiler_widget/raw/main/assets/spoiler_widget.jpg" alt="logo" width="800" height="400">
-
 ## Demo
 
-
+<!-- markdownlint-disable MD033 -->
 | Spoiler Example | Masked Spoiler Example |
 |----------------------|------------------------|
 | <img src="https://github.com/zhukeev/spoiler_widget/raw/main/example/lib/demo.gif" alt="Spoiler Demo" width="300" height="620"> | <img src="https://github.com/zhukeev/spoiler_widget/raw/main/example/lib/demo2.gif" alt="Masked Spoiler Demo" width="300" height="620"> |
+<!-- markdownlint-enable MD033 -->
 
 ## Features
 
