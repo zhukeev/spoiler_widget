@@ -18,7 +18,7 @@ import 'package:spoiler_widget/spoiler_widget.dart';
 /// The frequency and concurrency of waves is governed by:
 ///  - A periodic timer firing every second (by default).
 ///  - Randomized delayed timers for each wave (up to 3 per second).
-///  - [WidgetSpoilerConfiguration.maxActiveWaves] limiting simultaneous waves.
+///  - [WidgetSpoilerConfig.maxActiveWaves] limiting simultaneous waves.
 class SpoilerSpotsController extends SpoilerController {
   // ---------------------------------------------------------------------------
   // Fields
@@ -44,7 +44,7 @@ class SpoilerSpotsController extends SpoilerController {
   final TickerProvider _vsync;
 
   /// Holds wave-related config (maxActiveWaves, fade options, etc.).
-  WidgetSpoilerConfiguration _config = WidgetSpoilerConfiguration.defaultConfig();
+  WidgetSpoilerConfig _config = WidgetSpoilerConfig.defaultConfig();
 
   // ---------------------------------------------------------------------------
   // Constructor
@@ -67,7 +67,7 @@ class SpoilerSpotsController extends SpoilerController {
   ///
   /// [rect] is the bounding area.
   /// [configuration] includes fields like [maxActiveWaves], which limit concurrency.
-  void initParticles(Rect rect, WidgetSpoilerConfiguration configuration) {
+  void initParticles(Rect rect, WidgetSpoilerConfig configuration) {
     _config = configuration;
 
     // Call the base spoiler initialization (particles, fade, etc.).
@@ -176,7 +176,7 @@ class SpoilerSpotsController extends SpoilerController {
       );
 
       // If that offset is inside, use it; otherwise revert to waveEndpoint.
-      final finalOffset = spoilerBounds.containsOffset(randomOffset) ? randomOffset : waveEndpoint;
+      final finalOffset = current.path.contains(randomOffset) ? randomOffset : waveEndpoint;
 
       // Build a two-phase tween: (current -> waveEndpoint -> finalOffset)
       final offsetTween = TweenSequence<Offset>([
@@ -216,11 +216,10 @@ class SpoilerSpotsController extends SpoilerController {
   /// Extends [toggle] to ensure we don't toggle mid-fade, and re-initialize
   /// wave scheduling if we just enabled.
   @override
-  void toggle(Offset fadeOffset) {
-    // If mid-fade, skip
-    if (isFading) return;
+  bool toggle(Offset fadeOffset) {
+    final result = super.toggle(fadeOffset);
 
-    super.toggle(fadeOffset);
+    if (!result) return false;
 
     // If we ended up enabled, re-init wave scheduling
     // (which also restarts wave timers).
@@ -229,6 +228,7 @@ class SpoilerSpotsController extends SpoilerController {
     } else {
       _cancelAllWaveActivities();
     }
+    return isEnabled;
   }
 
   // ---------------------------------------------------------------------------
