@@ -120,10 +120,7 @@ class SpoilerController extends ChangeNotifier {
     return Path.combine(
       PathOperation.intersect,
       _spoilerPath,
-      Path()
-        ..addOval(
-          _fadeCenter == Offset.zero ? Offset.zero & size : _splashRect,
-        ),
+      _fadeCenter == Offset.zero ? _spoilerPath : (Path()..addOval(_splashRect)),
     );
   }
 

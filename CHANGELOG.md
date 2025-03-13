@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.12
+
+* `SpoilerOverlay` first blur render issue
+
 ## 1.0.11
 
 ### **Breaking Changes**
