@@ -14,10 +14,10 @@ A Flutter package to create spoiler animations similar to the one used in Telegr
 <!-- markdownlint-disable MD033 -->
 | Mask Operation | Demo |
 |----------------------------|------------------------|
-| `PathOperation.intersect`  | <img src="<https://github.com/zhukeev/spoiler_widget/raw/main/example/lib/intersect_demo.gif>"  |
-| `PathOperation.difference` | <img src="<https://github.com/zhukeev/spoiler_widget/raw/main/example/lib/difference_demo.gif>" |
-| `PathOperation.union`      | <img src="<https://github.com/zhukeev/spoiler_widget/raw/main/example/lib/union_demo.gif>"      |
-| `PathOperation.xor`        | <img src="<https://github.com/zhukeev/spoiler_widget/raw/main/example/lib/xor_demo.gif>"        |
+| `PathOperation.intersect`  | <img src="https://github.com/zhukeev/spoiler_widget/raw/main/example/lib/intersect_demo.gif">  |
+| `PathOperation.difference` | <img src="https://github.com/zhukeev/spoiler_widget/raw/main/example/lib/difference_demo.gif"> |
+| `PathOperation.union`      | <img src="https://github.com/zhukeev/spoiler_widget/raw/main/example/lib/union_demo.gif">      |
+| `PathOperation.xor`        | <img src="https://github.com/zhukeev/spoiler_widget/raw/main/example/lib/xor_demo.gif">        |
 <!-- markdownlint-enable MD033 -->
 
 ## Features
