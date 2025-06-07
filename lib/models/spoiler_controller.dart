@@ -120,14 +120,17 @@ class SpoilerController extends ChangeNotifier {
     return Path.combine(
       PathOperation.intersect,
       _spoilerPath,
-      _fadeCenter == Offset.zero ? _spoilerPath : (Path()..addOval(_splashRect)),
+      _fadeCenter == Offset.zero || !_config.enableFadeAnimation ? _spoilerPath : (Path()..addOval(_splashRect)),
     );
   }
 
   Path createSplashPathMaskClipper(Size size) {
     final clippedSpoilerPath = Path.combine(
       PathOperation.intersect,
-      _splashRect == Rect.zero ? (Path()..addRect(spoilerBounds)) : (Path()..addOval(_splashRect)),
+      // If the fade radius is 0 or the fade animation is disabled, we clip to the entire spoiler region.
+      _splashRect == Rect.zero || !_config.enableFadeAnimation
+          ? (Path()..addRect(spoilerBounds))
+          : (Path()..addOval(_splashRect)),
       _spoilerPath,
     );
 
@@ -255,7 +258,9 @@ class SpoilerController extends ChangeNotifier {
   void enable() {
     _isEnabled = true;
     _startParticleAnimationIfNeeded();
-    _fadeCtrl?.forward();
+    if (_config.enableFadeAnimation) {
+      _fadeCtrl?.forward();
+    }
     notifyListeners();
   }
 
@@ -272,7 +277,7 @@ class SpoilerController extends ChangeNotifier {
   /// Toggle the spoiler effect on/off. Optional [fadeOffset] for the radial center.
   bool toggle(Offset fadeOffset) {
     // If we’re mid-fade, skip to avoid partial toggles.
-    if (isFading || !_spoilerPath.contains(fadeOffset)) return false;
+    if ((_config.enableFadeAnimation && isFading) || !_spoilerPath.contains(fadeOffset)) return false;
 
     // Record the offset from which the radial fade expands.
     _fadeCenter = fadeOffset;

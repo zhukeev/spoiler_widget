@@ -3,6 +3,7 @@
 ## 1.0.12
 
 * `SpoilerOverlay` first blur render issue
+* `enableFadeAnimation` false issue
 
 ## 1.0.11
 

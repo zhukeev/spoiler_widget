@@ -62,6 +62,29 @@ class SpoilerConfig {
         isEnabled: true,
         enableGestureReveal: true,
       );
+
+  SpoilerConfig copyWith({
+    double? particleDensity,
+    double? particleSpeed,
+    Color? particleColor,
+    double? maxParticleSize,
+    bool? enableFadeAnimation,
+    double? fadeRadius,
+    bool? isEnabled,
+    bool? enableGestureReveal,
+    SpoilerMask? maskConfig,
+  }) =>
+      SpoilerConfig(
+        particleDensity: particleDensity ?? this.particleDensity,
+        particleSpeed: particleSpeed ?? this.particleSpeed,
+        particleColor: particleColor ?? this.particleColor,
+        maxParticleSize: maxParticleSize ?? this.maxParticleSize,
+        enableFadeAnimation: enableFadeAnimation ?? this.enableFadeAnimation,
+        fadeRadius: fadeRadius ?? this.fadeRadius,
+        isEnabled: isEnabled ?? this.isEnabled,
+        enableGestureReveal: enableGestureReveal ?? this.enableGestureReveal,
+        maskConfig: maskConfig ?? this.maskConfig,
+      );
 }
 
 /// Configuration for applying a mask to the spoiler effect.

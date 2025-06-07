@@ -224,7 +224,7 @@ class SpoilerSpotsController extends SpoilerController {
     // If we ended up enabled, re-init wave scheduling
     // (which also restarts wave timers).
     if (isEnabled) {
-      initParticles(spoilerBounds, _config);
+      updateConfiguration(_config.copyWith(isEnabled: true));
     } else {
       _cancelAllWaveActivities();
     }
