@@ -42,7 +42,7 @@ A Flutter package to create spoiler animations similar to the one used in Telegr
 
 In your `pubspec.yaml`:
 
-```aap
+```yaml
 dependencies:
   spoiler_widget: latest
 ```
