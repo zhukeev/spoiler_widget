@@ -59,6 +59,8 @@ class _SpoilerTextState extends State<SpoilerText> with TickerProviderStateMixin
             textSelection: widget.config.textSelection,
             textAlign: widget.config.textAlign ?? TextAlign.start,
             style: widget.config.textStyle,
+            maxLines: widget.config.maxLines,
+            isEllipsis: widget.config.isEllipsis,
             onPaint: (canvas, size) {
               if (_spoilerController.isEnabled) {
                 _spoilerController.drawParticles(canvas);
@@ -82,6 +84,8 @@ class SpoilerTextPainter extends StatefulWidget {
     required this.textAlign,
     this.style,
     this.textSelection,
+    this.maxLines,
+    this.isEllipsis,
     Key? key,
   }) : super(key: key);
 
@@ -91,6 +95,8 @@ class SpoilerTextPainter extends StatefulWidget {
   final TextAlign textAlign;
   final ValueChanged<List<Rect>> onInit;
   final PaintCallback onPaint;
+  final int? maxLines;
+  final bool? isEllipsis;
 
   @override
   State<SpoilerTextPainter> createState() => _SpoilerTextPainterState();
@@ -148,6 +154,8 @@ class _SpoilerTextPainterState extends State<SpoilerTextPainter> {
           text: TextSpan(text: widget.text, style: widget.style),
           textDirection: Directionality.maybeOf(context) ?? TextDirection.ltr,
           textAlign: widget.textAlign,
+          maxLines: widget.maxLines,
+          ellipsis: widget.isEllipsis == true ? '...' : null,
         );
         textPainter.layout(maxWidth: constraints.maxWidth);
         final textSize = Size(textPainter.width, textPainter.height);

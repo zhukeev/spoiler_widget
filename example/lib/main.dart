@@ -78,6 +78,8 @@ class _MainAppState extends State<MainApp> {
                     color: Colors.white,
                   ),
                   maskConfig: createStarPath(const Size.square(80), const Offset(230, 30)),
+                  maxLines: 1,
+                  isEllipsis: true
                 ),
                 text: text,
               ),
