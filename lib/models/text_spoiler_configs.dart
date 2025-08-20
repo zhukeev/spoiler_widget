@@ -45,8 +45,7 @@ class TextSpoilerConfig extends SpoilerConfig {
   /// If [isEllipsis] is true and the text exceeds [maxLines], a "…" will be
   /// appended to indicate that the text has been truncated.
   ///
-  /// If null or false, overflowing text will be clipped or handled according
-  /// to the [overflow] or default behavior.
+  /// If the value is null or false, the ellipsis will not be used
   final bool? isEllipsis;
 
   /// Creates a text spoiler configuration with the specified parameters.
