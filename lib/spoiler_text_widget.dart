@@ -155,7 +155,7 @@ class _SpoilerTextPainterState extends State<SpoilerTextPainter> {
           textDirection: Directionality.maybeOf(context) ?? TextDirection.ltr,
           textAlign: widget.textAlign,
           maxLines: widget.maxLines,
-          ellipsis: widget.isEllipsis == true ? '...' : null,
+          ellipsis: widget.isEllipsis == true ? '…' : null,
         );
         textPainter.layout(maxWidth: constraints.maxWidth);
         final textSize = Size(textPainter.width, textPainter.height);
