@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.13
+
+* Support `maxLines` and `isEllipsis` for TextPainter
+
 ## 1.0.12
 
 * `SpoilerOverlay` first blur render issue

@@ -236,6 +236,8 @@ Table showing common config parameters for both TextSpoilerConfiguration and Wid
 | `textStyle`    | TextStyle?     | The text style applied to the spoiler text. |
 | `textSelection` | TextSelection? | Range of text to apply the spoiler.        |
 | `textAlign` | TextAlign? | Text alignment inside the widget.        |
+| `maxLines` | int? |  An optional maximum number of lines for the text to span, wrapping if necessary.        |
+| `isEllipsis` | bool? |  Determines whether overflowing text should display an ellipsis ("…") at the end.        |
 
 #### WidgetSpoilerConfiguration
 
