@@ -26,6 +26,28 @@ class TextSpoilerConfig extends SpoilerConfig {
   /// If null, the default alignment of the parent widget will be used.
   final TextAlign? textAlign;
 
+  /// An optional maximum number of lines for the text to span, wrapping if necessary.
+  ///
+  /// If the text exceeds the given number of lines, it will be truncated according
+  /// to [isEllipsis].
+  ///
+  /// If this is 1, the text will not wrap. Otherwise, text will wrap at the
+  /// edge of the box.
+  ///
+  /// If this is null, but there is an ambient [DefaultTextStyle] that specifies
+  /// an explicit number for its [DefaultTextStyle.maxLines], then the
+  /// [DefaultTextStyle] value will take precedence. You can use a [RichText]
+  /// widget directly to entirely override the [DefaultTextStyle].
+  final int? maxLines;
+
+  /// Determines whether overflowing text should display an ellipsis ("…") at the end.
+  ///
+  /// If [isEllipsis] is true and the text exceeds [maxLines], a "…" will be
+  /// appended to indicate that the text has been truncated.
+  ///
+  /// If the value is null or false, the ellipsis will not be used
+  final bool? isEllipsis;
+
   /// Creates a text spoiler configuration with the specified parameters.
   ///
   /// Inherits base properties from [SpoilerConfig] while adding
@@ -34,6 +56,8 @@ class TextSpoilerConfig extends SpoilerConfig {
     this.textStyle,
     this.textSelection,
     this.textAlign,
+    this.maxLines,
+    this.isEllipsis,
     super.particleDensity = 20.0,
     super.particleSpeed = 0.2,
     super.particleColor = Colors.white70,
