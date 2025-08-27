@@ -96,7 +96,8 @@ class SpoilerController extends ChangeNotifier {
     required TickerProvider vsync,
   }) : _tickerProvider = vsync {
     _initAnimationControllers();
-    spoilerVisibilityNotifier.value = isEnabled;
+
+    spoilerVisibilityNotifier.value = _config.isEnabled;
   }
 
   // ---------------------------------------------------------------------------
