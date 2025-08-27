@@ -82,6 +82,9 @@ class _MainAppState extends State<MainApp> {
                   // isEllipsis: true
                 ),
                 text: text,
+                onSpoilerVisibleChanged: (onVisibleChanged) {
+                  // print("onVisibleChanged: " + onVisibleChanged.toString());
+                },
               ),
             ),
             RepaintBoundary(

@@ -96,6 +96,7 @@ class SpoilerController extends ChangeNotifier {
     required TickerProvider vsync,
   }) : _tickerProvider = vsync {
     _initAnimationControllers();
+    spoilerVisibilityNotifier.value = isEnabled;
   }
 
   // ---------------------------------------------------------------------------
@@ -114,6 +115,16 @@ class SpoilerController extends ChangeNotifier {
   Rect get spoilerBounds => _spoilerBounds;
 
   Rect get _splashRect => Rect.fromCircle(center: _fadeCenter, radius: _fadeRadius);
+
+  /// Notifies listeners when the overall spoiler visibility changes.
+  /// This is true if the spoiler effect (particles and/or fade) is active and
+  /// intended to be visible, regardless of whether it's currently fading in or out.
+  /// Use this to react to the spoiler being enabled or disabled.
+  final ValueNotifier<bool> spoilerVisibilityNotifier = ValueNotifier(false);
+
+  /// Returns true if the spoiler is currently considered visible.
+  /// This is a convenience getter for `spoilerVisibilityNotifier.value`.
+  bool get isSpoilerVisible => spoilerVisibilityNotifier.value;
 
   /// A path function that clips only the circular fade area if there’s a non-zero fade radius.
   Path createClipPath(Size size) {
@@ -261,6 +272,7 @@ class SpoilerController extends ChangeNotifier {
     if (_config.enableFadeAnimation) {
       _fadeCtrl?.forward();
     }
+    spoilerVisibilityNotifier.value = true;
     notifyListeners();
   }
 
@@ -272,6 +284,7 @@ class SpoilerController extends ChangeNotifier {
     } else {
       _fadeCtrl?.toggle().whenCompleteOrCancel(() => _stopAll());
     }
+    spoilerVisibilityNotifier.value = false;
   }
 
   /// Toggle the spoiler effect on/off. Optional [fadeOffset] for the radial center.
