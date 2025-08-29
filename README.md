@@ -78,7 +78,8 @@ SpoilerOverlay(
   ),
   child: Text('Hidden Content'),
   onSpoilerVisibleChanged: (isVisible) {
-      debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+    
+              debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
   },
 );
 
@@ -96,7 +97,8 @@ SpoilerText(
     textStyle: TextStyle(fontSize: 16, color: Colors.black),
   ),
   onSpoilerVisibleChanged: (isVisible) {
-      debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+    
+              debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
   },
 );
 
@@ -120,7 +122,8 @@ class WaveDemo extends StatelessWidget {
       ),
       child: Image.network('https://your-image-url'),
       onSpoilerVisibleChanged: (isVisible) {
-          debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+        
+              debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
       },
     );
   }
@@ -147,7 +150,7 @@ SpoilerText(
       offset: Offset(50, 30),
     ),
   onSpoilerVisibleChanged: (isVisible) {
-      debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+              debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
   },
   ),
 );
@@ -197,7 +200,7 @@ class MyApp extends StatelessWidget {
               ),
             text: text,
             onSpoilerVisibleChanged: (isVisible) {
-                debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+              debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
             },
           ),
 
@@ -216,7 +219,7 @@ class MyApp extends StatelessWidget {
                 ),
               child: CachedNetworkImage(imageUrl: imageUrl),
             onSpoilerVisibleChanged: (isVisible) {
-                debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+              debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
             },
             ),
           ),
