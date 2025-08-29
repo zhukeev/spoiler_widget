@@ -82,8 +82,8 @@ class _MainAppState extends State<MainApp> {
                   // isEllipsis: true
                 ),
                 text: text,
-                onSpoilerVisibleChanged: (onVisibleChanged) {
-                  // print("onVisibleChanged: " + onVisibleChanged.toString());
+                onSpoilerVisibleChanged: (isVisible) {
+                  debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
                 },
               ),
             ),
@@ -102,6 +102,9 @@ class _MainAppState extends State<MainApp> {
                   maskConfig: createStarPath(const Size.square(80), const Offset(200, 90)),
                 ),
                 child: CachedNetworkImage(imageUrl: url),
+                onSpoilerVisibleChanged: (isVisible) {
+                  debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+                },
               ),
             ),
           ],
