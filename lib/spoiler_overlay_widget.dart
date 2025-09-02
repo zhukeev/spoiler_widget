@@ -8,27 +8,18 @@ class SpoilerOverlay extends StatefulWidget {
     super.key,
     required this.child,
     required this.config,
-    this.onSpoilerVisibleChanged,
   });
   final Widget child;
   final WidgetSpoilerConfig config;
-
-  /// Callback that is invoked when the visibility of the spoiler changes
-  /// due to user interaction (e.g., a tap) or programmatic control.
-  ///
-  /// The boolean argument is `true` if the spoiler becomes visible,
-  /// and `false` if it becomes hidden.
-  ///
-  /// This can be used to notify external listeners or trigger other
-  /// actions when the spoiler's visibility state is altered.
-  final ValueChanged<bool>? onSpoilerVisibleChanged;
 
   @override
   State<SpoilerOverlay> createState() => _SpoilerOverlayState();
 }
 
-class _SpoilerOverlayState extends State<SpoilerOverlay> with TickerProviderStateMixin {
-  late final SpoilerSpotsController _spoilerController = SpoilerSpotsController(vsync: this);
+class _SpoilerOverlayState extends State<SpoilerOverlay>
+    with TickerProviderStateMixin {
+  late final SpoilerSpotsController _spoilerController =
+      SpoilerSpotsController(vsync: this);
   Rect _spoilerBounds = Rect.zero;
 
   void _initializeSpoilerBounds(Size size) {
@@ -66,9 +57,6 @@ class _SpoilerOverlayState extends State<SpoilerOverlay> with TickerProviderStat
         if (widget.config.enableGestureReveal) {
           // Toggle the spoiler's visibility state through the controller.
           _spoilerController.toggle(details.localPosition);
-          // If a callback is provided, notify it about the new visibility state.
-          // The `isSpoilerVisible` property on the controller reflects the state *after* the toggle.
-          widget.onSpoilerVisibleChanged?.call(_spoilerController.isSpoilerVisible);
         }
       },
       child: ListenableBuilder(
@@ -79,9 +67,13 @@ class _SpoilerOverlayState extends State<SpoilerOverlay> with TickerProviderStat
             children: [
               widget.child,
               CustomPaint(
-                foregroundPainter: CustomPainterCanvasCallback(onPaint: _onPaint),
+                foregroundPainter: CustomPainterCanvasCallback(
+                  onPaint: _onPaint,
+                ),
                 child: ClipPath(
-                  clipper: _SpoilerClipper(_spoilerController.createClipPath),
+                  clipper: _SpoilerClipper(
+                    _spoilerController.createClipPath,
+                  ),
                   child: ImageFiltered(
                     imageFilter: widget.config.imageFilter,
                     enabled: _spoilerController.isEnabled,
@@ -108,5 +100,6 @@ class _SpoilerClipper extends CustomClipper<Path> {
   Path getClip(Size size) => clipPathBuilder.call(size);
 
   @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => this != oldClipper;
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) =>
+      this != oldClipper;
 }

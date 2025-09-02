@@ -36,6 +36,7 @@ class WidgetSpoilerConfig extends SpoilerConfig {
     super.isEnabled = true,
     super.enableGestureReveal = false,
     super.maskConfig,
+    super.onSpoilerVisibilityChanged,
   });
 
   /// Returns a default configuration for the widget spoiler effect.

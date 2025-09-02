@@ -77,14 +77,16 @@ class _MainAppState extends State<MainApp> {
                     fontSize: 50,
                     color: Colors.white,
                   ),
-                  maskConfig: createStarPath(const Size.square(80), const Offset(230, 30)),
+                  maskConfig: createStarPath(
+                      const Size.square(80), const Offset(230, 30)),
+                  onSpoilerVisibilityChanged: (isVisible) {
+                    debugPrint(
+                        'Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+                  },
                   // maxLines: 1,
                   // isEllipsis: true
                 ),
                 text: text,
-                onSpoilerVisibleChanged: (isVisible) {
-                  debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
-                },
               ),
             ),
             RepaintBoundary(
@@ -99,12 +101,14 @@ class _MainAppState extends State<MainApp> {
                   enableFadeAnimation: true,
                   enableGestureReveal: true,
                   imageFilter: ImageFilter.blur(sigmaX: 30.0, sigmaY: 30.0),
-                  maskConfig: createStarPath(const Size.square(80), const Offset(200, 90)),
+                  maskConfig: createStarPath(
+                      const Size.square(80), const Offset(200, 90)),
+                  onSpoilerVisibilityChanged: (isVisible) {
+                    debugPrint(
+                        'Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+                  },
                 ),
                 child: CachedNetworkImage(imageUrl: url),
-                onSpoilerVisibleChanged: (isVisible) {
-                  debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
-                },
               ),
             ),
           ],

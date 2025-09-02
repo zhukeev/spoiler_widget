@@ -75,11 +75,11 @@ SpoilerOverlay(
     enableFadeAnimation: true,
     enableGestureReveal: true,
     imageFilter: ImageFilter.blur(sigmaX:30, sigmaY:30),
+    onSpoilerVisibilityChanged: (isVisible) {
+      debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+    },
   ),
   child: Text('Hidden Content'),
-  onSpoilerVisibleChanged: (isVisible) {
-    debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
-  },
 );
 
 ```
@@ -94,10 +94,11 @@ SpoilerText(
     enableFadeAnimation: true,
     enableGestureReveal: true,
     textStyle: TextStyle(fontSize: 16, color: Colors.black),
+    onSpoilerVisibilityChanged: (isVisible) {
+      debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+    },
   ),
-  onSpoilerVisibleChanged: (isVisible) {
-    debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
-  },
+  
 );
 
 ```
@@ -117,11 +118,11 @@ class WaveDemo extends StatelessWidget {
         enableFadeAnimation: true,
         enableGestureReveal: true,
         imageFilter: ImageFilter.blur(sigmaX:30, sigmaY:20),
+        onSpoilerVisibilityChanged: (isVisible) {
+          debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+        },
       ),
       child: Image.network('https://your-image-url'),
-      onSpoilerVisibleChanged: (isVisible) {
-        debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
-      },
     );
   }
 }
@@ -146,9 +147,9 @@ SpoilerText(
       maskOperation: PathOperation.intersect,
       offset: Offset(50, 30),
     ),
-  onSpoilerVisibleChanged: (isVisible) {
-    debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
-  },
+    onSpoilerVisibilityChanged: (isVisible) {
+      debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+    },
   ),
 );
 
@@ -194,11 +195,12 @@ class MyApp extends StatelessWidget {
                 enableGestureReveal: true,
                 textSelection: const TextSelection(baseOffset: 0, extentOffset: 30),
                 textStyle: const TextStyle(fontSize: 28, color: Colors.black),
+                onSpoilerVisibilityChanged: (isVisible) {
+                  debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+                },
               ),
             text: text,
-            onSpoilerVisibleChanged: (isVisible) {
-              debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
-            },
+           
           ),
 
           // Widget-based spoiler
@@ -213,11 +215,12 @@ class MyApp extends StatelessWidget {
                   enableFadeAnimation: true,
                   enableGestureReveal: true,
                   imageFilter: ImageFilter.blur(sigmaX:30, sigmaY:30),
+                  onSpoilerVisibilityChanged: (isVisible) {
+                    debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+                  },
                 ),
               child: CachedNetworkImage(imageUrl: imageUrl),
-            onSpoilerVisibleChanged: (isVisible) {
-              debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
-            },
+           
             ),
           ),
         ],
@@ -246,7 +249,7 @@ Table showing common config parameters for both TextSpoilerConfiguration and Wid
 | `particleSpeed` | double       | Speed factor for particle movement.                          |
 | `enableGestureReveal` | bool            | Whether tapped toggle should be out of the box.              |
 | `maskConfig` | SpoilerMask?            | Optional mask to apply using a `Path`.                       |
-| `onSpoilerVisibleChanged` | ValueChanged?            | Optional callback fired when spoiler becomes visible/hidden. |
+| `onSpoilerVisibilityChanged` | ValueChanged?            | Optional callback fired when spoiler becomes visible/hidden. |
 
 #### TextSpoilerConfiguration
 

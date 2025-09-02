@@ -33,10 +33,8 @@ class SpoilerConfig {
   /// Optional configuration for applying a custom mask to the spoiler.
   final SpoilerMask? maskConfig;
 
-  /// Creates a spoiler configuration with the specified parameters.
-  ///
-  /// The parameters allow customization of the spoiler effect, including
-  /// particle behavior, fade effects, and user interaction.
+  /// Optional callback that is invoked when the visibility of the spoiler changes.
+  final ValueChanged<bool>? onSpoilerVisibilityChanged;
   const SpoilerConfig({
     required this.particleDensity,
     required this.particleSpeed,
@@ -47,6 +45,7 @@ class SpoilerConfig {
     required this.isEnabled,
     required this.enableGestureReveal,
     this.maskConfig,
+    this.onSpoilerVisibilityChanged,
   });
 
   /// Returns a default configuration for the spoiler effect.
@@ -73,6 +72,7 @@ class SpoilerConfig {
     bool? isEnabled,
     bool? enableGestureReveal,
     SpoilerMask? maskConfig,
+    ValueChanged<bool>? onSpoilerVisibilityChanged,
   }) =>
       SpoilerConfig(
         particleDensity: particleDensity ?? this.particleDensity,
@@ -84,6 +84,8 @@ class SpoilerConfig {
         isEnabled: isEnabled ?? this.isEnabled,
         enableGestureReveal: enableGestureReveal ?? this.enableGestureReveal,
         maskConfig: maskConfig ?? this.maskConfig,
+        onSpoilerVisibilityChanged:
+            onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
       );
 }
 

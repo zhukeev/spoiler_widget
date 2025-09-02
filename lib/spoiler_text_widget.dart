@@ -9,28 +9,19 @@ class SpoilerText extends StatefulWidget {
     super.key,
     required this.text,
     required this.config,
-    this.onSpoilerVisibleChanged,
   });
 
   final TextSpoilerConfig config;
   final String text;
 
-  /// Callback that is invoked when the visibility of the spoiler changes
-  /// due to user interaction (e.g., a tap) or programmatic control.
-  ///
-  /// The boolean argument is `true` if the spoiler becomes visible,
-  /// and `false` if it becomes hidden.
-  ///
-  /// This can be used to notify external listeners or trigger other
-  /// actions when the spoiler's visibility state is altered.
-  final ValueChanged<bool>? onSpoilerVisibleChanged;
-
   @override
   State<SpoilerText> createState() => _SpoilerTextState();
 }
 
-class _SpoilerTextState extends State<SpoilerText> with TickerProviderStateMixin {
-  late final SpoilerController _spoilerController = SpoilerController(vsync: this);
+class _SpoilerTextState extends State<SpoilerText>
+    with TickerProviderStateMixin {
+  late final SpoilerController _spoilerController =
+      SpoilerController(vsync: this);
 
   void _setSpoilerRegions(List<Rect> regions) {
     final Path spoilerMaskPath = Path();
@@ -64,9 +55,6 @@ class _SpoilerTextState extends State<SpoilerText> with TickerProviderStateMixin
             if (widget.config.enableGestureReveal) {
               // Toggle the spoiler's visibility state through the controller.
               _spoilerController.toggle(details.localPosition);
-              // If a callback is provided, notify it about the new visibility state.
-              // The `isSpoilerVisible` property on the controller reflects the state *after* the toggle.
-              widget.onSpoilerVisibleChanged?.call(_spoilerController.isSpoilerVisible);
             }
           },
           child: SpoilerTextPainter(
@@ -79,7 +67,9 @@ class _SpoilerTextState extends State<SpoilerText> with TickerProviderStateMixin
             onPaint: (canvas, size) {
               if (_spoilerController.isEnabled) {
                 _spoilerController.drawParticles(canvas);
-                canvas.clipPath(_spoilerController.createSplashPathMaskClipper(size));
+                canvas.clipPath(
+                  _spoilerController.createSplashPathMaskClipper(size),
+                );
               }
             },
             onInit: _setSpoilerRegions,
@@ -123,7 +113,8 @@ class _SpoilerTextPainterState extends State<SpoilerTextPainter> {
 
   void _extractTextBoundaries(TextPainter textPainter, int offset) {
     if (widget.textSelection != null) {
-      final selectedBoxes = textPainter.getBoxesForSelection(widget.textSelection!);
+      final selectedBoxes =
+          textPainter.getBoxesForSelection(widget.textSelection!);
       for (final box in selectedBoxes) {
         _spoilerRegions.add(box.toRect());
       }

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.14
+
+* new `onSpoilerVisibilityChanged` method to listen visibility
+
 ## 1.0.13
 
 * Support `maxLines` and `isEllipsis` for TextPainter

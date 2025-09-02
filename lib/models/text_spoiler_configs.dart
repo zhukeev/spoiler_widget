@@ -67,5 +67,6 @@ class TextSpoilerConfig extends SpoilerConfig {
     super.isEnabled = true,
     super.enableGestureReveal = false,
     super.maskConfig,
+    super.onSpoilerVisibilityChanged,
   });
 }
