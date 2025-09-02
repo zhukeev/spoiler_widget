@@ -77,6 +77,9 @@ SpoilerOverlay(
     imageFilter: ImageFilter.blur(sigmaX:30, sigmaY:30),
   ),
   child: Text('Hidden Content'),
+  onSpoilerVisibleChanged: (isVisible) {
+    debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+  },
 );
 
 ```
@@ -92,6 +95,9 @@ SpoilerText(
     enableGestureReveal: true,
     textStyle: TextStyle(fontSize: 16, color: Colors.black),
   ),
+  onSpoilerVisibleChanged: (isVisible) {
+    debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+  },
 );
 
 ```
@@ -113,6 +119,9 @@ class WaveDemo extends StatelessWidget {
         imageFilter: ImageFilter.blur(sigmaX:30, sigmaY:20),
       ),
       child: Image.network('https://your-image-url'),
+      onSpoilerVisibleChanged: (isVisible) {
+        debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+      },
     );
   }
 }
@@ -137,6 +146,9 @@ SpoilerText(
       maskOperation: PathOperation.intersect,
       offset: Offset(50, 30),
     ),
+  onSpoilerVisibleChanged: (isVisible) {
+    debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+  },
   ),
 );
 
@@ -184,6 +196,9 @@ class MyApp extends StatelessWidget {
                 textStyle: const TextStyle(fontSize: 28, color: Colors.black),
               ),
             text: text,
+            onSpoilerVisibleChanged: (isVisible) {
+              debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+            },
           ),
 
           // Widget-based spoiler
@@ -200,6 +215,9 @@ class MyApp extends StatelessWidget {
                   imageFilter: ImageFilter.blur(sigmaX:30, sigmaY:30),
                 ),
               child: CachedNetworkImage(imageUrl: imageUrl),
+            onSpoilerVisibleChanged: (isVisible) {
+              debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+            },
             ),
           ),
         ],
@@ -218,16 +236,17 @@ class MyApp extends StatelessWidget {
 
 Table showing common config parameters for both TextSpoilerConfiguration and WidgetSpoilerConfiguration.
 
-| Field            | Type            | Description                                            |
-|-----------------|----------------|--------------------------------------------------------|
-| `isEnabled`     | bool            | Whether the spoiler starts covered `true`.           |
-| `enableFadeAnimation` | bool            | Enables smooth fade-in/out.          |
-| `fadeRadius`    | double          | The circle radius for radial fade.                   |
-| `particleDensity` | double        | The density of particles in the spoiler.             |
-| `maxParticleSize` | double        | The maximum size of particles.                       |
-| `particleSpeed` | double       | Speed factor for particle movement.                  |
-| `enableGestureReveal` | bool            | Whether tapped toggle should be out of the box.      |
-| `maskConfig` | SpoilerMask?            | Optional mask to apply using a `Path`.     |
+| Field            | Type            | Description                                                  |
+|-----------------|----------------|--------------------------------------------------------------|
+| `isEnabled`     | bool            | Whether the spoiler starts covered `true`.                   |
+| `enableFadeAnimation` | bool            | Enables smooth fade-in/out.                                  |
+| `fadeRadius`    | double          | The circle radius for radial fade.                           |
+| `particleDensity` | double        | The density of particles in the spoiler.                     |
+| `maxParticleSize` | double        | The maximum size of particles.                               |
+| `particleSpeed` | double       | Speed factor for particle movement.                          |
+| `enableGestureReveal` | bool            | Whether tapped toggle should be out of the box.              |
+| `maskConfig` | SpoilerMask?            | Optional mask to apply using a `Path`.                       |
+| `onSpoilerVisibleChanged` | ValueChanged?            | Optional callback fired when spoiler becomes visible/hidden. |
 
 #### TextSpoilerConfiguration
 
