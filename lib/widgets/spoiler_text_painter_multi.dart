@@ -86,9 +86,7 @@ class _SpoilerTextPainterMultiState extends State<SpoilerTextPainterMulti> {
   }
 
   /// Walks the render tree under this widget, collects all RenderParagraphs,
-  /// builds TextPainters for them, and computes regions for either:
-  ///   - provided [textSelection], or
-  ///   - all non-empty word boundaries.
+  /// builds TextPainters for them, and computes regions
   void _recompute() {
     if (!mounted) return;
 
@@ -129,15 +127,10 @@ class _SpoilerTextPainterMultiState extends State<SpoilerTextPainterMulti> {
       child: Stack(
         fit: StackFit.passthrough,
         children: [
-          // 1) Original content: we still need it in the tree to get RenderParagraphs
-          //    and correct layout/positions, but actual text glyphs can be hidden
-          //    by the parent wrapper (e.g. SpoilerAnyTextWrapper).
           SizeChangedLayoutNotifier(
             child: widget.child,
           ),
 
-          // 2) Overlay painter: first calls user-provided [onPaint] (for clip/effects),
-          //    then repaints all collected text paragraphs.
           Positioned.fill(
             child: IgnorePointer(
               child: CustomPaint(
@@ -278,11 +271,8 @@ class _CanvasCallbackMulti extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // 1) First apply custom effect (e.g. particles + clipPath).
     onPaint(canvas, size);
 
-    // 2) Then repaint all collected paragraphs, so they are affected
-    //    by whatever clip/mask was set up in [onPaint].
     for (final entry in entries) {
       canvas.save();
       canvas.transform(entry.toWrapper.storage);
@@ -303,8 +293,6 @@ class _CanvasCallbackMulti extends CustomPainter {
       }
     }
 
-    // Be conservative: if an external [repaint] was provided, it will also
-    // trigger repaint. Returning true here is safe for dynamic effects.
     return true;
   }
 }

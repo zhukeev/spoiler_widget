@@ -45,4 +45,32 @@ class WidgetSpoilerConfig extends SpoilerConfig {
   factory WidgetSpoilerConfig.defaultConfig() => WidgetSpoilerConfig(
         imageFilter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
       );
+
+  @override
+  WidgetSpoilerConfig copyWith({
+    double? particleDensity,
+    double? particleSpeed,
+    Color? particleColor,
+    double? maxParticleSize,
+    bool? enableFadeAnimation,
+    double? fadeRadius,
+    bool? isEnabled,
+    bool? enableGestureReveal,
+    SpoilerMask? maskConfig,
+    ValueChanged<bool>? onSpoilerVisibilityChanged,
+  }) =>
+      WidgetSpoilerConfig(
+        imageFilter: imageFilter,
+        maxActiveWaves: maxActiveWaves,
+        particleDensity: particleDensity ?? this.particleDensity,
+        particleSpeed: particleSpeed ?? this.particleSpeed,
+        particleColor: particleColor ?? this.particleColor,
+        maxParticleSize: maxParticleSize ?? this.maxParticleSize,
+        enableFadeAnimation: enableFadeAnimation ?? this.enableFadeAnimation,
+        fadeRadius: fadeRadius ?? this.fadeRadius,
+        isEnabled: isEnabled ?? this.isEnabled,
+        enableGestureReveal: enableGestureReveal ?? this.enableGestureReveal,
+        maskConfig: maskConfig ?? this.maskConfig,
+        onSpoilerVisibilityChanged: onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
+      );
 }

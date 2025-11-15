@@ -59,63 +59,74 @@ class _MainAppState extends State<MainApp> {
       showPerformanceOverlay: true,
       home: Scaffold(
         backgroundColor: Colors.black,
-        body: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            RepaintBoundary(
-              child: SpoilerTextWrapper(
-                config: TextSpoilerConfig(
-                  isEnabled: enable,
-                  maxParticleSize: 1,
-                  particleColor: Colors.white,
-                  particleDensity: .1,
-                  particleSpeed: .2,
-                  fadeRadius: 3,
-                  enableFadeAnimation: true,
-                  enableGestureReveal: true,
-                  onSpoilerVisibilityChanged: (isVisible) {
-                    debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
-                  },
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      Text(
-                        text,
-                        style: const TextStyle(fontSize: 50, color: Colors.white),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Container(
-                            color: Colors.amber,
-                            width: 100,
-                            height: 100,
-                          ),
-                          Container(
-                            color: Colors.blue,
-                            width: 100,
-                            height: 100,
-                          ),
-                        ],
-                      ),
-                      Text(
-                        text,
-                        style: const TextStyle(fontSize: 50, color: Colors.white),
-                      ),
-                      const Text.rich(
-                        TextSpan(
-                          text: 'This is a spoiler! Tap to reveal а.аа. с  \n asd',
-                          style: TextStyle(fontSize: 20, color: Colors.red),
+        body: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              RepaintBoundary(
+                child: SpoilerTextWrapper(
+                  config: SpoilerConfig(
+                    isEnabled: enable,
+                    maxParticleSize: 1,
+                    particleColor: Colors.white,
+                    particleDensity: .1,
+                    particleSpeed: .2,
+                    fadeRadius: 3,
+                    enableFadeAnimation: true,
+                    enableGestureReveal: true,
+                    onSpoilerVisibilityChanged: (isVisible) {
+                      debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+                    },
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        Text(
+                          text,
+                          style: const TextStyle(fontSize: 50, color: Colors.white),
                         ),
-                      ),
-                    ],
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Container(
+                              color: Colors.amber,
+                              width: 100,
+                              height: 100,
+                            ),
+                            Container(
+                              color: Colors.blue,
+                              width: 100,
+                              height: 100,
+                            ),
+                          ],
+                        ),
+                        Text(
+                          text,
+                          style: const TextStyle(fontSize: 50, color: Colors.white),
+                        ),
+                        const Text.rich(
+                          TextSpan(
+                            text: 'This is a spoiler! Tap to reveal а.аа. с  \n asd',
+                            style: TextStyle(fontSize: 20, color: Colors.red),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            )
-          ],
+              RepaintBoundary(
+                  child: SpoilerOverlay(
+                config: WidgetSpoilerConfig.defaultConfig().copyWith(enableGestureReveal: true),
+                child: CachedNetworkImage(
+                  imageUrl: url,
+                  placeholder: (context, url) => const CircularProgressIndicator(),
+                  errorWidget: (context, url, error) => const Icon(Icons.error),
+                ),
+              )),
+            ],
+          ),
         ),
       ),
     );
