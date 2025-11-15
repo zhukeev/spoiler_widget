@@ -5,7 +5,7 @@ typedef PaintCallback = void Function(Canvas canvas, Size size);
 class CustomPainterCanvasCallback extends CustomPainter {
   final PaintCallback onPaint;
 
-  const CustomPainterCanvasCallback({required this.onPaint});
+  const CustomPainterCanvasCallback({required this.onPaint, super.repaint});
 
   @override
   void paint(Canvas canvas, Size size) => onPaint.call(canvas, size);

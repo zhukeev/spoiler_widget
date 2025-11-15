@@ -56,14 +56,14 @@ class _MainAppState extends State<MainApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      // showPerformanceOverlay: true,
+      showPerformanceOverlay: true,
       home: Scaffold(
         backgroundColor: Colors.black,
         body: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             RepaintBoundary(
-              child: SpoilerText(
+              child: SpoilerTextWrapper(
                 config: TextSpoilerConfig(
                   isEnabled: enable,
                   maxParticleSize: 1,
@@ -73,44 +73,48 @@ class _MainAppState extends State<MainApp> {
                   fadeRadius: 3,
                   enableFadeAnimation: true,
                   enableGestureReveal: true,
-                  textStyle: const TextStyle(
-                    fontSize: 50,
-                    color: Colors.white,
+                  onSpoilerVisibilityChanged: (isVisible) {
+                    debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+                  },
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      Text(
+                        text,
+                        style: const TextStyle(fontSize: 50, color: Colors.white),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Container(
+                            color: Colors.amber,
+                            width: 100,
+                            height: 100,
+                          ),
+                          Container(
+                            color: Colors.blue,
+                            width: 100,
+                            height: 100,
+                          ),
+                        ],
+                      ),
+                      Text(
+                        text,
+                        style: const TextStyle(fontSize: 50, color: Colors.white),
+                      ),
+                      const Text.rich(
+                        TextSpan(
+                          text: 'This is a spoiler! Tap to reveal а.аа. с  \n asd',
+                          style: TextStyle(fontSize: 20, color: Colors.red),
+                        ),
+                      ),
+                    ],
                   ),
-                  maskConfig: createStarPath(
-                      const Size.square(80), const Offset(230, 30)),
-                  onSpoilerVisibilityChanged: (isVisible) {
-                    debugPrint(
-                        'Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
-                  },
-                  // maxLines: 1,
-                  // isEllipsis: true
                 ),
-                text: text,
               ),
-            ),
-            RepaintBoundary(
-              child: SpoilerOverlay(
-                config: WidgetSpoilerConfig(
-                  isEnabled: enable,
-                  maxParticleSize: 1,
-                  particleDensity: .1,
-                  particleSpeed: .4,
-                  particleColor: Colors.white,
-                  fadeRadius: 3,
-                  enableFadeAnimation: true,
-                  enableGestureReveal: true,
-                  imageFilter: ImageFilter.blur(sigmaX: 30.0, sigmaY: 30.0),
-                  maskConfig: createStarPath(
-                      const Size.square(80), const Offset(200, 90)),
-                  onSpoilerVisibilityChanged: (isVisible) {
-                    debugPrint(
-                        'Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
-                  },
-                ),
-                child: CachedNetworkImage(imageUrl: url),
-              ),
-            ),
+            )
           ],
         ),
       ),
