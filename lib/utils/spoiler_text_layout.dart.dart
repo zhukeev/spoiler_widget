@@ -29,6 +29,10 @@ SpoilerTextLayoutResult computeSpoilerTextLayout({
   required TextAlign textAlign,
   required TextDirection textDirection,
   int? maxLines,
+  TextScaler textScaler = TextScaler.noScaling,
+  TextHeightBehavior? textHeightBehavior,
+  Locale? locale,
+  StrutStyle? strutStyle,
   bool isEllipsis = false,
   TextRange? range,
   required double maxWidth,
@@ -39,6 +43,10 @@ SpoilerTextLayoutResult computeSpoilerTextLayout({
     textAlign: textAlign,
     maxLines: maxLines,
     ellipsis: isEllipsis ? '…' : null,
+    textScaler: textScaler,
+    textHeightBehavior: textHeightBehavior,
+    locale: locale,
+    strutStyle: strutStyle,
   );
 
   painter.layout(maxWidth: maxWidth);

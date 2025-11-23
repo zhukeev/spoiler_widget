@@ -67,11 +67,18 @@ class _MainAppState extends State<MainApp> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(height: 100),
+              TextFormField(
+                controller: controller,
+                focusNode: FocusNode(),
+                style: const TextStyle(fontSize: 50, color: Colors.white),
+                cursorColor: Colors.deepPurple,
+                maxLines: 3,
+              ),
               SpoilerTextFormField(
                 controller: controller,
                 focusNode: FocusNode(),
                 config: const TextSpoilerConfig(
-                  particleDensity: 1.15,
+                  particleDensity: .2,
                   enableGestureReveal: true,
                   enableFadeAnimation: true,
                   textSelection: TextSelection(baseOffset: 3, extentOffset: 8),
