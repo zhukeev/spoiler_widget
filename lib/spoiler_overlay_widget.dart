@@ -16,10 +16,8 @@ class SpoilerOverlay extends StatefulWidget {
   State<SpoilerOverlay> createState() => _SpoilerOverlayState();
 }
 
-class _SpoilerOverlayState extends State<SpoilerOverlay>
-    with TickerProviderStateMixin {
-  late final SpoilerSpotsController _spoilerController =
-      SpoilerSpotsController(vsync: this);
+class _SpoilerOverlayState extends State<SpoilerOverlay> with TickerProviderStateMixin {
+  late final SpoilerSpotsController _spoilerController = SpoilerSpotsController(vsync: this);
   Rect _spoilerBounds = Rect.zero;
 
   void _initializeSpoilerBounds(Size size) {
@@ -100,6 +98,5 @@ class _SpoilerClipper extends CustomClipper<Path> {
   Path getClip(Size size) => clipPathBuilder.call(size);
 
   @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) =>
-      this != oldClipper;
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => this != oldClipper;
 }

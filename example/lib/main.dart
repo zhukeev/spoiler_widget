@@ -17,6 +17,9 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> {
+  final controller = TextEditingController(
+    text: 'This is a spoiler! Tap to reveal',
+  );
   bool enable = true;
   final text = 'This is a spoiler! Tap to reveal';
 
@@ -56,13 +59,27 @@ class _MainAppState extends State<MainApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      showPerformanceOverlay: true,
+      // showPerformanceOverlay: true,
       home: Scaffold(
         backgroundColor: Colors.black,
         body: SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              const SizedBox(height: 100),
+              SpoilerTextFormField(
+                controller: controller,
+                focusNode: FocusNode(),
+                config: const TextSpoilerConfig(
+                  particleDensity: 1.15,
+                  enableGestureReveal: true,
+                  enableFadeAnimation: true,
+                  textSelection: TextSelection(baseOffset: 3, extentOffset: 8),
+                  textStyle: TextStyle(fontSize: 50, color: Colors.white),
+                ),
+                cursorColor: Colors.deepPurple,
+                maxLines: 3,
+              ),
               RepaintBoundary(
                 child: SpoilerTextWrapper(
                   config: SpoilerConfig(

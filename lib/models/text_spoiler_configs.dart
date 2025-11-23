@@ -69,4 +69,79 @@ class TextSpoilerConfig extends SpoilerConfig {
     super.maskConfig,
     super.onSpoilerVisibilityChanged,
   });
+
+  @override
+  TextSpoilerConfig copyWith({
+    double? particleDensity,
+    double? particleSpeed,
+    Color? particleColor,
+    double? maxParticleSize,
+    bool? enableFadeAnimation,
+    double? fadeRadius,
+    bool? isEnabled,
+    bool? enableGestureReveal,
+    SpoilerMask? maskConfig,
+    ValueChanged<bool>? onSpoilerVisibilityChanged,
+    TextStyle? textStyle,
+    TextSelection? textSelection,
+    TextAlign? textAlign,
+    int? maxLines,
+    bool? isEllipsis,
+  }) =>
+      TextSpoilerConfig(
+        particleDensity: particleDensity ?? this.particleDensity,
+        particleSpeed: particleSpeed ?? this.particleSpeed,
+        particleColor: particleColor ?? this.particleColor,
+        maxParticleSize: maxParticleSize ?? this.maxParticleSize,
+        enableFadeAnimation: enableFadeAnimation ?? this.enableFadeAnimation,
+        fadeRadius: fadeRadius ?? this.fadeRadius,
+        isEnabled: isEnabled ?? this.isEnabled,
+        enableGestureReveal: enableGestureReveal ?? this.enableGestureReveal,
+        maskConfig: maskConfig ?? this.maskConfig,
+        onSpoilerVisibilityChanged: onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
+        textStyle: textStyle ?? this.textStyle,
+        textSelection: textSelection ?? this.textSelection,
+        textAlign: textAlign ?? this.textAlign,
+        maxLines: maxLines ?? this.maxLines,
+        isEllipsis: isEllipsis ?? this.isEllipsis,
+      );
+
+  @override
+  int get hashCode => Object.hash(
+        particleDensity,
+        particleSpeed,
+        particleColor,
+        maxParticleSize,
+        enableFadeAnimation,
+        fadeRadius,
+        isEnabled,
+        enableGestureReveal,
+        maskConfig,
+        onSpoilerVisibilityChanged,
+        textStyle,
+        textSelection,
+        textAlign,
+        maxLines,
+        isEllipsis,
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TextSpoilerConfig &&
+          particleDensity == other.particleDensity &&
+          particleSpeed == other.particleSpeed &&
+          particleColor == other.particleColor &&
+          maxParticleSize == other.maxParticleSize &&
+          enableFadeAnimation == other.enableFadeAnimation &&
+          fadeRadius == other.fadeRadius &&
+          isEnabled == other.isEnabled &&
+          enableGestureReveal == other.enableGestureReveal &&
+          maskConfig == other.maskConfig &&
+          onSpoilerVisibilityChanged == other.onSpoilerVisibilityChanged &&
+          textStyle == other.textStyle &&
+          textSelection == other.textSelection &&
+          textAlign == other.textAlign &&
+          maxLines == other.maxLines &&
+          isEllipsis == other.isEllipsis;
 }

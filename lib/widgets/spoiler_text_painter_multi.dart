@@ -130,7 +130,6 @@ class _SpoilerTextPainterMultiState extends State<SpoilerTextPainterMulti> {
           SizeChangedLayoutNotifier(
             child: widget.child,
           ),
-
           Positioned.fill(
             child: IgnorePointer(
               child: CustomPaint(
