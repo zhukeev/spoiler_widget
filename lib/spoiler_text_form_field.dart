@@ -5,6 +5,7 @@ import 'package:spoiler_widget/models/text_spoiler_configs.dart';
 import 'package:spoiler_widget/widgets/canvas_callback_painter.dart';
 import 'package:spoiler_widget/widgets/path_clipper.dart';
 import 'package:spoiler_widget/utils/text_layout_client.dart';
+import 'utils/spoiler_path_builder.dart';
 
 typedef ContextMenuLabelBuilder = String Function();
 
@@ -45,8 +46,12 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
   late final SpoilerController _spoilerController = SpoilerController(vsync: this);
   final GlobalKey _editableKey = GlobalKey();
   late final VoidCallback _controllerListener = () {
-    _forceEnabled = _spoilerController.isEnabled;
-    setState(() {}); 
+    if (!mounted) return;
+    final enabled = _spoilerController.isEnabled;
+    if (_forceEnabled != enabled) {
+      _forceEnabled = enabled;
+      setState(() {});
+    }
   };
 
   ViewportOffset? _scrollOffset;
@@ -132,8 +137,13 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
     if (selection == null || render == null || host == null || !selection.isValid || selection.isCollapsed) return;
 
     _attachScrollOffset(render);
+    final layout = RenderEditableLayoutClient(render);
 
-    final _SpoilerGeometry? geom = _buildSpoilerPath(render, selection);
+    final geom = buildSpoilerGeometry(
+      layout: layout,
+      text: widget.controller.text,
+      selection: selection,
+    );
     if (geom == null) return;
     if (geom.signature == _spoilerSignature) return;
 
@@ -177,7 +187,12 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
             builder: (context, _) {
               return ClipPath(
                 clipper: PathClipper(
-                  builder: _spoilerController.createSplashPathMaskClipper,
+                  builder: (size) {
+                    if (!_spoilerController.isEnabled) {
+                      return Path()..addRect(Offset.zero & size);
+                    }
+                    return _spoilerController.createSplashPathMaskClipper(size);
+                  },
                 ),
                 child: TextFormField(
                   key: _editableKey,
@@ -266,37 +281,4 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
     root.visitChildren(visitor);
     return result;
   }
-
-  _SpoilerGeometry? _buildSpoilerPath(RenderEditable render, TextSelection selection) {
-    final text = widget.controller.text;
-    if (text.isEmpty) return null;
-
-    final layout = RenderEditableLayoutClient(render);
-    final path = buildSelectionPath(
-      layout: layout,
-      text: text,
-      selection: selection,
-      skipWhitespace: true,
-    );
-    if (path == null) return null;
-
-    final signature = StringBuffer();
-    final bounds = path.getBounds();
-    signature
-      ..write(bounds.left)
-      ..write(',')
-      ..write(bounds.top)
-      ..write(',')
-      ..write(bounds.right)
-      ..write(',')
-      ..write(bounds.bottom);
-
-    return _SpoilerGeometry(path: path, signature: signature.toString());
-  }
-}
-
-class _SpoilerGeometry {
-  _SpoilerGeometry({required this.path, required this.signature});
-  final Path path;
-  final String signature;
 }

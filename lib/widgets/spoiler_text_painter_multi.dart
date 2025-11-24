@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:spoiler_widget/widgets/canvas_callback_painter.dart';
 
+import '../utils/text_layout_client.dart';
+
 /// Collects all visible text paragraphs inside [child], reports their
 /// bounding regions, and repaints them on top of the original subtree.
 ///
@@ -201,9 +203,12 @@ class _TextRegionCollector {
   }
 
   /// Collect regions for each non-empty word using TextPainter word boundaries.
+
   void _collectWordRegions(TextPainter tp, Matrix4 toWrapper) {
     final plain = tp.text?.toPlainText() ?? '';
     if (plain.isEmpty) return;
+
+    final layout = TextPainterLayoutClient(tp);
 
     int offset = 0;
     final length = plain.length;
@@ -221,16 +226,16 @@ class _TextRegionCollector {
         continue;
       }
 
-      final boxes = tp.getBoxesForSelection(
+      final boxes = layout.getBoxesForSelection(
         TextSelection(
           baseOffset: wordRange.start,
           extentOffset: wordRange.end,
         ),
       );
 
-      if (boxes.isNotEmpty) {
-        final rect = MatrixUtils.transformRect(toWrapper, boxes.first.toRect());
-        if (_isNonEmpty(rect)) {
+      for (final box in boxes) {
+        final rect = MatrixUtils.transformRect(toWrapper, box.toRect());
+        if (!rect.isEmpty) {
           regions.add(rect);
         }
       }
@@ -238,8 +243,6 @@ class _TextRegionCollector {
       offset = wordRange.end;
     }
   }
-
-  bool _isNonEmpty(Rect rect) => rect.width > 0.0 && rect.height > 0.0;
 }
 
 /// Internal holder for a paragraph and its transform from local to wrapper space.

@@ -85,17 +85,3 @@ class _SpoilerOverlayState extends State<SpoilerOverlay> with TickerProviderStat
     );
   }
 }
-
-typedef ClipPathBuilder = Path Function(Size size);
-
-class _SpoilerClipper extends CustomClipper<Path> {
-  final ClipPathBuilder clipPathBuilder;
-
-  const _SpoilerClipper(this.clipPathBuilder);
-
-  @override
-  Path getClip(Size size) => clipPathBuilder.call(size);
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => this != oldClipper;
-}
