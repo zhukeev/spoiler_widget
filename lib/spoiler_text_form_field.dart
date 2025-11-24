@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:spoiler_widget/models/spoiler_controller.dart';
 import 'package:spoiler_widget/models/text_spoiler_configs.dart';
-import 'package:spoiler_widget/utils/spoiler_text_layout.dart.dart';
 import 'package:spoiler_widget/widgets/canvas_callback_painter.dart';
+import 'package:spoiler_widget/widgets/path_clipper.dart';
+import 'package:spoiler_widget/utils/text_layout_client.dart';
 
 typedef ContextMenuLabelBuilder = String Function();
 
@@ -41,9 +43,14 @@ class SpoilerTextFormField extends StatefulWidget {
 
 class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with TickerProviderStateMixin {
   late final SpoilerController _spoilerController = SpoilerController(vsync: this);
-  final GlobalKey<EditableTextState> _editableKey = GlobalKey<EditableTextState>();
+  final GlobalKey _editableKey = GlobalKey();
+  late final VoidCallback _controllerListener = () {
+    _forceEnabled = _spoilerController.isEnabled;
+    setState(() {}); 
+  };
 
-  Path? _spoilerPath;
+  ViewportOffset? _scrollOffset;
+  String? _spoilerSignature;
   TextSelection? _spoilerSelection;
   bool _forceEnabled = false;
   bool _pendingRenderSync = false;
@@ -52,8 +59,10 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
   void initState() {
     super.initState();
     widget.controller.addListener(_onControllerChanged);
+    _spoilerController.addListener(_controllerListener);
     _spoilerSelection = widget.config.textSelection;
     _forceEnabled = widget.config.isEnabled;
+    _scheduleRenderSync();
     WidgetsBinding.instance.addPostFrameCallback((_) => _syncFromRenderEditable());
   }
 
@@ -76,6 +85,8 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
   @override
   void dispose() {
     widget.controller.removeListener(_onControllerChanged);
+    _spoilerController.removeListener(_controllerListener);
+    _scrollOffset?.removeListener(_scheduleRenderSync);
     _spoilerController.dispose();
     super.dispose();
   }
@@ -87,8 +98,16 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
     if (selection == null) return widget.config.copyWith(isEnabled: _forceEnabled || widget.config.isEnabled);
     return widget.config.copyWith(
       textSelection: selection,
-      isEnabled: true,
+      isEnabled: _forceEnabled || _spoilerController.isEnabled,
     );
+  }
+
+  void _attachScrollOffset(RenderEditable? render) {
+    final next = render?.offset;
+    if (_scrollOffset == next) return;
+    _scrollOffset?.removeListener(_scheduleRenderSync);
+    _scrollOffset = next;
+    _scrollOffset?.addListener(_scheduleRenderSync);
   }
 
   void _onControllerChanged() {
@@ -107,22 +126,30 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
 
   void _syncFromRenderEditable() {
     final selection = _effectiveSelection;
-    final render = _editableKey.currentState?.renderEditable;
-    if (selection == null || render == null || !selection.isValid || selection.isCollapsed) return;
+    final render = _findRenderEditable();
+    final host = context.findRenderObject() as RenderBox?;
 
-    final boxes = render.getBoxesForSelection(selection);
-    if (boxes.isEmpty) return;
+    if (selection == null || render == null || host == null || !selection.isValid || selection.isCollapsed) return;
 
-    final path = Path();
-    for (final box in boxes) {
-      path.addRect(box.toRect());
-    }
+    _attachScrollOffset(render);
+
+    final _SpoilerGeometry? geom = _buildSpoilerPath(render, selection);
+    if (geom == null) return;
+    if (geom.signature == _spoilerSignature) return;
+
+    final Matrix4 toHost = render.getTransformTo(host);
+    final Path shiftedPath = Path()..addPath(geom.path, Offset.zero, matrix4: toHost.storage);
 
     setState(() {
-      _spoilerPath = path;
+      _spoilerSignature = geom.signature;
     });
 
-    _spoilerController.initializeParticles(path, _effectiveConfig);
+    _spoilerController.initializeParticles(shiftedPath, _effectiveConfig);
+    if (_effectiveConfig.isEnabled) {
+      _spoilerController.enable();
+    } else {
+      _spoilerController.disable();
+    }
   }
 
   @override
@@ -130,114 +157,146 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
     final baseStyle = widget.config.textStyle ?? DefaultTextStyle.of(context).style;
     final direction = Directionality.of(context);
 
+    final decoration = widget.decoration.copyWith(
+      border: widget.decoration.border ?? InputBorder.none,
+      isCollapsed: widget.decoration.isCollapsed,
+    );
+
     return Listener(
       behavior: HitTestBehavior.translucent,
-      onPointerDown: (details) {
-        if (widget.config.enableGestureReveal) {
-          _spoilerController.toggle(details.localPosition);
-        }
+      onPointerUp: (event) {
+        if (!widget.config.enableGestureReveal) return;
+
+        _spoilerController.toggle(event.localPosition);
       },
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final selection = _effectiveSelection;
-          final layout = computeSpoilerTextLayout(
-            text: widget.controller.text,
-            style: baseStyle,
-            textAlign: widget.config.textAlign ?? TextAlign.start,
-            textDirection: direction,
-            maxLines: widget.expands ? null : widget.maxLines,
-            isEllipsis: false,
-            range: selection,
-            maxWidth: constraints.maxWidth,
-          );
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          AnimatedBuilder(
+            animation: _spoilerController,
+            builder: (context, _) {
+              return ClipPath(
+                clipper: PathClipper(
+                  builder: _spoilerController.createSplashPathMaskClipper,
+                ),
+                child: TextFormField(
+                  key: _editableKey,
+                  controller: widget.controller,
+                  focusNode: widget.focusNode,
+                  style: baseStyle,
+                  cursorColor: widget.cursorColor,
+                  textAlign: widget.config.textAlign ?? TextAlign.start,
+                  textDirection: direction,
+                  maxLines: widget.expands ? null : widget.maxLines,
+                  minLines: widget.expands ? null : widget.minLines,
+                  expands: widget.expands,
+                  obscureText: widget.obscureText,
+                  decoration: decoration,
+                  contextMenuBuilder: (context, editableTextState) {
+                    final items = <ContextMenuButtonItem>[
+                      ...editableTextState.contextMenuButtonItems,
+                    ];
+                    final sel = editableTextState.textEditingValue.selection;
 
-          // Fallback path if renderEditable hasn't produced boxes yet.
-          if (_spoilerPath == null && selection != null) {
-            final path = Path()..addPath(layout.wordPath, Offset.zero);
-            _spoilerPath = path;
-            _spoilerController.initializeParticles(path, _effectiveConfig);
-          }
+                    if (sel.isValid && !sel.isCollapsed) {
+                      items.add(
+                        ContextMenuButtonItem(
+                          label: widget.spoilerLabelBuilder?.call() ?? 'Spoiler',
+                          onPressed: () {
+                            editableTextState.hideToolbar();
 
-          final decoration = widget.decoration.copyWith(
-            border: widget.decoration.border ?? InputBorder.none,
-            isCollapsed: widget.decoration.isCollapsed ?? true,
-            contentPadding: widget.decoration.contentPadding ?? EdgeInsets.zero,
-          );
+                            setState(() {
+                              _spoilerSelection = sel;
+                              _forceEnabled = true;
+                            });
 
-          return CustomPaint(
-            foregroundPainter: CustomPainterCanvasCallback(
-              repaint: _spoilerController,
-              onPaint: (canvas, size) {
-                final textMask = _spoilerController.createSplashPathMaskClipper(size);
-                final particleClip = _spoilerController.createClipPath(size);
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              _spoilerController.updateConfiguration(_effectiveConfig);
+                              _spoilerController.enable();
+                              _syncFromRenderEditable();
+                            });
+                          },
+                        ),
+                      );
+                    }
 
-                canvas.save();
-                if (_spoilerController.isEnabled) {
-                  // Hide text within the spoiler region using controller-provided clipper.
-                  canvas.clipPath(textMask);
-                }
-                layout.painter.paint(canvas, Offset.zero);
-                canvas.restore();
+                    return AdaptiveTextSelectionToolbar.buttonItems(
+                      anchors: editableTextState.contextMenuAnchors,
+                      buttonItems: items,
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(
+                foregroundPainter: CustomPainterCanvasCallback(
+                  repaint: _spoilerController,
+                  onPaint: (canvas, size) {
+                    if (!_spoilerController.isEnabled) return;
 
-                if (_spoilerController.isEnabled) {
-                  canvas.save();
-                  canvas.clipPath(particleClip);
-                  _spoilerController.drawParticles(canvas);
-                  canvas.restore();
-                }
-              },
+                    canvas.clipRect(Offset.zero & size);
+                    _spoilerController.drawParticles(canvas);
+                  },
+                ),
+              ),
             ),
-            child: TextFormField(
-              key: _editableKey,
-              controller: widget.controller,
-              focusNode: widget.focusNode,
-              style: baseStyle.copyWith(color: Colors.transparent),
-              cursorColor: widget.cursorColor,
-              textAlign: widget.config.textAlign ?? TextAlign.start,
-              textDirection: direction,
-              maxLines: widget.expands ? null : widget.maxLines,
-              minLines: widget.expands ? null : widget.minLines,
-              expands: widget.expands,
-              obscureText: widget.obscureText,
-              decoration: decoration,
-              contextMenuBuilder: (context, editableTextState) {
-                final items = <ContextMenuButtonItem>[
-                  ...editableTextState.contextMenuButtonItems,
-                ];
-                final sel = editableTextState.textEditingValue.selection;
-
-                if (sel.isValid && !sel.isCollapsed) {
-                  items.add(
-                    ContextMenuButtonItem(
-                      label: widget.spoilerLabelBuilder?.call() ?? 'Spoiler',
-                      onPressed: () {
-                        editableTextState.hideToolbar();
-
-                        setState(() {
-                          _spoilerSelection = sel;
-                          _forceEnabled = true;
-                          _spoilerPath = null; // recompute from render
-                        });
-
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          _spoilerController.updateConfiguration(_effectiveConfig);
-                          _spoilerController.enable();
-                          _syncFromRenderEditable();
-                        });
-                      },
-                    ),
-                  );
-                }
-
-                return AdaptiveTextSelectionToolbar.buttonItems(
-                  anchors: editableTextState.contextMenuAnchors,
-                  buttonItems: items,
-                );
-              },
-            ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
+
+  RenderEditable? _findRenderEditable() {
+    final RenderObject? root = _editableKey.currentContext?.findRenderObject();
+    if (root == null) return null;
+    if (root is RenderEditable) return root;
+
+    RenderEditable? result;
+    void visitor(RenderObject child) {
+      if (child is RenderEditable) {
+        result = child;
+        return;
+      }
+      child.visitChildren(visitor);
+    }
+
+    root.visitChildren(visitor);
+    return result;
+  }
+
+  _SpoilerGeometry? _buildSpoilerPath(RenderEditable render, TextSelection selection) {
+    final text = widget.controller.text;
+    if (text.isEmpty) return null;
+
+    final layout = RenderEditableLayoutClient(render);
+    final path = buildSelectionPath(
+      layout: layout,
+      text: text,
+      selection: selection,
+      skipWhitespace: true,
+    );
+    if (path == null) return null;
+
+    final signature = StringBuffer();
+    final bounds = path.getBounds();
+    signature
+      ..write(bounds.left)
+      ..write(',')
+      ..write(bounds.top)
+      ..write(',')
+      ..write(bounds.right)
+      ..write(',')
+      ..write(bounds.bottom);
+
+    return _SpoilerGeometry(path: path, signature: signature.toString());
+  }
+}
+
+class _SpoilerGeometry {
+  _SpoilerGeometry({required this.path, required this.signature});
+  final Path path;
+  final String signature;
 }

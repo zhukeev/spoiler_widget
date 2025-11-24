@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:spoiler_widget/models/spoiler_spots_controller.dart';
 import 'package:spoiler_widget/models/widget_spoiler.dart';
 import 'package:spoiler_widget/widgets/canvas_callback_painter.dart';
+import 'package:spoiler_widget/widgets/path_clipper.dart';
 
 class SpoilerOverlay extends StatefulWidget {
   const SpoilerOverlay({
@@ -69,9 +70,7 @@ class _SpoilerOverlayState extends State<SpoilerOverlay> with TickerProviderStat
                   onPaint: _onPaint,
                 ),
                 child: ClipPath(
-                  clipper: _SpoilerClipper(
-                    _spoilerController.createClipPath,
-                  ),
+                  clipper: PathClipper(builder: _spoilerController.createClipPath),
                   child: ImageFiltered(
                     imageFilter: widget.config.imageFilter,
                     enabled: _spoilerController.isEnabled,
