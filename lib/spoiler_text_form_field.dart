@@ -4,8 +4,8 @@ import 'package:spoiler_widget/models/spoiler_controller.dart';
 import 'package:spoiler_widget/models/text_spoiler_configs.dart';
 import 'package:spoiler_widget/widgets/canvas_callback_painter.dart';
 import 'package:spoiler_widget/widgets/path_clipper.dart';
+import 'package:spoiler_widget/utils/spoiler_path_builder.dart';
 import 'package:spoiler_widget/utils/text_layout_client.dart';
-import 'utils/spoiler_path_builder.dart';
 
 typedef ContextMenuLabelBuilder = String Function();
 
@@ -166,6 +166,7 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
   Widget build(BuildContext context) {
     final baseStyle = widget.config.textStyle ?? DefaultTextStyle.of(context).style;
     final direction = Directionality.of(context);
+    final effectiveConfig = _effectiveConfig;
 
     final decoration = widget.decoration.copyWith(
       border: widget.decoration.border ?? InputBorder.none,
@@ -187,12 +188,7 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
             builder: (context, _) {
               return ClipPath(
                 clipper: PathClipper(
-                  builder: (size) {
-                    if (!_spoilerController.isEnabled) {
-                      return Path()..addRect(Offset.zero & size);
-                    }
-                    return _spoilerController.createSplashPathMaskClipper(size);
-                  },
+                  builder: _spoilerController.createSplashPathMaskClipper,
                 ),
                 child: TextFormField(
                   key: _editableKey,
@@ -226,7 +222,7 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
                             });
 
                             WidgetsBinding.instance.addPostFrameCallback((_) {
-                              _spoilerController.updateConfiguration(_effectiveConfig);
+                              _spoilerController.updateConfiguration(effectiveConfig);
                               _spoilerController.enable();
                               _syncFromRenderEditable();
                             });
@@ -251,7 +247,6 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
                   repaint: _spoilerController,
                   onPaint: (canvas, size) {
                     if (!_spoilerController.isEnabled) return;
-
                     canvas.clipRect(Offset.zero & size);
                     _spoilerController.drawParticles(canvas);
                   },
