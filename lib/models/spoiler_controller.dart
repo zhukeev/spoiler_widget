@@ -117,10 +117,13 @@ class SpoilerController extends ChangeNotifier {
 
   /// A path function that clips only the circular fade area if there’s a non-zero fade radius.
   Path createClipPath(Size size) {
+    if (!_config.enableFadeAnimation || _fadeRadius == 0) {
+      return _spoilerPath;
+    }
     return Path.combine(
       PathOperation.intersect,
       _spoilerPath,
-      _fadeCenter == Offset.zero || !_config.enableFadeAnimation ? _spoilerPath : (Path()..addOval(_splashRect)),
+      Path()..addOval(_splashRect),
     );
   }
 
@@ -163,8 +166,6 @@ class SpoilerController extends ChangeNotifier {
   /// [path] is the shape describing where particles should exist.
   /// [config] includes fade, density, maxParticleSize, etc.
   void initializeParticles(Path path, SpoilerConfig config) {
-    final bool preserveEnabledState = isInitialized && config == _config;
-    final bool previousEnabled = _isEnabled;
     // Ensure maxParticleSize is valid
     assert(config.maxParticleSize >= 1, 'maxParticleSize must be >= 1');
     _config = config;
@@ -206,7 +207,7 @@ class SpoilerController extends ChangeNotifier {
       }
     }
 
-    _isEnabled = preserveEnabledState ? previousEnabled : config.isEnabled;
+    _isEnabled = config.isEnabled;
 
     _reallocAtlasBuffers();
 
