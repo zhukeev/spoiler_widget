@@ -129,7 +129,7 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
     });
   }
 
-  void _syncFromRenderEditable() {
+  void _syncFromRenderEditable({bool selectionChanged = false}) {
     if (!_forceEnabled && !_effectiveConfig.isEnabled) return;
 
     final selection = _effectiveSelection;
@@ -157,6 +157,10 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
     });
 
     _spoilerController.initializeParticles(shiftedPath, _effectiveConfig);
+    if (selectionChanged) {
+      _spoilerController.setFadeCenter(geom.path.getBounds().center);
+    }
+
     if (_effectiveConfig.isEnabled) {
       _spoilerController.enable();
     } else {
@@ -223,11 +227,9 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
                               _forceEnabled = true;
                             });
 
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              _spoilerController.updateConfiguration(effectiveConfig);
-                              _spoilerController.enable();
-                              _syncFromRenderEditable();
-                            });
+                            WidgetsBinding.instance.addPostFrameCallback(
+                              (_) => _syncFromRenderEditable(selectionChanged: true),
+                            );
                           },
                         ),
                       );

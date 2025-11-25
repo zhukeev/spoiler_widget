@@ -284,16 +284,20 @@ class SpoilerController extends ChangeNotifier {
     }
 
     // Record the offset from which the radial fade expands.
-    _fadeCenter = fadeOffset;
+    setFadeCenter(fadeOffset);
 
-    onEnabledChanged(!_isEnabled);
+    _onEnabledChanged(!_isEnabled);
 
     return true;
   }
 
+  void setFadeCenter(Offset fadeCenter) {
+    _fadeCenter = fadeCenter;
+  }
+
   /// Called by [toggle] after setting [_fadeCenter].
   /// If [value] is true, calls [enable]. Otherwise, [disable].
-  void onEnabledChanged(bool value) {
+  void _onEnabledChanged(bool value) {
     if (value) {
       enable();
     } else {
