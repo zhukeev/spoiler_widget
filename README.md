@@ -103,6 +103,49 @@ SpoilerText(
 
 ```
 
+### 1.1 Wrap existing text widgets
+
+If you already have a text subtree and just need to hide it with particles, use `SpoilerTextWrapper`:
+
+```dart
+SpoilerTextWrapper(
+  config: SpoilerConfig(
+    isEnabled: true,
+    enableFadeAnimation: true,
+    enableGestureReveal: true,
+  ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: const [
+      Text('Sensitive line 1'),
+      Text('Sensitive line 2'),
+    ],
+  ),
+);
+```
+
+### 1.2 Form field integration
+
+Use `SpoilerTextFormField` to keep the native context menu/cursor while hiding parts of the input:
+
+```dart
+final controller = TextEditingController(text: 'Type here...');
+
+SpoilerTextFormField(
+  controller: controller,
+  focusNode: FocusNode(),
+  config: const TextSpoilerConfig(
+    isEnabled: true,
+    enableFadeAnimation: true,
+    enableGestureReveal: true,
+    textSelection: TextSelection(baseOffset: 0, extentOffset: 5),
+    textStyle: TextStyle(fontSize: 18, color: Colors.white),
+  ),
+  cursorColor: Colors.deepPurple,
+  maxLines: 3,
+);
+```
+
 ### 2. Wave Animations (SpoilerSpotsController)
 
 For **dynamic "wave"** effects:
