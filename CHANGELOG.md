@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.15
+
+* Added `SpoilerTextFormField` to keep native text field behaviors (cursor, context menu) while applying spoiler masks to selected ranges.
+* Added `SpoilerTextWrapper` to wrap existing text widgets/subtrees with the spoiler effect.
+* Unified path/signature helpers for selections; small gesture and clipping fixes.
+
 ## 1.0.14
 
 * new `onSpoilerVisibilityChanged` method to listen visibility

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:spoiler_widget/models/spoiler_spots_controller.dart';
 import 'package:spoiler_widget/models/widget_spoiler.dart';
 import 'package:spoiler_widget/widgets/canvas_callback_painter.dart';
+import 'package:spoiler_widget/widgets/path_clipper.dart';
 
 class SpoilerOverlay extends StatefulWidget {
   const SpoilerOverlay({
@@ -16,10 +17,8 @@ class SpoilerOverlay extends StatefulWidget {
   State<SpoilerOverlay> createState() => _SpoilerOverlayState();
 }
 
-class _SpoilerOverlayState extends State<SpoilerOverlay>
-    with TickerProviderStateMixin {
-  late final SpoilerSpotsController _spoilerController =
-      SpoilerSpotsController(vsync: this);
+class _SpoilerOverlayState extends State<SpoilerOverlay> with TickerProviderStateMixin {
+  late final SpoilerSpotsController _spoilerController = SpoilerSpotsController(vsync: this);
   Rect _spoilerBounds = Rect.zero;
 
   void _initializeSpoilerBounds(Size size) {
@@ -71,9 +70,7 @@ class _SpoilerOverlayState extends State<SpoilerOverlay>
                   onPaint: _onPaint,
                 ),
                 child: ClipPath(
-                  clipper: _SpoilerClipper(
-                    _spoilerController.createClipPath,
-                  ),
+                  clipper: PathClipper(builder: _spoilerController.createClipPath),
                   child: ImageFiltered(
                     imageFilter: widget.config.imageFilter,
                     enabled: _spoilerController.isEnabled,
@@ -87,19 +84,4 @@ class _SpoilerOverlayState extends State<SpoilerOverlay>
       ),
     );
   }
-}
-
-typedef ClipPathBuilder = Path Function(Size size);
-
-class _SpoilerClipper extends CustomClipper<Path> {
-  final ClipPathBuilder clipPathBuilder;
-
-  const _SpoilerClipper(this.clipPathBuilder);
-
-  @override
-  Path getClip(Size size) => clipPathBuilder.call(size);
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) =>
-      this != oldClipper;
 }

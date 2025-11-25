@@ -10,8 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:spoiler_widget/spoiler_text_widget.dart';
 
 void main() {
-  testWidgets('SpoilerWidget has a SpoilerTextWidget',
-      (WidgetTester tester) async {
+  testWidgets('SpoilerWidget has a SpoilerTextWidget', (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const MainApp());
 

@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +16,9 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> {
+  final controller = TextEditingController(
+    text: 'This is a spoiler! Tap to reveal',
+  );
   bool enable = true;
   final text = 'This is a spoiler! Tap to reveal';
 
@@ -55,63 +57,97 @@ class _MainAppState extends State<MainApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      // showPerformanceOverlay: true,
+    return MaterialApp( 
+      showPerformanceOverlay: false,
       home: Scaffold(
         backgroundColor: Colors.black,
-        body: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            RepaintBoundary(
-              child: SpoilerText(
-                config: TextSpoilerConfig(
-                  isEnabled: enable,
-                  maxParticleSize: 1,
-                  particleColor: Colors.white,
-                  particleDensity: .1,
-                  particleSpeed: .2,
-                  fadeRadius: 3,
-                  enableFadeAnimation: true,
-                  enableGestureReveal: true,
-                  textStyle: const TextStyle(
-                    fontSize: 50,
-                    color: Colors.white,
+        body: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 100),
+              RepaintBoundary(
+                child: SpoilerTextFormField(
+                  controller: controller,
+                  focusNode: FocusNode(),
+                  config: const TextSpoilerConfig(
+                    particleDensity: .2,
+                    enableGestureReveal: true,
+                    enableFadeAnimation: true,
+                    textSelection: TextSelection(baseOffset: 3, extentOffset: 8),
+                    textStyle: TextStyle(fontSize: 50, color: Colors.white),
                   ),
-                  maskConfig: createStarPath(
-                      const Size.square(80), const Offset(230, 30)),
-                  onSpoilerVisibilityChanged: (isVisible) {
-                    debugPrint(
-                        'Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
-                  },
-                  // maxLines: 1,
-                  // isEllipsis: true
+                  cursorColor: Colors.deepPurple,
+                  maxLines: 3,
                 ),
-                text: text,
               ),
-            ),
-            RepaintBoundary(
-              child: SpoilerOverlay(
-                config: WidgetSpoilerConfig(
-                  isEnabled: enable,
-                  maxParticleSize: 1,
-                  particleDensity: .1,
-                  particleSpeed: .4,
-                  particleColor: Colors.white,
-                  fadeRadius: 3,
-                  enableFadeAnimation: true,
+              RepaintBoundary(
+                child: SpoilerTextWrapper(
+                  config: SpoilerConfig(
+                    isEnabled: enable,
+                    maxParticleSize: 1,
+                    particleColor: Colors.white,
+                    particleDensity: .1,
+                    particleSpeed: .2,
+                    fadeRadius: 3,
+                    enableFadeAnimation: true,
+                    enableGestureReveal: true,
+                    onSpoilerVisibilityChanged: (isVisible) {
+                      debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+                    },
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        Text(
+                          text,
+                          style: const TextStyle(fontSize: 50, color: Colors.white),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Container(
+                              color: Colors.amber,
+                              width: 100,
+                              height: 100,
+                            ),
+                            Container(
+                              color: Colors.blue,
+                              width: 100,
+                              height: 100,
+                            ),
+                          ],
+                        ),
+                        Text(
+                          text,
+                          style: const TextStyle(fontSize: 50, color: Colors.white),
+                        ),
+                        const Text.rich(
+                          TextSpan(
+                            text: 'This is a spoiler! Tap to reveal а.аа. с  \n asd',
+                            style: TextStyle(fontSize: 20, color: Colors.red),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              RepaintBoundary(
+                  child: SpoilerOverlay(
+                config: WidgetSpoilerConfig.defaultConfig().copyWith(
                   enableGestureReveal: true,
-                  imageFilter: ImageFilter.blur(sigmaX: 30.0, sigmaY: 30.0),
-                  maskConfig: createStarPath(
-                      const Size.square(80), const Offset(200, 90)),
-                  onSpoilerVisibilityChanged: (isVisible) {
-                    debugPrint(
-                        'Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
-                  },
+                  enableFadeAnimation: true,
                 ),
-                child: CachedNetworkImage(imageUrl: url),
-              ),
-            ),
-          ],
+                child: CachedNetworkImage(
+                  imageUrl: url,
+                  placeholder: (context, url) => const CircularProgressIndicator(),
+                  errorWidget: (context, url, error) => const Icon(Icons.error),
+                ),
+              )),
+            ],
+          ),
         ),
       ),
     );

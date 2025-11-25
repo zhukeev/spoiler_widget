@@ -84,9 +84,37 @@ class SpoilerConfig {
         isEnabled: isEnabled ?? this.isEnabled,
         enableGestureReveal: enableGestureReveal ?? this.enableGestureReveal,
         maskConfig: maskConfig ?? this.maskConfig,
-        onSpoilerVisibilityChanged:
-            onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
+        onSpoilerVisibilityChanged: onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
       );
+
+  @override
+  int get hashCode => Object.hash(
+        particleDensity,
+        particleSpeed,
+        particleColor,
+        maxParticleSize,
+        enableFadeAnimation,
+        fadeRadius,
+        isEnabled,
+        enableGestureReveal,
+        maskConfig,
+        onSpoilerVisibilityChanged,
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SpoilerConfig &&
+          particleDensity == other.particleDensity &&
+          particleSpeed == other.particleSpeed &&
+          particleColor == other.particleColor &&
+          maxParticleSize == other.maxParticleSize &&
+          enableFadeAnimation == other.enableFadeAnimation &&
+          fadeRadius == other.fadeRadius &&
+          isEnabled == other.isEnabled &&
+          enableGestureReveal == other.enableGestureReveal &&
+          maskConfig == other.maskConfig &&
+          onSpoilerVisibilityChanged == other.onSpoilerVisibilityChanged;
 }
 
 /// Configuration for applying a mask to the spoiler effect.
