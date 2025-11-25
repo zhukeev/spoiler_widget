@@ -172,7 +172,6 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
   Widget build(BuildContext context) {
     final baseStyle = widget.config.textStyle ?? DefaultTextStyle.of(context).style;
     final direction = Directionality.of(context);
-    final effectiveConfig = _effectiveConfig;
 
     final decoration = widget.decoration.copyWith(
       border: widget.decoration.border ?? InputBorder.none,
