@@ -185,17 +185,9 @@ class SpoilerController extends ChangeNotifier {
         _spoilerPath.addPath(path, Offset.zero);
       }
       _spoilerBounds = _spoilerPath.getBounds();
-      // Anchor fade center to current bounds so the animated clip matches the selection.
-      _fadeCenter = _spoilerBounds.center;
     }
 
     _initFadeIfNeeded();
-    // Reset fade controller to current enabled state so radius starts from correct value
-    // when the path changes.
-    if (_fadeCtrl != null) {
-      _fadeCtrl!.value = config.isEnabled ? 1 : 0;
-    }
-    _updateFadeRadius();
 
     if (_circleImage.color != _config.particleColor || _circleImage.dimension != _config.maxParticleSize) {
       _circleImage = CircleImageFactory.create(
