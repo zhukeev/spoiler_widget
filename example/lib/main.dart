@@ -57,8 +57,8 @@ class _MainAppState extends State<MainApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      // showPerformanceOverlay: true,
+    return MaterialApp( 
+      showPerformanceOverlay: false,
       home: Scaffold(
         backgroundColor: Colors.black,
         body: SingleChildScrollView(
@@ -66,18 +66,20 @@ class _MainAppState extends State<MainApp> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(height: 100),
-              SpoilerTextFormField(
-                controller: controller,
-                focusNode: FocusNode(),
-                config: const TextSpoilerConfig(
-                  particleDensity: .2,
-                  enableGestureReveal: true,
-                  enableFadeAnimation: true,
-                  textSelection: TextSelection(baseOffset: 3, extentOffset: 8),
-                  textStyle: TextStyle(fontSize: 50, color: Colors.white),
+              RepaintBoundary(
+                child: SpoilerTextFormField(
+                  controller: controller,
+                  focusNode: FocusNode(),
+                  config: const TextSpoilerConfig(
+                    particleDensity: .2,
+                    enableGestureReveal: true,
+                    enableFadeAnimation: true,
+                    textSelection: TextSelection(baseOffset: 3, extentOffset: 8),
+                    textStyle: TextStyle(fontSize: 50, color: Colors.white),
+                  ),
+                  cursorColor: Colors.deepPurple,
+                  maxLines: 3,
                 ),
-                cursorColor: Colors.deepPurple,
-                maxLines: 3,
               ),
               RepaintBoundary(
                 child: SpoilerTextWrapper(
@@ -134,7 +136,10 @@ class _MainAppState extends State<MainApp> {
               ),
               RepaintBoundary(
                   child: SpoilerOverlay(
-                config: WidgetSpoilerConfig.defaultConfig().copyWith(enableGestureReveal: true),
+                config: WidgetSpoilerConfig.defaultConfig().copyWith(
+                  enableGestureReveal: true,
+                  enableFadeAnimation: true,
+                ),
                 child: CachedNetworkImage(
                   imageUrl: url,
                   placeholder: (context, url) => const CircularProgressIndicator(),
