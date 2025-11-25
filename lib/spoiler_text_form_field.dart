@@ -130,6 +130,8 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
   }
 
   void _syncFromRenderEditable() {
+    if (!_forceEnabled && !_effectiveConfig.isEnabled) return;
+
     final selection = _effectiveSelection;
     final render = _findRenderEditable();
     final host = context.findRenderObject() as RenderBox?;
