@@ -64,6 +64,11 @@ class SpoilerController extends ChangeNotifier {
   Int32List? _atlasColors;
 
   // ---------------------------
+  // Caching
+  // ---------------------------
+  Path? _cachedClipPath;
+
+  // ---------------------------
   // Visual Assets & Bounds
   // ---------------------------
   /// The bounding area where particles are rendered.
@@ -128,6 +133,14 @@ class SpoilerController extends ChangeNotifier {
   }
 
   Path createSplashPathMaskClipper(Size size) {
+    if (!isInitialized) {
+      return Path();
+    }
+
+    if (_cachedClipPath != null) {
+      return _cachedClipPath!;
+    }
+
     final clippedSpoilerPath = Path.combine(
       PathOperation.intersect,
       // If the fade radius is 0 or the fade animation is disabled, we clip to the entire spoiler region.
@@ -143,6 +156,7 @@ class SpoilerController extends ChangeNotifier {
       clippedSpoilerPath,
     );
 
+    _cachedClipPath = finalClipPath;
     return finalClipPath;
   }
 
@@ -170,6 +184,7 @@ class SpoilerController extends ChangeNotifier {
     assert(config.maxParticleSize >= 1, 'maxParticleSize must be >= 1');
     _config = config;
     particles.clear();
+    _cachedClipPath = null; // Invalidate cache
 
     if (_spoilerPath != path) {
       _spoilerPath.reset();
@@ -260,6 +275,7 @@ class SpoilerController extends ChangeNotifier {
   /// and restart the particle animation.
   void enable() {
     _isEnabled = true;
+    _cachedClipPath = null; // Invalidate cache
     _startParticleAnimationIfNeeded();
     if (_config.enableFadeAnimation) {
       _fadeCtrl?.forward();
@@ -273,7 +289,7 @@ class SpoilerController extends ChangeNotifier {
       // If fade is disabled, just stop everything now.
       _stopAll();
     } else {
-      _fadeCtrl?.toggle().whenCompleteOrCancel(() => _stopAll());
+      _fadeCtrl?.reverse().whenCompleteOrCancel(() => _stopAll());
     }
   }
 
@@ -341,6 +357,7 @@ class SpoilerController extends ChangeNotifier {
 
     // If fadeAnim goes from 0→1, we scale radius from 0→distance
     _fadeRadius = distance * _fadeAnim!.value;
+    _cachedClipPath = null; // Invalidate cache
     notifyListeners();
   }
 
@@ -353,6 +370,7 @@ class SpoilerController extends ChangeNotifier {
   void _stopAll() {
     _isEnabled = false;
     _fadeRadius = 0;
+    _cachedClipPath = null; // Invalidate cache
     _particleCtrl.reset();
     notifyListeners();
   }

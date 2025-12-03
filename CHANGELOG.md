@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.16
+
+* Refactored `SpoilerRenderObjectWidget` to use `onClipPath` and `onPaint` callbacks, removing direct `SpoilerController` dependency.
+
 ## 1.0.15
 
 * Added `SpoilerTextFormField` to keep native text field behaviors (cursor, context menu) while applying spoiler masks to selected ranges.

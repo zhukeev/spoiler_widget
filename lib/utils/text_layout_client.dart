@@ -38,7 +38,7 @@ class TextPainterLayoutClient implements TextLayoutClient {
 }
 
 /// Build a path for a selection using any [TextLayoutClient].
-Path? buildSelectionPath({
+(Path?, List<Rect>) buildSelectionPath({
   required TextLayoutClient layout,
   required String text,
   required TextSelection selection,
@@ -48,9 +48,10 @@ Path? buildSelectionPath({
   final int rawEnd = selection.start > selection.end ? selection.start : selection.end;
   final int start = rawStart.clamp(0, text.length);
   final int end = rawEnd.clamp(0, text.length);
-  if (start >= end) return null;
+  if (start >= end) return (null, []);
 
   final path = Path();
+  final boxList = <Rect>[];
   bool hasContent = false;
 
   for (int i = start; i < end; i++) {
@@ -59,10 +60,11 @@ Path? buildSelectionPath({
 
     final boxes = layout.getBoxesForSelection(TextSelection(baseOffset: i, extentOffset: i + 1));
     for (final box in boxes) {
+      boxList.add(box.toRect());
       path.addRect(box.toRect());
       hasContent = true;
     }
   }
 
-  return hasContent ? path : null;
+  return hasContent ? (path, boxList) : (null, const <Rect>[]);
 }

@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:spoiler_widget/models/spoiler_configs.dart';
 
 import 'package:spoiler_widget/models/spoiler_controller.dart';
-import 'package:spoiler_widget/utils/text_hider.dart';
-import 'package:spoiler_widget/widgets/spoiler_text_painter_multi.dart';
+import 'package:spoiler_widget/widgets/spoiler_render_object.dart';
 
 /// High-level wrapper that:
 ///  - hides all text widgets in the subtree (Text / RichText),
-///  - lets [SpoilerTextPainterMulti] collect their layout/regions,
+///  - lets [SpoilerRenderObjectWidget] intercept painting,
 ///  - then renders custom spoiler particles + text via canvas.
 ///
 /// You can wrap *any* widget tree (e.g. Column, ListView, custom layouts),
@@ -47,40 +46,34 @@ class _SpoilerTextWrapperState extends State<SpoilerTextWrapper> with TickerProv
     super.dispose();
   }
 
-  /// Called when [SpoilerTextPainterMulti] recomputes text regions.
-  void _setSpoilerRegions(List<Rect> regions) {
-    final spoilerMaskPath = Path();
-    for (final rect in regions) {
-      spoilerMaskPath.addRect(rect);
-    }
-
-    _spoilerController.initializeParticles(spoilerMaskPath, widget.config);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final Widget childWithHiddenText = hideTextInSubtree(widget.child);
-
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onTapDown: (details) {
-        if (widget.config.enableGestureReveal) {
-          _spoilerController.toggle(details.localPosition);
-        }
-      },
-      child: SpoilerTextPainterMulti(
-        onPaint: (canvas, size) {
-          if (_spoilerController.isEnabled) {
-            _spoilerController.drawParticles(canvas);
-
-            canvas.clipPath(
-              _spoilerController.createSplashPathMaskClipper(size),
-            );
+    return ListenableBuilder(
+      listenable: _spoilerController,
+      child: widget.child,
+      builder: (context, child) => GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTapDown: (details) {
+          if (widget.config.enableGestureReveal) {
+            _spoilerController.toggle(details.localPosition);
           }
         },
-        onInit: _setSpoilerRegions,
-        repaint: _spoilerController,
-        child: childWithHiddenText,
+        child: SpoilerRenderObjectWidget(
+          onPaint: (canvas, size) {
+            if (_spoilerController.isEnabled) {
+              _spoilerController.drawParticles(canvas);
+            }
+          },
+          onClipPath: (size) => _spoilerController.createSplashPathMaskClipper(size),
+          onInit: (rects) {
+            final path = Path();
+            for (final rect in rects) {
+              path.addRect(rect);
+            }
+            _spoilerController.initializeParticles(path, widget.config);
+          },
+          child: child,
+        ),
       ),
     );
   }

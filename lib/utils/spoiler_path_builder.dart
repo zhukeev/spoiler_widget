@@ -3,10 +3,15 @@ import 'package:spoiler_widget/utils/path_signature.dart';
 import 'package:spoiler_widget/utils/text_layout_client.dart';
 
 class SpoilerGeometry {
-  SpoilerGeometry({required this.path, required this.signature});
+  SpoilerGeometry({
+    required this.path,
+    required this.signature,
+    required this.rects,
+  });
 
   final Path path;
   final String signature;
+  final List<Rect> rects;
 }
 
 /// Builds spoiler geometry (path + signature) for a given selection.
@@ -19,7 +24,7 @@ SpoilerGeometry? buildSpoilerGeometry({
   required TextSelection selection,
   bool skipWhitespace = true,
 }) {
-  final Path? path = buildSelectionPath(
+  final (path, rects) = buildSelectionPath(
     layout: layout,
     text: text,
     selection: selection,
@@ -30,5 +35,6 @@ SpoilerGeometry? buildSpoilerGeometry({
   return SpoilerGeometry(
     path: path,
     signature: pathSignature(path),
+    rects: rects,
   );
 }
