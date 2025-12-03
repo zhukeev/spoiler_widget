@@ -1,0 +1,322 @@
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
+
+import 'canvas_callback_painter.dart';
+
+class SpoilerRenderObjectWidget extends SingleChildRenderObjectWidget {
+  const SpoilerRenderObjectWidget({
+    super.key,
+    required super.child,
+    this.onPaint,
+    this.onClipPath,
+    this.onInit,
+  });
+
+  final PaintCallback? onPaint;
+  final Path Function(Size size)? onClipPath;
+  final ValueChanged<List<Rect>>? onInit;
+
+  @override
+  RenderSpoiler createRenderObject(BuildContext context) {
+    return RenderSpoiler(
+      textDirection: Directionality.of(context),
+      onPaint: onPaint,
+      onClipPath: onClipPath,
+      onInit: onInit,
+    );
+  }
+
+  @override
+  void updateRenderObject(BuildContext context, covariant RenderSpoiler renderObject) {
+    renderObject
+      ..onPaint = onPaint
+      ..onClipPath = onClipPath
+      ..onInit = onInit
+      ..textDirection = Directionality.of(context);
+  }
+}
+
+class RenderSpoiler extends RenderProxyBox {
+  RenderSpoiler({
+    required TextDirection textDirection,
+    PaintCallback? onPaint,
+    Path Function(Size size)? onClipPath,
+    ValueChanged<List<Rect>>? onInit,
+    RenderBox? child,
+  })  : _textDirection = textDirection,
+        _onPaint = onPaint,
+        _onClipPath = onClipPath,
+        _onInit = onInit,
+        super(child);
+
+  @override
+  bool get isRepaintBoundary => true;
+
+  @override
+  bool hitTestSelf(Offset position) => true;
+
+  TextDirection _textDirection;
+  set textDirection(TextDirection value) {
+    if (_textDirection != value) {
+      _textDirection = value;
+      markNeedsPaint();
+    }
+  }
+
+  PaintCallback? _onPaint;
+  set onPaint(PaintCallback? value) {
+    if (_onPaint != value) {
+      _onPaint = value;
+      markNeedsPaint();
+    }
+  }
+
+  Path Function(Size size)? _onClipPath;
+  set onClipPath(Path Function(Size size)? value) {
+    if (_onClipPath != value) {
+      _onClipPath = value;
+      markNeedsPaint();
+    }
+  }
+
+  ValueChanged<List<Rect>>? _onInit;
+  set onInit(ValueChanged<List<Rect>>? value) {
+    if (_onInit != value) {
+      _onInit = value;
+      markNeedsPaint();
+    }
+  }
+
+  @override
+  void performLayout() {
+    super.performLayout();
+    _rectsDirty = true;
+  }
+
+  bool _rectsDirty = true;
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    // Create our custom context to intercept text drawing
+    final spoilerContext = SpoilerPaintingContext(
+      layer: layer!,
+      estimatedBounds: paintBounds.shift(offset),
+      calculateRects: _rectsDirty,
+    );
+
+    // 1. User custom paint (particles, etc.) - Background
+    if (_onPaint != null) {
+      final canvas = spoilerContext.canvas;
+      canvas.save();
+      canvas.translate(offset.dx, offset.dy);
+      _onPaint!(canvas, size);
+      canvas.restore();
+    }
+
+    // 2. Paint child (with optional clip)
+    if (_onClipPath != null) {
+      final clipPath = _onClipPath!(size);
+      // pushClipPath handles shifting the path by offset
+      spoilerContext.pushClipPath(
+        needsCompositing,
+        offset,
+        paintBounds.shift(offset), // bounds
+        clipPath,
+        (context, offset) {
+          super.paint(context, offset);
+        },
+      );
+    } else {
+      super.paint(spoilerContext, offset);
+    }
+
+    spoilerContext.stopRecordingIfNeeded();
+
+    // If we recalculated rects, update our cache and notify
+    if (_rectsDirty) {
+      _onInit?.call(spoilerContext.spoilerRects);
+      _rectsDirty = false;
+    }
+  }
+}
+
+class SpoilerPaintingContext extends PaintingContext {
+  SpoilerPaintingContext({
+    required ContainerLayer layer,
+    required Rect estimatedBounds,
+    required this.calculateRects,
+  }) : super(layer, estimatedBounds);
+
+  final bool calculateRects;
+  final List<Rect> spoilerRects = [];
+  String? currentText;
+
+  @override
+  ui.Canvas get canvas => SpoilerCanvas(super.canvas, this);
+
+  @override
+  void paintChild(RenderObject child, Offset offset) {
+    if (child is RenderParagraph && calculateRects) {
+      currentText = child.text.toPlainText();
+    }
+    super.paintChild(child, offset);
+    currentText = null;
+  }
+
+  @override
+  PaintingContext createChildContext(ContainerLayer childLayer, ui.Rect bounds) {
+    return _ChildSpoilerPaintingContext(
+      layer: childLayer,
+      estimatedBounds: bounds,
+      rootRects: spoilerRects,
+      calculateRects: calculateRects,
+    );
+  }
+}
+
+class _ChildSpoilerPaintingContext extends SpoilerPaintingContext {
+  _ChildSpoilerPaintingContext({
+    required super.layer,
+    required super.estimatedBounds,
+    required this.rootRects,
+    required super.calculateRects,
+  });
+
+  final List<Rect> rootRects;
+
+  @override
+  List<Rect> get spoilerRects => rootRects;
+}
+
+class SpoilerCanvas implements Canvas {
+  SpoilerCanvas(this.parent, this.context);
+
+  final Canvas parent;
+  final SpoilerPaintingContext context;
+
+  @override
+  void drawParagraph(ui.Paragraph paragraph, ui.Offset offset) {
+    // Only calculate rects if needed (layout changed)
+    if (context.calculateRects) {
+      var currentOffset = 0;
+      while (true) {
+        final range = paragraph.getWordBoundary(ui.TextPosition(offset: currentOffset));
+        if (range.start == range.end) break;
+
+        final fullText = context.currentText ?? '';
+
+        if (fullText.length >= range.end) {
+          final wordText = fullText.substring(range.start, range.end);
+          final trimmed = wordText.trim();
+
+          if (trimmed.isNotEmpty) {
+            final trimStart = wordText.indexOf(trimmed);
+            final start = range.start + trimStart;
+            final end = start + trimmed.length;
+
+            final boxes = paragraph.getBoxesForRange(start, end);
+            for (final box in boxes) {
+              // Rects are collected in local coordinates because we paint at (0,0) with translation
+              final rect = box.toRect().shift(offset);
+              context.spoilerRects.add(rect);
+            }
+          }
+        }
+
+        if (range.end <= currentOffset) break;
+        currentOffset = range.end;
+      }
+    }
+
+    parent.drawParagraph(paragraph, offset);
+  }
+
+  // --- Boilerplate delegation for other Canvas methods ---
+  @override
+  void save() => parent.save();
+  @override
+  void saveLayer(Rect? bounds, Paint paint) => parent.saveLayer(bounds, paint);
+  @override
+  void restore() => parent.restore();
+  @override
+  void restoreToCount(int count) => parent.restoreToCount(count);
+  @override
+  int getSaveCount() => parent.getSaveCount();
+  @override
+  void translate(double dx, double dy) => parent.translate(dx, dy);
+  @override
+  void scale(double sx, [double? sy]) => parent.scale(sx, sy);
+  @override
+  void rotate(double radians) => parent.rotate(radians);
+  @override
+  void skew(double sx, double sy) => parent.skew(sx, sy);
+  @override
+  void transform(Float64List matrix4) => parent.transform(matrix4);
+  @override
+  Float64List getTransform() => parent.getTransform();
+  @override
+  void clipRect(Rect rect, {ui.ClipOp clipOp = ui.ClipOp.intersect, bool doAntiAlias = true}) =>
+      parent.clipRect(rect, clipOp: clipOp, doAntiAlias: doAntiAlias);
+  @override
+  void clipRRect(RRect rrect, {bool doAntiAlias = true}) => parent.clipRRect(rrect, doAntiAlias: doAntiAlias);
+  @override
+  void clipPath(Path path, {bool doAntiAlias = true}) => parent.clipPath(path, doAntiAlias: doAntiAlias);
+  @override
+  Rect getLocalClipBounds() => parent.getLocalClipBounds();
+  @override
+  Rect getDestinationClipBounds() => parent.getDestinationClipBounds();
+  @override
+  void drawColor(Color color, BlendMode blendMode) => parent.drawColor(color, blendMode);
+  @override
+  void drawLine(Offset p1, Offset p2, Paint paint) => parent.drawLine(p1, p2, paint);
+  @override
+  void drawPaint(Paint paint) => parent.drawPaint(paint);
+  @override
+  void drawRect(Rect rect, Paint paint) => parent.drawRect(rect, paint);
+  @override
+  void drawRRect(RRect rrect, Paint paint) => parent.drawRRect(rrect, paint);
+  @override
+  void drawDRRect(RRect outer, RRect inner, Paint paint) => parent.drawDRRect(outer, inner, paint);
+  @override
+  void drawOval(Rect rect, Paint paint) => parent.drawOval(rect, paint);
+  @override
+  void drawCircle(Offset c, double radius, Paint paint) => parent.drawCircle(c, radius, paint);
+  @override
+  void drawArc(Rect rect, double startAngle, double sweepAngle, bool useCenter, Paint paint) =>
+      parent.drawArc(rect, startAngle, sweepAngle, useCenter, paint);
+  @override
+  void drawPath(Path path, Paint paint) => parent.drawPath(path, paint);
+  @override
+  void drawImage(ui.Image image, Offset p, Paint paint) => parent.drawImage(image, p, paint);
+  @override
+  void drawImageRect(ui.Image image, Rect src, Rect dst, Paint paint) => parent.drawImageRect(image, src, dst, paint);
+  @override
+  void drawImageNine(ui.Image image, Rect center, Rect dst, Paint paint) =>
+      parent.drawImageNine(image, center, dst, paint);
+  @override
+  void drawPicture(ui.Picture picture) => parent.drawPicture(picture);
+  @override
+  void drawPoints(ui.PointMode pointMode, List<Offset> points, Paint paint) =>
+      parent.drawPoints(pointMode, points, paint);
+  @override
+  void drawVertices(ui.Vertices vertices, BlendMode blendMode, Paint paint) =>
+      parent.drawVertices(vertices, blendMode, paint);
+  @override
+  void drawAtlas(ui.Image atlas, List<RSTransform> transforms, List<Rect> rects, List<Color>? colors,
+          BlendMode? blendMode, Rect? cullRect, Paint paint) =>
+      parent.drawAtlas(atlas, transforms, rects, colors, blendMode, cullRect, paint);
+  @override
+  void drawRawAtlas(ui.Image atlas, Float32List rstTransforms, Float32List rects, Int32List? colors,
+          BlendMode? blendMode, Rect? cullRect, Paint paint) =>
+      parent.drawRawAtlas(atlas, rstTransforms, rects, colors, blendMode, cullRect, paint);
+  @override
+  void drawShadow(Path path, Color color, double elevation, bool transparentOccluder) =>
+      parent.drawShadow(path, color, elevation, transparentOccluder);
+  @override
+  void drawRawPoints(ui.PointMode pointMode, Float32List points, Paint paint) =>
+      parent.drawRawPoints(pointMode, points, paint);
+}

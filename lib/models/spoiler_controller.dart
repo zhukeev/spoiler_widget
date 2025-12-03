@@ -128,6 +128,14 @@ class SpoilerController extends ChangeNotifier {
   }
 
   Path createSplashPathMaskClipper(Size size) {
+    if (!isInitialized) {
+      return Path();
+    }
+
+    if (!isEnabled) {
+      return Path()..addRect(Offset.zero & size);
+    }
+
     final clippedSpoilerPath = Path.combine(
       PathOperation.intersect,
       // If the fade radius is 0 or the fade animation is disabled, we clip to the entire spoiler region.
@@ -273,7 +281,7 @@ class SpoilerController extends ChangeNotifier {
       // If fade is disabled, just stop everything now.
       _stopAll();
     } else {
-      _fadeCtrl?.toggle().whenCompleteOrCancel(() => _stopAll());
+      _fadeCtrl?.reverse().whenCompleteOrCancel(() => _stopAll());
     }
   }
 
