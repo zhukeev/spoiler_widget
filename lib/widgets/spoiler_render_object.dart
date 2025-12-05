@@ -33,7 +33,8 @@ class SpoilerRenderObjectWidget extends SingleChildRenderObjectWidget {
   }
 
   @override
-  void updateRenderObject(BuildContext context, covariant RenderSpoiler renderObject) {
+  void updateRenderObject(
+      BuildContext context, covariant RenderSpoiler renderObject) {
     renderObject
       ..onPaint = onPaint
       ..onClipPath = onClipPath
@@ -171,7 +172,8 @@ class SpoilerPaintingContext extends PaintingContext {
   }
 
   @override
-  PaintingContext createChildContext(ContainerLayer childLayer, ui.Rect bounds) {
+  PaintingContext createChildContext(
+      ContainerLayer childLayer, ui.Rect bounds) {
     return _ChildSpoilerPaintingContext(
       layer: childLayer,
       estimatedBounds: bounds,
@@ -207,7 +209,8 @@ class SpoilerCanvas implements Canvas {
     if (context.calculateRects) {
       var currentOffset = 0;
       while (true) {
-        final range = paragraph.getWordBoundary(ui.TextPosition(offset: currentOffset));
+        final range =
+            paragraph.getWordBoundary(ui.TextPosition(offset: currentOffset));
         if (range.start == range.end) break;
 
         final fullText = context.currentText ?? '';
@@ -262,20 +265,25 @@ class SpoilerCanvas implements Canvas {
   @override
   Float64List getTransform() => parent.getTransform();
   @override
-  void clipRect(Rect rect, {ui.ClipOp clipOp = ui.ClipOp.intersect, bool doAntiAlias = true}) =>
+  void clipRect(Rect rect,
+          {ui.ClipOp clipOp = ui.ClipOp.intersect, bool doAntiAlias = true}) =>
       parent.clipRect(rect, clipOp: clipOp, doAntiAlias: doAntiAlias);
   @override
-  void clipRRect(RRect rrect, {bool doAntiAlias = true}) => parent.clipRRect(rrect, doAntiAlias: doAntiAlias);
+  void clipRRect(RRect rrect, {bool doAntiAlias = true}) =>
+      parent.clipRRect(rrect, doAntiAlias: doAntiAlias);
   @override
-  void clipPath(Path path, {bool doAntiAlias = true}) => parent.clipPath(path, doAntiAlias: doAntiAlias);
+  void clipPath(Path path, {bool doAntiAlias = true}) =>
+      parent.clipPath(path, doAntiAlias: doAntiAlias);
   @override
   Rect getLocalClipBounds() => parent.getLocalClipBounds();
   @override
   Rect getDestinationClipBounds() => parent.getDestinationClipBounds();
   @override
-  void drawColor(Color color, BlendMode blendMode) => parent.drawColor(color, blendMode);
+  void drawColor(Color color, BlendMode blendMode) =>
+      parent.drawColor(color, blendMode);
   @override
-  void drawLine(Offset p1, Offset p2, Paint paint) => parent.drawLine(p1, p2, paint);
+  void drawLine(Offset p1, Offset p2, Paint paint) =>
+      parent.drawLine(p1, p2, paint);
   @override
   void drawPaint(Paint paint) => parent.drawPaint(paint);
   @override
@@ -283,20 +291,25 @@ class SpoilerCanvas implements Canvas {
   @override
   void drawRRect(RRect rrect, Paint paint) => parent.drawRRect(rrect, paint);
   @override
-  void drawDRRect(RRect outer, RRect inner, Paint paint) => parent.drawDRRect(outer, inner, paint);
+  void drawDRRect(RRect outer, RRect inner, Paint paint) =>
+      parent.drawDRRect(outer, inner, paint);
   @override
   void drawOval(Rect rect, Paint paint) => parent.drawOval(rect, paint);
   @override
-  void drawCircle(Offset c, double radius, Paint paint) => parent.drawCircle(c, radius, paint);
+  void drawCircle(Offset c, double radius, Paint paint) =>
+      parent.drawCircle(c, radius, paint);
   @override
-  void drawArc(Rect rect, double startAngle, double sweepAngle, bool useCenter, Paint paint) =>
+  void drawArc(Rect rect, double startAngle, double sweepAngle, bool useCenter,
+          Paint paint) =>
       parent.drawArc(rect, startAngle, sweepAngle, useCenter, paint);
   @override
   void drawPath(Path path, Paint paint) => parent.drawPath(path, paint);
   @override
-  void drawImage(ui.Image image, Offset p, Paint paint) => parent.drawImage(image, p, paint);
+  void drawImage(ui.Image image, Offset p, Paint paint) =>
+      parent.drawImage(image, p, paint);
   @override
-  void drawImageRect(ui.Image image, Rect src, Rect dst, Paint paint) => parent.drawImageRect(image, src, dst, paint);
+  void drawImageRect(ui.Image image, Rect src, Rect dst, Paint paint) =>
+      parent.drawImageRect(image, src, dst, paint);
   @override
   void drawImageNine(ui.Image image, Rect center, Rect dst, Paint paint) =>
       parent.drawImageNine(image, center, dst, paint);
@@ -309,15 +322,30 @@ class SpoilerCanvas implements Canvas {
   void drawVertices(ui.Vertices vertices, BlendMode blendMode, Paint paint) =>
       parent.drawVertices(vertices, blendMode, paint);
   @override
-  void drawAtlas(ui.Image atlas, List<RSTransform> transforms, List<Rect> rects, List<Color>? colors,
-          BlendMode? blendMode, Rect? cullRect, Paint paint) =>
-      parent.drawAtlas(atlas, transforms, rects, colors, blendMode, cullRect, paint);
+  void drawAtlas(
+          ui.Image atlas,
+          List<RSTransform> transforms,
+          List<Rect> rects,
+          List<Color>? colors,
+          BlendMode? blendMode,
+          Rect? cullRect,
+          Paint paint) =>
+      parent.drawAtlas(
+          atlas, transforms, rects, colors, blendMode, cullRect, paint);
   @override
-  void drawRawAtlas(ui.Image atlas, Float32List rstTransforms, Float32List rects, Int32List? colors,
-          BlendMode? blendMode, Rect? cullRect, Paint paint) =>
-      parent.drawRawAtlas(atlas, rstTransforms, rects, colors, blendMode, cullRect, paint);
+  void drawRawAtlas(
+          ui.Image atlas,
+          Float32List rstTransforms,
+          Float32List rects,
+          Int32List? colors,
+          BlendMode? blendMode,
+          Rect? cullRect,
+          Paint paint) =>
+      parent.drawRawAtlas(
+          atlas, rstTransforms, rects, colors, blendMode, cullRect, paint);
   @override
-  void drawShadow(Path path, Color color, double elevation, bool transparentOccluder) =>
+  void drawShadow(
+          Path path, Color color, double elevation, bool transparentOccluder) =>
       parent.drawShadow(path, color, elevation, transparentOccluder);
   @override
   void drawRawPoints(ui.PointMode pointMode, Float32List points, Paint paint) =>
@@ -326,7 +354,8 @@ class SpoilerCanvas implements Canvas {
   @override
   void clipRSuperellipse(dynamic rsuperellipse, {bool doAntiAlias = true}) {
     // ignore: avoid_dynamic_calls
-    (parent as dynamic).clipRSuperellipse(rsuperellipse, doAntiAlias: doAntiAlias);
+    (parent as dynamic)
+        .clipRSuperellipse(rsuperellipse, doAntiAlias: doAntiAlias);
   }
 
   @override

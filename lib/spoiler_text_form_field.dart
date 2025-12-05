@@ -42,8 +42,10 @@ class SpoilerTextFormField extends StatefulWidget {
   State<SpoilerTextFormField> createState() => _SpoilerTextFormFieldState();
 }
 
-class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with TickerProviderStateMixin {
-  late final SpoilerController _spoilerController = SpoilerController(vsync: this);
+class _SpoilerTextFormFieldState extends State<SpoilerTextFormField>
+    with TickerProviderStateMixin {
+  late final SpoilerController _spoilerController =
+      SpoilerController(vsync: this);
   final GlobalKey _editableKey = GlobalKey();
 
   void _controllerListener() {
@@ -69,7 +71,8 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
     _spoilerSelection = widget.config.textSelection;
     _forceEnabled = widget.config.isEnabled;
     _scheduleRenderSync();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _syncFromRenderEditable());
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _syncFromRenderEditable());
   }
 
   @override
@@ -97,11 +100,14 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
     super.dispose();
   }
 
-  TextSelection? get _effectiveSelection => _spoilerSelection ?? widget.config.textSelection;
+  TextSelection? get _effectiveSelection =>
+      _spoilerSelection ?? widget.config.textSelection;
 
   TextSpoilerConfig get _effectiveConfig {
     final selection = _effectiveSelection;
-    if (selection == null) return widget.config.copyWith(isEnabled: _forceEnabled || widget.config.isEnabled);
+    if (selection == null)
+      return widget.config
+          .copyWith(isEnabled: _forceEnabled || widget.config.isEnabled);
     return widget.config.copyWith(
       textSelection: selection,
       isEnabled: _forceEnabled || _spoilerController.isEnabled,
@@ -137,7 +143,11 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
     final render = _findRenderEditable();
     final host = context.findRenderObject() as RenderBox?;
 
-    if (selection == null || render == null || host == null || !selection.isValid || selection.isCollapsed) return;
+    if (selection == null ||
+        render == null ||
+        host == null ||
+        !selection.isValid ||
+        selection.isCollapsed) return;
 
     _attachScrollOffset(render);
     final layout = RenderEditableLayoutClient(render);
@@ -151,7 +161,8 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
     if (geom.signature == _spoilerSignature) return;
 
     final Matrix4 toHost = render.getTransformTo(host);
-    final Path shiftedPath = Path()..addPath(geom.path, Offset.zero, matrix4: toHost.storage);
+    final Path shiftedPath = Path()
+      ..addPath(geom.path, Offset.zero, matrix4: toHost.storage);
 
     setState(() {
       _spoilerSignature = geom.signature;
@@ -171,7 +182,8 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
 
   @override
   Widget build(BuildContext context) {
-    final baseStyle = widget.config.textStyle ?? DefaultTextStyle.of(context).style;
+    final baseStyle =
+        widget.config.textStyle ?? DefaultTextStyle.of(context).style;
     final direction = Directionality.of(context);
 
     final decoration = widget.decoration.copyWith(
@@ -218,7 +230,8 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
                     if (sel.isValid && !sel.isCollapsed) {
                       items.add(
                         ContextMenuButtonItem(
-                          label: widget.spoilerLabelBuilder?.call() ?? 'Spoiler',
+                          label:
+                              widget.spoilerLabelBuilder?.call() ?? 'Spoiler',
                           onPressed: () {
                             editableTextState.hideToolbar();
 
@@ -228,7 +241,8 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with Ticker
                             });
 
                             WidgetsBinding.instance.addPostFrameCallback(
-                              (_) => _syncFromRenderEditable(selectionChanged: true),
+                              (_) => _syncFromRenderEditable(
+                                  selectionChanged: true),
                             );
                           },
                         ),

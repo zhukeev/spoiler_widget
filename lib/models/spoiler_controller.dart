@@ -97,7 +97,8 @@ class SpoilerController extends ChangeNotifier {
   double _fadeRadius = 0;
 
   /// A 2D texture to draw each particle (a circle image).
-  CircleImage _circleImage = CircleImageFactory.create(diameter: 1, color: Colors.white);
+  CircleImage _circleImage =
+      CircleImageFactory.create(diameter: 1, color: Colors.white);
 
   // ---------------------------
   // Configuration
@@ -126,12 +127,16 @@ class SpoilerController extends ChangeNotifier {
   bool get isEnabled => _isEnabled;
 
   /// True if the fade animation is active.
-  bool get isFading => _config.enableFadeAnimation && _fadeCtrl != null && _fadeCtrl!.isAnimating;
+  bool get isFading =>
+      _config.enableFadeAnimation &&
+      _fadeCtrl != null &&
+      _fadeCtrl!.isAnimating;
 
   /// The bounding rectangle for the spoiler region.
   Rect get spoilerBounds => _spoilerBounds;
 
-  Rect get _splashRect => Rect.fromCircle(center: _fadeCenter, radius: _fadeRadius);
+  Rect get _splashRect =>
+      Rect.fromCircle(center: _fadeCenter, radius: _fadeRadius);
 
   /// A path function that clips only the circular fade area if there’s a non-zero fade radius.
   Path createClipPath(Size size) {
@@ -218,7 +223,8 @@ class SpoilerController extends ChangeNotifier {
 
     _initFadeIfNeeded();
 
-    if (_circleImage.color != _config.particleColor || _circleImage.dimension != _config.maxParticleSize) {
+    if (_circleImage.color != _config.particleColor ||
+        _circleImage.dimension != _config.maxParticleSize) {
       _circleImage = CircleImageFactory.create(
         diameter: _config.maxParticleSize,
         color: _config.particleColor,
@@ -229,7 +235,8 @@ class SpoilerController extends ChangeNotifier {
 
     for (final path in subPaths) {
       final rect = path.getBounds();
-      final particleCount = (rect.width * rect.height) * _config.particleDensity;
+      final particleCount =
+          (rect.width * rect.height) * _config.particleDensity;
       for (int i = 0; i < particleCount; i++) {
         particles.add(_createRandomParticlePath(path));
       }
@@ -254,7 +261,8 @@ class SpoilerController extends ChangeNotifier {
         duration: const Duration(milliseconds: 300),
         vsync: _tickerProvider,
       );
-      _fadeAnim = Tween<double>(begin: 0, end: 1).animate(_fadeCtrl!)..addListener(_updateFadeRadius);
+      _fadeAnim = Tween<double>(begin: 0, end: 1).animate(_fadeCtrl!)
+        ..addListener(_updateFadeRadius);
     }
   }
 
@@ -309,7 +317,8 @@ class SpoilerController extends ChangeNotifier {
   /// Toggle the spoiler effect on/off. Optional [fadeOffset] for the radial center.
   bool toggle(Offset fadeOffset) {
     // If we’re mid-fade, skip to avoid partial toggles.
-    if ((_config.enableFadeAnimation && isFading) || !_spoilerPath.contains(fadeOffset)) {
+    if ((_config.enableFadeAnimation && isFading) ||
+        !_spoilerPath.contains(fadeOffset)) {
       return false;
     }
 
@@ -355,7 +364,9 @@ class SpoilerController extends ChangeNotifier {
       final p = particles[i];
       // If near end of life, spawn a new particle. Otherwise, keep moving.
       // particles[i] = (p.life <= 0.1) ? _createRandomParticle(p.rect) : p.moveToRandomAngle();
-      particles[i] = (p.life <= 0.1) ? _createRandomParticlePath(p.path) : p.moveToRandomAngle();
+      particles[i] = (p.life <= 0.1)
+          ? _createRandomParticlePath(p.path)
+          : p.moveToRandomAngle();
     }
     notifyListeners();
   }
@@ -398,7 +409,9 @@ class SpoilerController extends ChangeNotifier {
     if (_particleCtrl.status.isDismissed) return;
 
     // If atlas buffers are uninitialized, skip
-    if (_atlasTransforms == null || _atlasRects == null || _atlasColors == null) {
+    if (_atlasTransforms == null ||
+        _atlasRects == null ||
+        _atlasColors == null) {
       return;
     }
 

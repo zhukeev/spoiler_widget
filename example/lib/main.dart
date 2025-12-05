@@ -74,7 +74,8 @@ class _MainAppState extends State<MainApp> {
                     particleDensity: .2,
                     enableGestureReveal: true,
                     enableFadeAnimation: true,
-                    textSelection: TextSelection(baseOffset: 3, extentOffset: 8),
+                    textSelection:
+                        TextSelection(baseOffset: 3, extentOffset: 8),
                     textStyle: TextStyle(fontSize: 50, color: Colors.white),
                   ),
                   cursorColor: Colors.deepPurple,
@@ -93,7 +94,8 @@ class _MainAppState extends State<MainApp> {
                     enableFadeAnimation: true,
                     enableGestureReveal: true,
                     onSpoilerVisibilityChanged: (isVisible) {
-                      debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+                      debugPrint(
+                          'Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
                     },
                   ),
                   child: Padding(
@@ -102,7 +104,8 @@ class _MainAppState extends State<MainApp> {
                       children: [
                         Text(
                           text,
-                          style: const TextStyle(fontSize: 50, color: Colors.white),
+                          style: const TextStyle(
+                              fontSize: 50, color: Colors.white),
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -121,11 +124,13 @@ class _MainAppState extends State<MainApp> {
                         ),
                         Text(
                           text,
-                          style: const TextStyle(fontSize: 50, color: Colors.white),
+                          style: const TextStyle(
+                              fontSize: 50, color: Colors.white),
                         ),
                         const Text.rich(
                           TextSpan(
-                            text: 'This is a spoiler! Tap to reveal а.аа. с  \n asd',
+                            text:
+                                'This is a spoiler! Tap to reveal а.аа. с  \n asd',
                             style: TextStyle(fontSize: 20, color: Colors.red),
                           ),
                         ),
@@ -142,7 +147,8 @@ class _MainAppState extends State<MainApp> {
                 ),
                 child: CachedNetworkImage(
                   imageUrl: url,
-                  placeholder: (context, url) => const CircularProgressIndicator(),
+                  placeholder: (context, url) =>
+                      const CircularProgressIndicator(),
                   errorWidget: (context, url, error) => const Icon(Icons.error),
                 ),
               )),
