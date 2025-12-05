@@ -9,17 +9,6 @@ import 'package:spoiler_widget/utils/image_factory.dart';
 import '../extension/rect_x.dart';
 import '../models/particle.dart';
 
-/// Extension to convert Color to ARGB32 int using component accessors.
-extension _ColorToInt on Color {
-  int toInt() {
-    final a = (this.a * 255).round();
-    final r = (this.r * 255).round();
-    final g = (this.g * 255).round();
-    final b = (this.b * 255).round();
-    return (a << 24) | (r << 16) | (g << 8) | b;
-  }
-}
-
 /// A base controller that manages a "spoiler" effect, which involves:
 /// 1. A set of "particles" (positions, movement, lifespan).
 /// 2. An optional fade animation (a radial reveal or cover based on [_fadeCenter]).
@@ -440,11 +429,11 @@ class SpoilerController extends ChangeNotifier {
           rects[transformIndex + 1] = 0.0;
           rects[transformIndex + 2] = _circleImage.dimension.toDouble();
           rects[transformIndex + 3] = _circleImage.dimension.toDouble();
-          colors[index] = color.toInt();
+          colors[index] = color.toARGB32();
           index++;
         } else {
           // If outside the circle, just hide the particle
-          colors[index] = Colors.transparent.toInt();
+          colors[index] = Colors.transparent.toARGB32();
           transforms[transformIndex + 0] = 0;
 
           index++;
@@ -461,7 +450,7 @@ class SpoilerController extends ChangeNotifier {
         rects[transformIndex + 2] = _circleImage.dimension.toDouble();
         rects[transformIndex + 3] = _circleImage.dimension.toDouble();
 
-        colors[index] = p.color.toInt();
+        colors[index] = p.color.toARGB32();
         index++;
       }
     }
