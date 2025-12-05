@@ -9,6 +9,19 @@ import 'package:spoiler_widget/utils/image_factory.dart';
 import '../extension/rect_x.dart';
 import '../models/particle.dart';
 
+/// Extension for Flutter 3.27+ compatibility.
+/// Uses the new Color API (a, r, g, b as doubles 0.0-1.0) to compute ARGB32.
+/// This avoids the deprecated .value and the not-yet-available .toARGB32().
+extension _ColorToARGB32 on Color {
+  int toARGB32() {
+    final aInt = (a * 255).round();
+    final rInt = (r * 255).round();
+    final gInt = (g * 255).round();
+    final bInt = (b * 255).round();
+    return (aInt << 24) | (rInt << 16) | (gInt << 8) | bInt;
+  }
+}
+
 /// A base controller that manages a "spoiler" effect, which involves:
 /// 1. A set of "particles" (positions, movement, lifespan).
 /// 2. An optional fade animation (a radial reveal or cover based on [_fadeCenter]).
