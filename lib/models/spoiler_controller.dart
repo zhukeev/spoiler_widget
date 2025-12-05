@@ -9,6 +9,17 @@ import 'package:spoiler_widget/utils/image_factory.dart';
 import '../extension/rect_x.dart';
 import '../models/particle.dart';
 
+/// Extension to convert Color to ARGB32 int using component accessors.
+extension _ColorToInt on Color {
+  int toInt() {
+    final a = (this.a * 255).round();
+    final r = (this.r * 255).round();
+    final g = (this.g * 255).round();
+    final b = (this.b * 255).round();
+    return (a << 24) | (r << 16) | (g << 8) | b;
+  }
+}
+
 /// A base controller that manages a "spoiler" effect, which involves:
 /// 1. A set of "particles" (positions, movement, lifespan).
 /// 2. An optional fade animation (a radial reveal or cover based on [_fadeCenter]).
@@ -405,10 +416,18 @@ class SpoilerController extends ChangeNotifier {
 
       if (isFading) {
         // If we have a fade, check if the particle is inside the fade circle
-        final dist = (_fadeCenter - p).distance;
+        final distSq = (_fadeCenter - p).distanceSquared;
+        final radiusSq = _fadeRadius * _fadeRadius;
 
-        if (dist < _fadeRadius) {
+        if (distSq < radiusSq) {
           // Enlarge near the edge, turning them white if close to radius boundary
+          // We approximate the "edge" check with squares to avoid sqrt if possible,
+          // or just take sqrt once if needed. Let's stick to simple logic but optimized.
+          // Actually, let's keep it simple for now but using distanceSquared for the main check.
+
+          // Re-calculating distance only if inside for the "edge" effect
+          final dist = sqrt(distSq);
+
           final scale = (dist > _fadeRadius - 20) ? 1.5 : 1.0;
           final color = (dist > _fadeRadius - 20) ? Colors.white : p.color;
 
@@ -421,12 +440,11 @@ class SpoilerController extends ChangeNotifier {
           rects[transformIndex + 1] = 0.0;
           rects[transformIndex + 2] = _circleImage.dimension.toDouble();
           rects[transformIndex + 3] = _circleImage.dimension.toDouble();
-
-          colors[index] = color.value;
+          colors[index] = color.toInt();
           index++;
         } else {
           // If outside the circle, just hide the particle
-          colors[index] = Colors.transparent.value;
+          colors[index] = Colors.transparent.toInt();
           transforms[transformIndex + 0] = 0;
 
           index++;
@@ -443,7 +461,7 @@ class SpoilerController extends ChangeNotifier {
         rects[transformIndex + 2] = _circleImage.dimension.toDouble();
         rects[transformIndex + 3] = _circleImage.dimension.toDouble();
 
-        colors[index] = p.color.value;
+        colors[index] = p.color.toInt();
         index++;
       }
     }
@@ -457,10 +475,12 @@ class SpoilerController extends ChangeNotifier {
         colors,
         BlendMode.srcOver,
         null, // cullRect
-        Paint(),
+        _particlePaint,
       );
     }
   }
+
+  final Paint _particlePaint = Paint();
 
   // ---------------------------------------------------------------------------
   // Disposal

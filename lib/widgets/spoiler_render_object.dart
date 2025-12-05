@@ -1,3 +1,5 @@
+// ignore_for_file: override_on_non_overriding_member
+
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -134,6 +136,7 @@ class RenderSpoiler extends RenderProxyBox {
       super.paint(spoilerContext, offset);
     }
 
+    // ignore: invalid_use_of_protected_member
     spoilerContext.stopRecordingIfNeeded();
 
     // If we recalculated rects, update our cache and notify
@@ -319,4 +322,16 @@ class SpoilerCanvas implements Canvas {
   @override
   void drawRawPoints(ui.PointMode pointMode, Float32List points, Paint paint) =>
       parent.drawRawPoints(pointMode, points, paint);
+
+  @override
+  void clipRSuperellipse(dynamic rsuperellipse, {bool doAntiAlias = true}) {
+    // ignore: avoid_dynamic_calls
+    (parent as dynamic).clipRSuperellipse(rsuperellipse, doAntiAlias: doAntiAlias);
+  }
+
+  @override
+  void drawRSuperellipse(dynamic rsuperellipse, ui.Paint paint) {
+    // ignore: avoid_dynamic_calls
+    (parent as dynamic).drawRSuperellipse(rsuperellipse, paint);
+  }
 }

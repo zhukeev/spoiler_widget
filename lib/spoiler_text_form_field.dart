@@ -45,14 +45,15 @@ class SpoilerTextFormField extends StatefulWidget {
 class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with TickerProviderStateMixin {
   late final SpoilerController _spoilerController = SpoilerController(vsync: this);
   final GlobalKey _editableKey = GlobalKey();
-  late final VoidCallback _controllerListener = () {
+
+  void _controllerListener() {
     if (!mounted) return;
     final enabled = _spoilerController.isEnabled;
     if (_forceEnabled != enabled) {
       _forceEnabled = enabled;
       setState(() {});
     }
-  };
+  }
 
   ViewportOffset? _scrollOffset;
   String? _spoilerSignature;
