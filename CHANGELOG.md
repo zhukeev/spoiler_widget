@@ -1,4 +1,9 @@
 # Changelog
+
+## 1.0.18
+
+* Matrix translate fix
+
 ## 1.0.17
 
 * Bumped minimum Flutter version to 3.27.0.

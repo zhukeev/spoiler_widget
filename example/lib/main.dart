@@ -45,9 +45,9 @@ class _MainAppState extends State<MainApp> {
     path.close();
 
     final Matrix4 matrix = Matrix4.identity()
-      ..translateByDouble(cx, cy, 0.0, 1.0)
+      ..translate(cx, cy, 0.0)
       ..rotateZ(1)
-      ..translateByDouble(-cx, -cy, 0.0, 1.0);
+      ..translate(-cx, -cy, 0.0);
     return SpoilerMask(
       maskPath: path.transform(matrix.storage),
       maskOperation: PathOperation.intersect,
