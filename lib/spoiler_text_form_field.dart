@@ -105,9 +105,11 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField>
 
   TextSpoilerConfig get _effectiveConfig {
     final selection = _effectiveSelection;
-    if (selection == null)
-      return widget.config
-          .copyWith(isEnabled: _forceEnabled || widget.config.isEnabled);
+    if (selection == null) {
+      return widget.config.copyWith(
+        isEnabled: _forceEnabled || widget.config.isEnabled,
+      );
+    }
     return widget.config.copyWith(
       textSelection: selection,
       isEnabled: _forceEnabled || _spoilerController.isEnabled,
