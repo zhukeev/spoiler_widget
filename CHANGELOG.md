@@ -1,4 +1,8 @@
 # Changelog
+## 1.0.17
+
+* Bumped minimum Flutter version to 3.27.0.
+* Added support for `clipRSuperellipse` and `drawRSuperellipse` in `SpoilerCanvas` (via dynamic dispatch for compatibility).
 
 ## 1.0.16
 

@@ -17,8 +17,10 @@ class SpoilerOverlay extends StatefulWidget {
   State<SpoilerOverlay> createState() => _SpoilerOverlayState();
 }
 
-class _SpoilerOverlayState extends State<SpoilerOverlay> with TickerProviderStateMixin {
-  late final SpoilerSpotsController _spoilerController = SpoilerSpotsController(vsync: this);
+class _SpoilerOverlayState extends State<SpoilerOverlay>
+    with TickerProviderStateMixin {
+  late final SpoilerSpotsController _spoilerController =
+      SpoilerSpotsController(vsync: this);
   Rect _spoilerBounds = Rect.zero;
 
   void _initializeSpoilerBounds(Size size) {
@@ -70,7 +72,8 @@ class _SpoilerOverlayState extends State<SpoilerOverlay> with TickerProviderStat
                   onPaint: _onPaint,
                 ),
                 child: ClipPath(
-                  clipper: PathClipper(builder: _spoilerController.createClipPath),
+                  clipper:
+                      PathClipper(builder: _spoilerController.createClipPath),
                   child: ImageFiltered(
                     imageFilter: widget.config.imageFilter,
                     enabled: _spoilerController.isEnabled,

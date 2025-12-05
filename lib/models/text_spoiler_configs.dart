@@ -98,7 +98,8 @@ class TextSpoilerConfig extends SpoilerConfig {
         isEnabled: isEnabled ?? this.isEnabled,
         enableGestureReveal: enableGestureReveal ?? this.enableGestureReveal,
         maskConfig: maskConfig ?? this.maskConfig,
-        onSpoilerVisibilityChanged: onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
+        onSpoilerVisibilityChanged:
+            onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
         textStyle: textStyle ?? this.textStyle,
         textSelection: textSelection ?? this.textSelection,
         textAlign: textAlign ?? this.textAlign,

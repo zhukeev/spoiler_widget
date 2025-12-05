@@ -71,6 +71,7 @@ class WidgetSpoilerConfig extends SpoilerConfig {
         isEnabled: isEnabled ?? this.isEnabled,
         enableGestureReveal: enableGestureReveal ?? this.enableGestureReveal,
         maskConfig: maskConfig ?? this.maskConfig,
-        onSpoilerVisibilityChanged: onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
+        onSpoilerVisibilityChanged:
+            onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
       );
 }
