@@ -2,6 +2,9 @@ import 'package:flutter/rendering.dart';
 
 typedef PaintCallback = void Function(Canvas canvas, Size size);
 
+/// Custom painter that calls [onPaint] callback on paint.
+///
+/// [repaint] is used to trigger repaints when needed.
 class CustomPainterCanvasCallback extends CustomPainter {
   final PaintCallback onPaint;
 

@@ -137,7 +137,9 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField>
   }
 
   void _syncFromRenderEditable({bool selectionChanged = false}) {
-    if (!_forceEnabled && !_effectiveConfig.isEnabled) return;
+    if (!_forceEnabled && !_effectiveConfig.isEnabled) {
+      return;
+    }
 
     final selection = _effectiveSelection;
     final render = _findRenderEditable();
@@ -147,7 +149,9 @@ class _SpoilerTextFormFieldState extends State<SpoilerTextFormField>
         render == null ||
         host == null ||
         !selection.isValid ||
-        selection.isCollapsed) return;
+        selection.isCollapsed) {
+      return;
+    }
 
     _attachScrollOffset(render);
     final layout = RenderEditableLayoutClient(render);
