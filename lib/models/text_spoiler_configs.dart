@@ -67,7 +67,9 @@ class TextSpoilerConfig extends SpoilerConfig {
     super.isEnabled = true,
     super.enableGestureReveal = false,
     super.maskConfig,
+    super.customShaderPath,
     super.onSpoilerVisibilityChanged,
+    super.onGetShaderUniforms,
   });
 
   @override
@@ -81,7 +83,9 @@ class TextSpoilerConfig extends SpoilerConfig {
     bool? isEnabled,
     bool? enableGestureReveal,
     SpoilerMask? maskConfig,
+    String? customShaderPath,
     ValueChanged<bool>? onSpoilerVisibilityChanged,
+    List<double> Function(Rect rect, double time, double seed, SpoilerConfig config)? onGetShaderUniforms,
     TextStyle? textStyle,
     TextSelection? textSelection,
     TextAlign? textAlign,
@@ -98,8 +102,9 @@ class TextSpoilerConfig extends SpoilerConfig {
         isEnabled: isEnabled ?? this.isEnabled,
         enableGestureReveal: enableGestureReveal ?? this.enableGestureReveal,
         maskConfig: maskConfig ?? this.maskConfig,
-        onSpoilerVisibilityChanged:
-            onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
+        customShaderPath: customShaderPath ?? this.customShaderPath,
+        onSpoilerVisibilityChanged: onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
+        onGetShaderUniforms: onGetShaderUniforms ?? this.onGetShaderUniforms,
         textStyle: textStyle ?? this.textStyle,
         textSelection: textSelection ?? this.textSelection,
         textAlign: textAlign ?? this.textAlign,
@@ -140,6 +145,7 @@ class TextSpoilerConfig extends SpoilerConfig {
           enableGestureReveal == other.enableGestureReveal &&
           maskConfig == other.maskConfig &&
           onSpoilerVisibilityChanged == other.onSpoilerVisibilityChanged &&
+          onGetShaderUniforms == other.onGetShaderUniforms &&
           textStyle == other.textStyle &&
           textSelection == other.textSelection &&
           textAlign == other.textAlign &&

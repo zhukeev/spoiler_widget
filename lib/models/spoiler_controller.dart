@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:spoiler_widget/extension/path_x.dart';
 import 'package:spoiler_widget/models/spoiler_configs.dart';
 import 'package:spoiler_widget/utils/image_factory.dart';
+import 'package:spoiler_widget/utils/spoiler_shader_renderer.dart';
 
 import '../extension/rect_x.dart';
 import '../models/particle.dart';
@@ -64,6 +65,14 @@ class SpoilerController extends ChangeNotifier {
   Int32List? _atlasColors;
 
   // ---------------------------
+  // Shader Rendering
+  // ---------------------------
+  /// Custom shader renderer if [SpoilerConfig.customShaderPath] is set.
+  SpoilerShaderRenderer? _shaderRenderer;
+  bool _shaderInitAttempted = false;
+  double _shaderTime = 0;
+
+  // ---------------------------
   // Caching
   // ---------------------------
   Path? _cachedClipPath;
@@ -77,6 +86,14 @@ class SpoilerController extends ChangeNotifier {
   /// A Path describing the spoiler region (may be multiple rectangles).
   final Path _spoilerPath = Path();
 
+  /// Cached list of sub-paths (individual text blocks) for per-rect shader rendering.
+  // TODO: Deprecate/remove if _spoilerRects replaces this completely.
+  // Keeping for fallback or if Path based logic is needed elsewhere.
+  List<Path> _encapsulatedPaths = [];
+
+  /// Explicit list of rectangles for per-rect shader rendering.
+  List<Rect> _spoilerRects = [];
+
   /// A radial fade reveals or hides content starting from this center offset.
   Offset _fadeCenter = Offset.zero;
 
@@ -84,8 +101,7 @@ class SpoilerController extends ChangeNotifier {
   double _fadeRadius = 0;
 
   /// A 2D texture to draw each particle (a circle image).
-  CircleImage _circleImage =
-      CircleImageFactory.create(diameter: 1, color: Colors.white);
+  CircleImage _circleImage = CircleImageFactory.create(diameter: 1, color: Colors.white);
 
   // ---------------------------
   // Configuration
@@ -114,16 +130,12 @@ class SpoilerController extends ChangeNotifier {
   bool get isEnabled => _isEnabled;
 
   /// True if the fade animation is active.
-  bool get isFading =>
-      _config.enableFadeAnimation &&
-      _fadeCtrl != null &&
-      _fadeCtrl!.isAnimating;
+  bool get isFading => _config.enableFadeAnimation && _fadeCtrl != null && _fadeCtrl!.isAnimating;
 
   /// The bounding rectangle for the spoiler region.
   Rect get spoilerBounds => _spoilerBounds;
 
-  Rect get _splashRect =>
-      Rect.fromCircle(center: _fadeCenter, radius: _fadeRadius);
+  Rect get _splashRect => Rect.fromCircle(center: _fadeCenter, radius: _fadeRadius);
 
   /// A path function that clips only the circular fade area if there’s a non-zero fade radius.
   Path createClipPath(Size size) {
@@ -138,6 +150,7 @@ class SpoilerController extends ChangeNotifier {
   }
 
   Path createSplashPathMaskClipper(Size size) {
+    // show black screen while initializing
     if (!isInitialized) {
       return Path();
     }
@@ -179,15 +192,17 @@ class SpoilerController extends ChangeNotifier {
     )..addListener(_onParticleFrameTick);
   }
 
-  /// Sets up the spoiler region, the bounding path, and initializes all particles.
-  /// If [config.isEnabled] is true, the spoiler is turned on, and we start the particle animation.
+  /// Initializes the particle system with necessary bounds and configuration.
   ///
-  /// [path] is the shape describing where particles should exist.
-  /// [config] includes fade, density, maxParticleSize, etc.
-  void initializeParticles(Path path, SpoilerConfig config) {
+  /// [path]: The area where particles can exist (e.g. text outlines).
+  /// [config]: Configuration for speed, density, color, etc.
+  /// [rects]: Optional explicit list of rectangles (e.g. for individual words).
+  ///          If provided, this is preferred for shader rendering to ensure precise per-rect shapes.
+  void initializeParticles(Path path, SpoilerConfig config, {List<Rect>? rects}) {
     // Ensure maxParticleSize is valid
     assert(config.maxParticleSize >= 1, 'maxParticleSize must be >= 1');
     _config = config;
+    _spoilerRects = rects ?? [];
     particles.clear();
     _cachedClipPath = null; // Invalidate cache
 
@@ -208,22 +223,39 @@ class SpoilerController extends ChangeNotifier {
       _spoilerBounds = _spoilerPath.getBounds();
     }
 
+    // If rects weren't provided, try to approximate them from path bounds
+    if (_spoilerRects.isEmpty) {
+      // Fallback: use subPaths derived rects
+      // This keeps backward compatibility if initializeParticles is called without rects
+      // Note: subPaths getter can be expensive, computed once here.
+      final subPaths = _spoilerPath.subPaths;
+      _encapsulatedPaths = subPaths.toList();
+      _spoilerRects = _encapsulatedPaths.map((p) => p.getBounds()).toList();
+    } else {
+      // If rects provided, we should probably still populate _encapsulatedPaths
+      // if we want to support the old particle system correctly?
+      // The old system iterates subPaths.
+      // If the path passed in is just a union of rects, subPaths should work fine.
+      // So we leave the loop related to particles generation as is, using _spoilerPath.subPaths.
+    }
+
     _initFadeIfNeeded();
 
-    if (_circleImage.color != _config.particleColor ||
-        _circleImage.dimension != _config.maxParticleSize) {
+    if (_circleImage.color != _config.particleColor || _circleImage.dimension != _config.maxParticleSize) {
       _circleImage = CircleImageFactory.create(
         diameter: _config.maxParticleSize,
         color: _config.particleColor,
       );
     }
 
+    // Re-generate particles (cpu) regardless of shader model
+    // This allows fallback if shader fails
     final subPaths = _spoilerPath.subPaths;
+    _encapsulatedPaths = subPaths.toList();
 
     for (final path in subPaths) {
       final rect = path.getBounds();
-      final particleCount =
-          (rect.width * rect.height) * _config.particleDensity;
+      final particleCount = (rect.width * rect.height) * _config.particleDensity;
       for (int i = 0; i < particleCount; i++) {
         particles.add(_createRandomParticlePath(path));
       }
@@ -248,8 +280,7 @@ class SpoilerController extends ChangeNotifier {
         duration: const Duration(milliseconds: 300),
         vsync: _tickerProvider,
       );
-      _fadeAnim = Tween<double>(begin: 0, end: 1).animate(_fadeCtrl!)
-        ..addListener(_updateFadeRadius);
+      _fadeAnim = Tween<double>(begin: 0, end: 1).animate(_fadeCtrl!)..addListener(_updateFadeRadius);
     }
   }
 
@@ -304,8 +335,7 @@ class SpoilerController extends ChangeNotifier {
   /// Toggle the spoiler effect on/off. Optional [fadeOffset] for the radial center.
   bool toggle(Offset fadeOffset) {
     // If we’re mid-fade, skip to avoid partial toggles.
-    if ((_config.enableFadeAnimation && isFading) ||
-        !_spoilerPath.contains(fadeOffset)) {
+    if ((_config.enableFadeAnimation && isFading) || !_spoilerPath.contains(fadeOffset)) {
       return false;
     }
 
@@ -345,15 +375,20 @@ class SpoilerController extends ChangeNotifier {
 
   /// Called each frame (via [_particleCtrl]) to move or re-spawn particles.
   void _onParticleFrameTick() {
+    // If using custom shader, update time uniform
+    if (_config.customShaderPath != null) {
+      // 60 FPS approx increment.
+      // Ideally we'd use elapsed time from the Ticker, but this is sufficient for visual effects.
+      _shaderTime += 0.016;
+      notifyListeners();
+    }
+
     if (particles.isEmpty) return;
 
     for (int i = 0; i < particles.length; i++) {
       final p = particles[i];
       // If near end of life, spawn a new particle. Otherwise, keep moving.
-      // particles[i] = (p.life <= 0.1) ? _createRandomParticle(p.rect) : p.moveToRandomAngle();
-      particles[i] = (p.life <= 0.1)
-          ? _createRandomParticlePath(p.path)
-          : p.moveToRandomAngle();
+      particles[i] = (p.life <= 0.1) ? _createRandomParticlePath(p.path) : p.moveToRandomAngle();
     }
     notifyListeners();
   }
@@ -390,19 +425,128 @@ class SpoilerController extends ChangeNotifier {
   // Drawing
   // ---------------------------------------------------------------------------
 
-  /// Draws the current set of particles via [canvas.drawRawAtlas].
+  /// Draws the current set of particles.
+  ///
+  /// Uses shader rendering if enabled and available, otherwise falls back
+  /// to [canvas.drawRawAtlas] for optimal batched rendering.
   void drawParticles(Canvas canvas) {
-    // If particle updates aren’t running, skip drawing
+    // If particle updates aren't running, skip drawing
     if (_particleCtrl.status.isDismissed) return;
 
-    // If atlas buffers are uninitialized, skip
-    if (_atlasTransforms == null ||
-        _atlasRects == null ||
-        _atlasColors == null) {
+    // Update shader time
+    _shaderTime += 0.016; // ~60fps increment
+
+    // Try shader rendering if enabled
+    if (_config.customShaderPath != null) {
+      _initShaderIfNeeded();
+      if (_shaderRenderer != null) {
+        _drawParticlesWithShader(canvas);
+        return;
+      }
+    }
+
+    // Fallback to atlas rendering
+    if (_atlasTransforms == null || _atlasRects == null || _atlasColors == null) {
       return;
     }
 
     _drawParticlesWithRawAtlas(canvas);
+  }
+
+  /// Lazily initializes the shader renderer.
+  void _initShaderIfNeeded() {
+    if (_shaderInitAttempted) return;
+    _shaderInitAttempted = true;
+
+    final path = _config.customShaderPath;
+    if (path == null) return;
+
+    SpoilerShaderRenderer.create(path).then((renderer) {
+      _shaderRenderer = renderer;
+      if (renderer != null) {
+        debugPrint('SpoilerController: Custom shader loaded from $path');
+      }
+    });
+  }
+
+  /// Draws particles using the custom shader.
+  void _drawParticlesWithShader(Canvas canvas) {
+    if (_spoilerRects.isEmpty) {
+      // Fallback if no rects (e.g. initial frame or simple box)
+      canvas.save();
+
+      if (isFading && _fadeRadius > 0) {
+        final circlePath = Path()
+          ..addOval(
+            Rect.fromCircle(center: _fadeCenter, radius: _fadeRadius),
+          );
+        final clipPath = Path.combine(
+          PathOperation.intersect,
+          _spoilerPath,
+          circlePath,
+        );
+        canvas.clipPath(clipPath);
+      } else {
+        // canvas.clipPath(_spoilerPath);
+        // Allow bleeding for "smooth edge" effect
+      }
+
+      final params = _config.onGetShaderUniforms?.call(_spoilerBounds, _shaderTime, 0.0, _config) ?? [];
+
+      _shaderRenderer!.render(
+        canvas,
+        _spoilerBounds.inflate(_config.fadeRadius),
+        _shaderTime,
+        seed: 0.0,
+        params: params,
+      );
+      canvas.restore();
+      return;
+    }
+
+    int i = 0;
+    for (final rect in _spoilerRects) {
+      // Generate a unique, stable seed for this rect index and position
+      // This ensures "Hello" has diverse noise from "World", but consistent over time.
+      final seed = i * 123.45 + rect.left + rect.top;
+
+      canvas.save();
+
+      if (isFading && _fadeRadius > 0) {
+        // Geometric Clipping:
+        // We want to draw particles INSIDE the fade circle (Ink Spreader effect),
+        // covering the text which is masked out by the clipper.
+        final rectPath = Path()..addRect(rect);
+        final circlePath = Path()
+          ..addOval(
+            Rect.fromCircle(center: _fadeCenter, radius: _fadeRadius),
+          );
+
+        final clipPath = Path.combine(
+          PathOperation.intersect,
+          rectPath,
+          circlePath,
+        );
+
+        canvas.clipPath(clipPath);
+      } else {
+        // canvas.clipRect(rect);
+        // Allow bleeding
+      }
+
+      final params = _config.onGetShaderUniforms?.call(rect, _shaderTime, seed, _config) ?? [];
+
+      _shaderRenderer!.render(
+        canvas,
+        rect.inflate(_config.maxParticleSize),
+        _shaderTime,
+        seed: seed,
+        params: params,
+      );
+
+      canvas.restore();
+      i++;
+    }
   }
 
   /// Populates [transforms], [rects], [colors] for each particle, then calls [canvas.drawRawAtlas].

@@ -33,8 +33,19 @@ class SpoilerConfig {
   /// Optional configuration for applying a custom mask to the spoiler.
   final SpoilerMask? maskConfig;
 
+  /// Path to a custom fragment shader asset (e.g. 'shaders/my_clouds.frag').
+  /// If provided, this shader replaces the default particle effect.
+  final String? customShaderPath;
+
   /// Optional callback that is invoked when the visibility of the spoiler changes.
   final ValueChanged<bool>? onSpoilerVisibilityChanged;
+
+  /// Optional callback to generate shader uniforms for a given rect.
+  ///
+  /// This callback determines the list of float values passed to the shader
+  /// for each rendered frame and particle rect.
+  /// The [config] parameter provides access to the current configuration.
+  final List<double> Function(Rect rect, double time, double seed, SpoilerConfig config)? onGetShaderUniforms;
   const SpoilerConfig({
     required this.particleDensity,
     required this.particleSpeed,
@@ -45,7 +56,9 @@ class SpoilerConfig {
     required this.isEnabled,
     required this.enableGestureReveal,
     this.maskConfig,
+    this.customShaderPath,
     this.onSpoilerVisibilityChanged,
+    this.onGetShaderUniforms,
   });
 
   /// Returns a default configuration for the spoiler effect.
@@ -72,7 +85,9 @@ class SpoilerConfig {
     bool? isEnabled,
     bool? enableGestureReveal,
     SpoilerMask? maskConfig,
+    String? customShaderPath,
     ValueChanged<bool>? onSpoilerVisibilityChanged,
+    List<double> Function(Rect rect, double time, double seed, SpoilerConfig config)? onGetShaderUniforms,
   }) =>
       SpoilerConfig(
         particleDensity: particleDensity ?? this.particleDensity,
@@ -84,8 +99,9 @@ class SpoilerConfig {
         isEnabled: isEnabled ?? this.isEnabled,
         enableGestureReveal: enableGestureReveal ?? this.enableGestureReveal,
         maskConfig: maskConfig ?? this.maskConfig,
-        onSpoilerVisibilityChanged:
-            onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
+        customShaderPath: customShaderPath ?? this.customShaderPath,
+        onSpoilerVisibilityChanged: onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
+        onGetShaderUniforms: onGetShaderUniforms ?? this.onGetShaderUniforms,
       );
 
   @override
@@ -99,7 +115,9 @@ class SpoilerConfig {
         isEnabled,
         enableGestureReveal,
         maskConfig,
+        customShaderPath,
         onSpoilerVisibilityChanged,
+        onGetShaderUniforms,
       );
 
   @override
@@ -115,7 +133,9 @@ class SpoilerConfig {
           isEnabled == other.isEnabled &&
           enableGestureReveal == other.enableGestureReveal &&
           maskConfig == other.maskConfig &&
-          onSpoilerVisibilityChanged == other.onSpoilerVisibilityChanged;
+          customShaderPath == other.customShaderPath &&
+          onSpoilerVisibilityChanged == other.onSpoilerVisibilityChanged &&
+          onGetShaderUniforms == other.onGetShaderUniforms;
 }
 
 /// Configuration for applying a mask to the spoiler effect.

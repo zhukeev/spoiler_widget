@@ -36,7 +36,9 @@ class WidgetSpoilerConfig extends SpoilerConfig {
     super.isEnabled = true,
     super.enableGestureReveal = false,
     super.maskConfig,
+    super.customShaderPath,
     super.onSpoilerVisibilityChanged,
+    super.onGetShaderUniforms,
   });
 
   /// Returns a default configuration for the widget spoiler effect.
@@ -57,7 +59,9 @@ class WidgetSpoilerConfig extends SpoilerConfig {
     bool? isEnabled,
     bool? enableGestureReveal,
     SpoilerMask? maskConfig,
+    String? customShaderPath,
     ValueChanged<bool>? onSpoilerVisibilityChanged,
+    List<double> Function(Rect rect, double time, double seed, SpoilerConfig config)? onGetShaderUniforms,
   }) =>
       WidgetSpoilerConfig(
         imageFilter: imageFilter,
@@ -71,7 +75,8 @@ class WidgetSpoilerConfig extends SpoilerConfig {
         isEnabled: isEnabled ?? this.isEnabled,
         enableGestureReveal: enableGestureReveal ?? this.enableGestureReveal,
         maskConfig: maskConfig ?? this.maskConfig,
-        onSpoilerVisibilityChanged:
-            onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
+        customShaderPath: customShaderPath ?? this.customShaderPath,
+        onSpoilerVisibilityChanged: onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
+        onGetShaderUniforms: onGetShaderUniforms ?? this.onGetShaderUniforms,
       );
 }
