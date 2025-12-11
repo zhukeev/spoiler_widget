@@ -24,9 +24,10 @@ class WidgetSpoilerConfig extends SpoilerConfig {
   ///
   /// Inherits base properties from [SpoilerConfig] while adding an image filter
   /// and wave control for additional customization.
-  const WidgetSpoilerConfig({
+  WidgetSpoilerConfig({
     required this.imageFilter,
     this.maxActiveWaves = 4,
+    super.fadeEdgeThickness = 20.0,
     super.particleDensity = 0.1,
     super.particleSpeed = 0.2,
     super.particleColor = Colors.white,
@@ -36,9 +37,7 @@ class WidgetSpoilerConfig extends SpoilerConfig {
     super.isEnabled = true,
     super.enableGestureReveal = false,
     super.maskConfig,
-    super.customShaderPath,
     super.onSpoilerVisibilityChanged,
-    super.onGetShaderUniforms,
   });
 
   /// Returns a default configuration for the widget spoiler effect.
@@ -56,12 +55,12 @@ class WidgetSpoilerConfig extends SpoilerConfig {
     double? maxParticleSize,
     bool? enableFadeAnimation,
     double? fadeRadius,
+    double? fadeEdgeThickness,
     bool? isEnabled,
     bool? enableGestureReveal,
     SpoilerMask? maskConfig,
-    String? customShaderPath,
     ValueChanged<bool>? onSpoilerVisibilityChanged,
-    List<double> Function(Rect rect, double time, double seed, SpoilerConfig config)? onGetShaderUniforms,
+    ShaderConfig? shaderConfig,
   }) =>
       WidgetSpoilerConfig(
         imageFilter: imageFilter,
@@ -72,11 +71,10 @@ class WidgetSpoilerConfig extends SpoilerConfig {
         maxParticleSize: maxParticleSize ?? this.maxParticleSize,
         enableFadeAnimation: enableFadeAnimation ?? this.enableFadeAnimation,
         fadeRadius: fadeRadius ?? this.fadeRadius,
+        fadeEdgeThickness: fadeEdgeThickness ?? this.fadeEdgeThickness,
         isEnabled: isEnabled ?? this.isEnabled,
         enableGestureReveal: enableGestureReveal ?? this.enableGestureReveal,
         maskConfig: maskConfig ?? this.maskConfig,
-        customShaderPath: customShaderPath ?? this.customShaderPath,
         onSpoilerVisibilityChanged: onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
-        onGetShaderUniforms: onGetShaderUniforms ?? this.onGetShaderUniforms,
       );
 }

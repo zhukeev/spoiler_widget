@@ -4,25 +4,62 @@ import 'package:flutter/material.dart';
 ///
 /// This class defines the behavior and appearance of the spoiler animation,
 /// including particle properties, fade effects, and gesture interactions.
+///
+/// Legacy scalar fields (marked as `@Deprecated`) are preserved for backward
+/// compatibility. They are automatically mapped into [particleConfig] and
+/// [fadeConfig] when those configs are not provided explicitly. New code
+/// should prefer [particleConfig] and [fadeConfig] directly.
 @immutable
 class SpoilerConfig {
   /// The density of the particles, affecting the number of particles displayed.
+  ///
+  /// Kept for backward compatibility. When [particleConfig] is not provided,
+  /// this value is used as the source for [ParticleConfig.density].
+  @Deprecated('Use particleConfig.density instead')
   final double particleDensity;
 
   /// The speed at which particles move.
+  ///
+  /// Kept for backward compatibility. When [particleConfig] is not provided,
+  /// this value is used as the source for [ParticleConfig.speed].
+  @Deprecated('Use particleConfig.speed instead')
   final double particleSpeed;
 
   /// The color of the particles.
+  ///
+  /// Kept for backward compatibility. When [particleConfig] is not provided,
+  /// this value is used as the source for [ParticleConfig.color].
+  @Deprecated('Use particleConfig.color instead')
   final Color particleColor;
 
   /// The maximum size a particle can have.
+  ///
+  /// Kept for backward compatibility. When [particleConfig] is not provided,
+  /// this value is used as the source for [ParticleConfig.maxParticleSize].
+  @Deprecated('Use particleConfig.maxSize instead')
   final double maxParticleSize;
 
   /// Determines whether the particles will fade out over time.
+  ///
+  /// Kept for backward compatibility. This flag is used together with
+  /// [fadeConfig]; when [fadeConfig] is not provided, the default
+  /// [FadeConfig] is created based on the deprecated fade fields.
+  @Deprecated('Use fadeConfig instead')
   final bool enableFadeAnimation;
 
   /// The radius over which the fade effect is applied.
+  ///
+  /// Kept for backward compatibility. When [fadeConfig] is not provided,
+  /// this value is used as the source for [FadeConfig.radius].
+  @Deprecated('Use fadeConfig.radius instead')
   final double fadeRadius;
+
+  /// Padding near the fade radius where particles get brighter/larger in shader.
+  ///
+  /// Kept for backward compatibility. When [fadeConfig] is not provided,
+  /// this value is used as the source for [FadeConfig.edgeThickness].
+  @Deprecated('Use fadeConfig.edgeThickness instead')
+  final double fadeEdgeThickness;
 
   /// Controls whether the spoiler effect is active.
   final bool isEnabled;
@@ -33,44 +70,69 @@ class SpoilerConfig {
   /// Optional configuration for applying a custom mask to the spoiler.
   final SpoilerMask? maskConfig;
 
-  /// Path to a custom fragment shader asset (e.g. 'shaders/my_clouds.frag').
-  /// If provided, this shader replaces the default particle effect.
-  final String? customShaderPath;
-
   /// Optional callback that is invoked when the visibility of the spoiler changes.
   final ValueChanged<bool>? onSpoilerVisibilityChanged;
 
-  /// Optional callback to generate shader uniforms for a given rect.
+  /// Optional configuration for applying a custom shader to the spoiler.
+  final ShaderConfig? shaderConfig;
+
+  /// Particle configuration.
   ///
-  /// This callback determines the list of float values passed to the shader
-  /// for each rendered frame and particle rect.
-  /// The [config] parameter provides access to the current configuration.
-  final List<double> Function(Rect rect, double time, double seed, SpoilerConfig config)? onGetShaderUniforms;
-  const SpoilerConfig({
+  /// This is the preferred way to configure particle behavior. If not
+  /// provided in the constructor, it is derived from the deprecated scalar
+  /// fields ([particleDensity], [particleSpeed], [particleColor],
+  /// [maxParticleSize]) for backward compatibility.
+  final ParticleConfig particleConfig;
+
+  /// Fade configuration.
+  ///
+  /// This is the preferred way to configure fade behavior. If not provided
+  /// in the constructor, it is derived from the deprecated fade fields
+  /// ([fadeRadius], [fadeEdgeThickness]) for backward compatibility.
+  final FadeConfig? fadeConfig;
+
+  /// Constructor for the SpoilerConfig class.
+  SpoilerConfig({
     required this.particleDensity,
     required this.particleSpeed,
     required this.particleColor,
     required this.maxParticleSize,
     required this.enableFadeAnimation,
     required this.fadeRadius,
+    required this.fadeEdgeThickness,
     required this.isEnabled,
     required this.enableGestureReveal,
+    ParticleConfig? particleConfig,
+    FadeConfig? fadeConfig,
     this.maskConfig,
-    this.customShaderPath,
     this.onSpoilerVisibilityChanged,
-    this.onGetShaderUniforms,
-  });
+    this.shaderConfig,
+  })  : particleConfig = particleConfig ??
+            ParticleConfig(
+              density: particleDensity,
+              speed: particleSpeed,
+              color: particleColor,
+              maxParticleSize: maxParticleSize,
+            ),
+        fadeConfig = fadeConfig ??
+            (enableFadeAnimation
+                ? FadeConfig(
+                    radius: fadeRadius,
+                    edgeThickness: fadeEdgeThickness,
+                  )
+                : null);
 
   /// Returns a default configuration for the spoiler effect.
   ///
   /// This provides a balanced set of default values suitable for most cases.
-  factory SpoilerConfig.defaultConfig() => const SpoilerConfig(
+  factory SpoilerConfig.defaultConfig() => SpoilerConfig(
         particleDensity: 0.1,
         particleSpeed: 0.2,
         particleColor: Colors.white,
         maxParticleSize: 1.0,
         enableFadeAnimation: true,
         fadeRadius: 3.0,
+        fadeEdgeThickness: 20.0,
         isEnabled: true,
         enableGestureReveal: true,
       );
@@ -82,12 +144,12 @@ class SpoilerConfig {
     double? maxParticleSize,
     bool? enableFadeAnimation,
     double? fadeRadius,
+    double? fadeEdgeThickness,
     bool? isEnabled,
     bool? enableGestureReveal,
     SpoilerMask? maskConfig,
-    String? customShaderPath,
     ValueChanged<bool>? onSpoilerVisibilityChanged,
-    List<double> Function(Rect rect, double time, double seed, SpoilerConfig config)? onGetShaderUniforms,
+    ShaderConfig? shaderConfig,
   }) =>
       SpoilerConfig(
         particleDensity: particleDensity ?? this.particleDensity,
@@ -96,12 +158,12 @@ class SpoilerConfig {
         maxParticleSize: maxParticleSize ?? this.maxParticleSize,
         enableFadeAnimation: enableFadeAnimation ?? this.enableFadeAnimation,
         fadeRadius: fadeRadius ?? this.fadeRadius,
+        fadeEdgeThickness: fadeEdgeThickness ?? this.fadeEdgeThickness,
         isEnabled: isEnabled ?? this.isEnabled,
         enableGestureReveal: enableGestureReveal ?? this.enableGestureReveal,
         maskConfig: maskConfig ?? this.maskConfig,
-        customShaderPath: customShaderPath ?? this.customShaderPath,
         onSpoilerVisibilityChanged: onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
-        onGetShaderUniforms: onGetShaderUniforms ?? this.onGetShaderUniforms,
+        shaderConfig: shaderConfig ?? this.shaderConfig,
       );
 
   @override
@@ -112,12 +174,12 @@ class SpoilerConfig {
         maxParticleSize,
         enableFadeAnimation,
         fadeRadius,
+        fadeEdgeThickness,
         isEnabled,
         enableGestureReveal,
         maskConfig,
-        customShaderPath,
+        shaderConfig,
         onSpoilerVisibilityChanged,
-        onGetShaderUniforms,
       );
 
   @override
@@ -130,12 +192,12 @@ class SpoilerConfig {
           maxParticleSize == other.maxParticleSize &&
           enableFadeAnimation == other.enableFadeAnimation &&
           fadeRadius == other.fadeRadius &&
+          fadeEdgeThickness == other.fadeEdgeThickness &&
           isEnabled == other.isEnabled &&
           enableGestureReveal == other.enableGestureReveal &&
           maskConfig == other.maskConfig &&
-          customShaderPath == other.customShaderPath &&
-          onSpoilerVisibilityChanged == other.onSpoilerVisibilityChanged &&
-          onGetShaderUniforms == other.onGetShaderUniforms;
+          shaderConfig == other.shaderConfig &&
+          onSpoilerVisibilityChanged == other.onSpoilerVisibilityChanged;
 }
 
 /// Configuration for applying a mask to the spoiler effect.
@@ -162,5 +224,56 @@ class SpoilerMask {
     required this.maskPath,
     required this.maskOperation,
     this.offset = Offset.zero,
+  });
+}
+
+class ShaderConfig {
+  /// Path to a custom fragment shader asset (e.g. 'shaders/particles.frag').
+  /// If provided, this shader replaces the default particle effect.
+  final String? customShaderPath;
+
+  /// Optional callback to generate shader uniforms for a given rect.
+  ///
+  /// This callback determines the list of float values passed to the shader
+  /// for each rendered frame and particle rect.
+  /// The [config] parameter provides access to the current configuration.
+  final ShaderCallback? onGetShaderUniforms;
+
+  const ShaderConfig({
+    required this.onGetShaderUniforms,
+    required this.customShaderPath,
+  });
+}
+
+typedef ShaderCallback = List<double> Function(
+  Rect rect,
+  double time,
+  double seed,
+  Offset fadeCenter,
+  bool isFading,
+  SpoilerConfig config,
+);
+
+class FadeConfig {
+  final double radius;
+  final double edgeThickness;
+
+  const FadeConfig({
+    required this.radius,
+    required this.edgeThickness,
+  });
+}
+
+class ParticleConfig {
+  final double density;
+  final double speed;
+  final Color color;
+  final double maxParticleSize;
+
+  ParticleConfig({
+    required this.density,
+    required this.speed,
+    required this.color,
+    required this.maxParticleSize,
   });
 }

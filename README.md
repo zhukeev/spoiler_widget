@@ -283,16 +283,21 @@ class MyApp extends StatelessWidget {
 Table showing common config parameters for both TextSpoilerConfiguration and WidgetSpoilerConfiguration.
 
 | Field            | Type            | Description                                                  |
-|-----------------|----------------|--------------------------------------------------------------|
-| `isEnabled`     | bool            | Whether the spoiler starts covered `true`.                   |
-| `enableFadeAnimation` | bool            | Enables smooth fade-in/out.                                  |
-| `fadeRadius`    | double          | The circle radius for radial fade.                           |
-| `particleDensity` | double        | The density of particles in the spoiler.                     |
-| `maxParticleSize` | double        | The maximum size of particles.                               |
-| `particleSpeed` | double       | Speed factor for particle movement.                          |
-| `enableGestureReveal` | bool            | Whether tapped toggle should be out of the box.              |
-| `maskConfig` | SpoilerMask?            | Optional mask to apply using a `Path`.                       |
-| `onSpoilerVisibilityChanged` | ValueChanged?            | Optional callback fired when spoiler becomes visible/hidden. |
+|------------------|-----------------|--------------------------------------------------------------|
+| `isEnabled`      | bool            | Whether the spoiler starts covered `true`.                   |
+| `enableFadeAnimation` | bool       | Enables smooth fade-in/out.<br/>Deprecated, use `fadeConfig`.|
+| `fadeRadius`     | double          | Deprecated, use `fadeConfig`.                                |
+| `particleDensity`| double          | Deprecated, use `particleConfig`.                            |
+| `maxParticleSize`| double          | Deprecated, use `particleConfig`.                            |
+| `particleSpeed`  | double          | Deprecated, use `particleConfig`.                            |
+| `particleColor`  | Color           | Deprecated, use `particleConfig`.                            |
+| `fadeEdgeThickness` | double       | Deprecated, use `fadeConfig`.                                |
+| `particleConfig` | ParticleConfig? | Particle system parameters (density, speed, color, size).    |
+| `fadeConfig`     | FadeConfig?     | Fade animation parameters (radius, edge thickness).          |
+| `shaderConfig`   | ShaderConfig?   | Custom fragment shader configuration for particles.          |
+| `enableGestureReveal` | bool       | Whether tapped toggle should be out of the box.              |
+| `maskConfig`     | SpoilerMask?    | Optional mask to apply using a `Path`.                       |
+| `onSpoilerVisibilityChanged` | ValueChanged? | Optional callback fired when spoiler becomes visible/hidden. |
 
 #### TextSpoilerConfiguration
 
@@ -321,6 +326,65 @@ Yes—by default, you get a basic spoiler with fade. Use SpoilerSpotsController 
 
 3) Does this work on the web?
 Yes! It’s entirely in Flutter/Dart. Just ensure you handle any platform quirks with gesture input.
+
+
+### 4. Custom Fragment Shaders (New Feature)
+
+`spoiler_widget` now supports **custom fragment shaders** for full GPU‑driven particle rendering.
+
+This allows you to override how particles look, move, fade, and react to user gestures.
+
+#### How to use
+
+```dart
+SpoilerTextWrapper(
+  config: SpoilerConfig(
+    isEnabled: true,
+    enableGestureReveal: true,
+
+    // New API: particle + fade configs
+    particleConfig: ParticleConfig(
+      density: 0.15,
+      speed: 0.25,
+      color: Colors.white,
+      maxParticleSize: 1.5,
+    ),
+    fadeConfig: FadeConfig(
+      radius: 4.0,
+      edgeThickness: 18.0,
+    ),
+
+    // NEW: GPU shader override
+    shaderConfig: ShaderConfig(
+      customShaderPath: 'shaders/particles.frag',
+      onGetShaderUniforms:
+          (rect, time, seed, fadeOffset, isFading, config) {
+        return [
+          rect.width, rect.height,      // uResolution
+          time,                         // uTime
+          rect.left, rect.top,
+          rect.width, rect.height,      // uRect
+          seed,                         // uSeed
+          config.particleConfig.color.red / 255,
+          config.particleConfig.color.green / 255,
+          config.particleConfig.color.blue / 255, // uColor
+          config.particleConfig.density,          // uDensity
+          config.particleConfig.maxParticleSize,  // uSize
+          config.particleConfig.speed,            // uSpeed
+          fadeOffset.dx, fadeOffset.dy,           // uFadeCenter
+          config.fadeConfig?.radius ?? 10,        // uFadeRadius
+          isFading ? 1.0 : 0.0,                   // uIsFading
+          config.fadeConfig?.edgeThickness ?? 1,  // uFadeEdgeThickness
+        ];
+      },
+    ),
+  ),
+  child: const Text(
+    'This is a spoiler rendered by your custom shader!',
+    style: TextStyle(fontSize: 24, color: Colors.white),
+  ),
+);
+```
 
 ### Contributing
 

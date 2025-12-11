@@ -74,12 +74,16 @@ class _MainAppState extends State<MainApp> {
                       particleDensity: .1,
                       particleSpeed: .2,
                       fadeRadius: 3,
+                      fadeEdgeThickness: 20,
                       enableFadeAnimation: true,
                       enableGestureReveal: true,
                     ),
                     child: Text(
                       text,
-                      style: const TextStyle(fontSize: 50, color: Colors.white),
+                      style: const TextStyle(
+                        fontSize: 50,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
@@ -92,31 +96,43 @@ class _MainAppState extends State<MainApp> {
                       particleDensity: .1,
                       particleSpeed: .2,
                       fadeRadius: 3,
+                      fadeEdgeThickness: 20,
                       enableFadeAnimation: true,
                       enableGestureReveal: true,
-                      customShaderPath: 'shaders/particles.frag',
-                      onGetShaderUniforms: (rect, time, seed, config) {
-                        return [
-                          // 1. uResolution
-                          rect.width, rect.height,
-                          // 2. uTime
-                          time,
-                          // 3. uRect
-                          rect.left, rect.top, rect.width, rect.height,
-                          // 4. uSeed
-                          seed,
-                          // 5. uColor
-                          config.particleColor.red / 255.0,
-                          config.particleColor.green / 255.0,
-                          config.particleColor.blue / 255.0,
-                          // 6. uDensity
-                          config.particleDensity,
-                          // 7. uSize
-                          config.maxParticleSize / 2,
-                          // 8. uSpeed
-                          config.particleSpeed,
-                        ];
-                      },
+                      shaderConfig: ShaderConfig(
+                        customShaderPath: 'shaders/particles.frag',
+                        onGetShaderUniforms: (rect, time, seed, fadeOffset, isFading, config) {
+                          return [
+                            // 1. uResolution
+                            rect.width, rect.height,
+                            // 2. uTime
+                            time,
+                            // 3. uRect
+                            rect.left, rect.top, rect.width, rect.height,
+                            // 4. uSeed
+                            seed,
+                            // 5. uColor
+                            config.particleConfig.color.red / 255.0,
+                            config.particleConfig.color.green / 255.0,
+                            config.particleConfig.color.blue / 255.0,
+                            // 6. uDensity
+                            config.particleConfig.density,
+                            // 7. uSize
+                            config.particleConfig.maxParticleSize,
+                            // 8. uSpeed
+                            config.particleConfig.speed,
+                            // 9. uFadeCenter
+                            fadeOffset.dx,
+                            fadeOffset.dy,
+                            // 10. uFadeRadius
+                            config.fadeConfig?.radius ?? 10,
+                            // 11. uIsFading
+                            isFading ? 1.0 : 0.0,
+                            // 12. uFadeEdgeThickness
+                            config.fadeConfig?.edgeThickness ?? 1,
+                          ];
+                        },
+                      ),
                       onSpoilerVisibilityChanged: (isVisible) {
                         debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
                       },
@@ -167,7 +183,7 @@ class _MainAppState extends State<MainApp> {
                     child: SpoilerTextFormField(
                       controller: controller,
                       focusNode: FocusNode(),
-                      config: const TextSpoilerConfig(
+                      config: TextSpoilerConfig(
                         particleDensity: .2,
                         enableGestureReveal: true,
                         enableFadeAnimation: true,
@@ -187,31 +203,9 @@ class _MainAppState extends State<MainApp> {
                         particleDensity: .1,
                         particleSpeed: .2,
                         fadeRadius: 3,
+                        fadeEdgeThickness: 20,
                         enableFadeAnimation: true,
                         enableGestureReveal: true,
-                        customShaderPath: 'shaders/thermal.frag',
-                        onGetShaderUniforms: (rect, time, seed, config) {
-                          return [
-                            // 1. uResolution
-                            rect.width, rect.height,
-                            // 2. uTime
-                            time,
-                            // 3. uRect
-                            rect.left, rect.top, rect.width, rect.height,
-                            // 4. uSeed
-                            seed,
-                            // 5. uColor
-                            config.particleColor.red / 255.0,
-                            config.particleColor.green / 255.0,
-                            config.particleColor.blue / 255.0,
-                            // 6. uDensity
-                            config.particleDensity,
-                            // 7. uSize
-                            config.maxParticleSize,
-                            // 8. uSpeed
-                            config.particleSpeed,
-                          ];
-                        },
                         onSpoilerVisibilityChanged: (isVisible) {
                           debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
                         },

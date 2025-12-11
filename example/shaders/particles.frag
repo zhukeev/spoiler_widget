@@ -13,6 +13,11 @@ uniform float uDensity;   // number of particles per area
 uniform float uSize;      // particle diameter in px
 uniform float uSpeed;     // speed per frame (same semantics as in Dart)
 
+uniform vec2  uFadeCenter;
+uniform float uFadeRadius;
+uniform float uIsFading;
+uniform float uEdgeThickness;
+
 out vec4 fragColor;
 
 // simple hash for pseudo-random values per cell
@@ -61,6 +66,21 @@ void main() {
 
     // will accumulate alpha via a src-over blend model
     float alphaAccum = 0.0;
+    float edgeAlphaAccum = 0.0; // tracks contribution of edge-boosted particles for white tinting
+
+    // Per-pixel edge factor (band near the fade radius)
+    float edgeFactorPx = 0.0;
+    if (uIsFading > 0.5 && uFadeRadius > 0.0001) {
+        vec2 fadeCenterLocal = uFadeCenter - uRect.xy;
+        float distToCenter   = length(localFragCoord - fadeCenterLocal);
+        if (distToCenter <= uFadeRadius && uEdgeThickness > 0.0) {
+            edgeFactorPx = smoothstep(
+                uFadeRadius - uEdgeThickness,
+                uFadeRadius,
+                distToCenter
+            );
+        }
+    }
 
     // sample 3x3 neighbor cells — each may contribute one particle
     for (int y = -1; y <= 1; y++) {
@@ -113,6 +133,8 @@ void main() {
             // final radius for this particle instance
             float particleRadiusPx = max(uSize * 0.5, 0.5) * lifeScale * jitterScale;
 
+            particleRadiusPx *= mix(1.0, 1.5, edgeFactorPx);
+
             // AA proportional to particle size
             float aaPx = max(0.5, particleRadiusPx * 0.5);
 
@@ -129,15 +151,28 @@ void main() {
 
             // this particle’s opacity contribution
             float candidateAlpha = intensity * alphaLife;
+            // Boost alpha near fade edge
+            float alphaBoost = mix(1.0, 1.5, edgeFactorPx);
+            candidateAlpha *= alphaBoost;
 
             // classic src-over alpha blending (same behavior Canvas uses)
             alphaAccum = alphaAccum + candidateAlpha * (1.0 - alphaAccum);
+
+            // Track edge-weighted alpha separately for white tint mix later
+            float edgeAlpha = candidateAlpha * edgeFactorPx;
+            edgeAlphaAccum = edgeAlphaAccum + edgeAlpha * (1.0 - edgeAlphaAccum);
         }
     }
 
     // final color modulated by accumulated alpha
     float alpha = clamp(alphaAccum, 0.0, 1.0);
     vec3  col   = uColor * alpha;
+
+    // Fade edge highlight: tint only where edge-boosted particles contributed.
+    if (uIsFading > 0.5 && uFadeRadius > 0.0001 && alpha > 0.0) {
+        float edgeMix = clamp(edgeAlphaAccum / alpha, 0.0, 1.0);
+        col = mix(col, vec3(1.0) * alpha, edgeMix * 0.6);
+    }
 
     // small trick so compiler doesn’t drop this uniform
     float resSum        = uResolution.x + uResolution.y;

@@ -52,12 +52,13 @@ class TextSpoilerConfig extends SpoilerConfig {
   ///
   /// Inherits base properties from [SpoilerConfig] while adding
   /// text-specific customizations such as styling, alignment, and selection.
-  const TextSpoilerConfig({
+  TextSpoilerConfig({
     this.textStyle,
     this.textSelection,
     this.textAlign,
     this.maxLines,
     this.isEllipsis,
+    super.fadeEdgeThickness = 20.0,
     super.particleDensity = 20.0,
     super.particleSpeed = 0.2,
     super.particleColor = Colors.white70,
@@ -67,13 +68,12 @@ class TextSpoilerConfig extends SpoilerConfig {
     super.isEnabled = true,
     super.enableGestureReveal = false,
     super.maskConfig,
-    super.customShaderPath,
     super.onSpoilerVisibilityChanged,
-    super.onGetShaderUniforms,
-  });
+  }) : super(shaderConfig: null);
 
   @override
   TextSpoilerConfig copyWith({
+    double? fadeEdgeThickness,
     double? particleDensity,
     double? particleSpeed,
     Color? particleColor,
@@ -83,12 +83,11 @@ class TextSpoilerConfig extends SpoilerConfig {
     bool? isEnabled,
     bool? enableGestureReveal,
     SpoilerMask? maskConfig,
-    String? customShaderPath,
     ValueChanged<bool>? onSpoilerVisibilityChanged,
-    List<double> Function(Rect rect, double time, double seed, SpoilerConfig config)? onGetShaderUniforms,
     TextStyle? textStyle,
     TextSelection? textSelection,
     TextAlign? textAlign,
+    ShaderConfig? shaderConfig,
     int? maxLines,
     bool? isEllipsis,
   }) =>
@@ -99,12 +98,11 @@ class TextSpoilerConfig extends SpoilerConfig {
         maxParticleSize: maxParticleSize ?? this.maxParticleSize,
         enableFadeAnimation: enableFadeAnimation ?? this.enableFadeAnimation,
         fadeRadius: fadeRadius ?? this.fadeRadius,
+        fadeEdgeThickness: fadeEdgeThickness ?? this.fadeEdgeThickness,
         isEnabled: isEnabled ?? this.isEnabled,
         enableGestureReveal: enableGestureReveal ?? this.enableGestureReveal,
         maskConfig: maskConfig ?? this.maskConfig,
-        customShaderPath: customShaderPath ?? this.customShaderPath,
         onSpoilerVisibilityChanged: onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
-        onGetShaderUniforms: onGetShaderUniforms ?? this.onGetShaderUniforms,
         textStyle: textStyle ?? this.textStyle,
         textSelection: textSelection ?? this.textSelection,
         textAlign: textAlign ?? this.textAlign,
@@ -120,6 +118,7 @@ class TextSpoilerConfig extends SpoilerConfig {
         maxParticleSize,
         enableFadeAnimation,
         fadeRadius,
+        fadeEdgeThickness,
         isEnabled,
         enableGestureReveal,
         maskConfig,
@@ -141,11 +140,11 @@ class TextSpoilerConfig extends SpoilerConfig {
           maxParticleSize == other.maxParticleSize &&
           enableFadeAnimation == other.enableFadeAnimation &&
           fadeRadius == other.fadeRadius &&
+          fadeEdgeThickness == other.fadeEdgeThickness &&
           isEnabled == other.isEnabled &&
           enableGestureReveal == other.enableGestureReveal &&
           maskConfig == other.maskConfig &&
           onSpoilerVisibilityChanged == other.onSpoilerVisibilityChanged &&
-          onGetShaderUniforms == other.onGetShaderUniforms &&
           textStyle == other.textStyle &&
           textSelection == other.textSelection &&
           textAlign == other.textAlign &&
