@@ -14,31 +14,42 @@ class SpoilerRenderObjectWidget extends SingleChildRenderObjectWidget {
     super.key,
     required super.child,
     this.onPaint,
+    this.onAfterPaint,
     this.onClipPath,
     this.onInit,
+    this.imageFilter,
+    this.enableOverlay = false,
   });
 
   final PaintCallback? onPaint;
+  final PaintCallback? onAfterPaint;
   final Path Function(Size size)? onClipPath;
   final ValueChanged<List<Rect>>? onInit;
+  final ui.ImageFilter? imageFilter;
+  final bool enableOverlay;
 
   @override
   RenderSpoiler createRenderObject(BuildContext context) {
     return RenderSpoiler(
       textDirection: Directionality.of(context),
       onPaint: onPaint,
+      onAfterPaint: onAfterPaint,
       onClipPath: onClipPath,
       onInit: onInit,
+      imageFilter: imageFilter,
+      enableOverlay: enableOverlay,
     );
   }
 
   @override
-  void updateRenderObject(
-      BuildContext context, covariant RenderSpoiler renderObject) {
+  void updateRenderObject(BuildContext context, covariant RenderSpoiler renderObject) {
     renderObject
       ..onPaint = onPaint
+      ..onAfterPaint = onAfterPaint
       ..onClipPath = onClipPath
       ..onInit = onInit
+      ..imageFilter = imageFilter
+      ..enableOverlay = enableOverlay
       ..textDirection = Directionality.of(context);
   }
 }
@@ -47,13 +58,19 @@ class RenderSpoiler extends RenderProxyBox {
   RenderSpoiler({
     required TextDirection textDirection,
     PaintCallback? onPaint,
+    PaintCallback? onAfterPaint,
     Path Function(Size size)? onClipPath,
     ValueChanged<List<Rect>>? onInit,
+    ui.ImageFilter? imageFilter,
+    bool enableOverlay = false,
     RenderBox? child,
   })  : _textDirection = textDirection,
         _onPaint = onPaint,
+        _onAfterPaint = onAfterPaint,
         _onClipPath = onClipPath,
         _onInit = onInit,
+        _imageFilter = imageFilter,
+        _enableOverlay = enableOverlay,
         super(child);
 
   @override
@@ -78,6 +95,14 @@ class RenderSpoiler extends RenderProxyBox {
     }
   }
 
+  PaintCallback? _onAfterPaint;
+  set onAfterPaint(PaintCallback? value) {
+    if (_onAfterPaint != value) {
+      _onAfterPaint = value;
+      markNeedsPaint();
+    }
+  }
+
   Path Function(Size size)? _onClipPath;
   set onClipPath(Path Function(Size size)? value) {
     if (_onClipPath != value) {
@@ -94,6 +119,22 @@ class RenderSpoiler extends RenderProxyBox {
     }
   }
 
+  ui.ImageFilter? _imageFilter;
+  set imageFilter(ui.ImageFilter? value) {
+    if (_imageFilter != value) {
+      _imageFilter = value;
+      markNeedsPaint();
+    }
+  }
+
+  bool _enableOverlay;
+  set enableOverlay(bool value) {
+    if (_enableOverlay != value) {
+      _enableOverlay = value;
+      markNeedsPaint();
+    }
+  }
+
   @override
   void performLayout() {
     super.performLayout();
@@ -104,46 +145,157 @@ class RenderSpoiler extends RenderProxyBox {
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    // Create our custom context to intercept text drawing
-    final spoilerContext = SpoilerPaintingContext(
+    if (_enableOverlay) {
+      // 1. Paint Base (Clear child) normally.
+      super.paint(context, offset);
+
+      // 2. Prepare for Overlay (Backdrop Blur + Particles)
+      // Check if we have anything to draw on top.
+      if (_onClipPath == null && _onPaint == null && _onAfterPaint == null && _imageFilter == null) {
+        return;
+      }
+
+      final clipPath = _onClipPath?.call(size);
+
+      // Logic:
+      // A. Clip Scope (defines the "Spoiler Area"). Outside of clip = clean base.
+      // B. Inside Clip:
+      //    i.   Background Particles (obscured by blur?).
+      //    ii.  BackdropFilter (Blur the base + bg particles).
+      //    iii. Foreground Particles (Sharp).
+
+      if (clipPath != null) {
+        context.pushClipPath(needsCompositing, offset, paintBounds.shift(offset), clipPath, (c, o) {
+          _paintOverlayContent(c, o);
+        });
+      } else {
+        // No Clip (Full Rect)
+        _paintOverlayContent(context, offset);
+      }
+      return;
+    }
+
+    // --- Legacy Mode (enableOverlay = false) ---
+    // Used by SpoilerTextWrapper to intercept text rects.
+
+    final clipPath = _onClipPath?.call(size);
+
+    // Helper to paint the "Spoiler Layer"
+    void paintSpoilerLayer(PaintingContext layerContext, Offset layerOffset) {
+      final spoilerContext = layerContext is SpoilerPaintingContext
+          ? layerContext
+          : SpoilerPaintingContext(
+              layer: layer!,
+              estimatedBounds: paintBounds.shift(layerOffset),
+              calculateRects: _rectsDirty,
+            );
+
+      Path? particleClipPath;
+      if (clipPath != null) {
+        // Invert the clip for particles so they are shown where the text is hidden.
+        // Assumes clipPath cuts out the text (Difference).
+        // Inverse = Screen - clipPath = Text Area.
+        particleClipPath = Path.combine(
+          PathOperation.difference,
+          Path()..addRect(Offset.zero & size),
+          clipPath,
+        );
+      }
+
+      // 1. Background Particles (Clipped to Text Area)
+      if (_onPaint != null) {
+        if (particleClipPath != null) {
+          spoilerContext.pushClipPath(needsCompositing, layerOffset, paintBounds.shift(layerOffset), particleClipPath,
+              (c, o) {
+            _drawParticles(c, o, _onPaint);
+          });
+        } else {
+          _drawParticles(spoilerContext, layerOffset, _onPaint);
+        }
+      }
+
+      // 2. Child (Clipped to Hide Text)
+      if (clipPath != null) {
+        spoilerContext.pushClipPath(needsCompositing, layerOffset, paintBounds.shift(layerOffset), clipPath, (c, o) {
+          _paintChildWithFilter(c, o);
+        });
+      } else {
+        _paintChildWithFilter(spoilerContext, layerOffset);
+      }
+
+      // 3. Foreground Particles (Clipped to Text Area)
+      if (_onAfterPaint != null) {
+        if (particleClipPath != null) {
+          spoilerContext.pushClipPath(needsCompositing, layerOffset, paintBounds.shift(layerOffset), particleClipPath,
+              (c, o) {
+            _drawParticles(c, o, _onAfterPaint);
+          });
+        } else {
+          _drawParticles(spoilerContext, layerOffset, _onAfterPaint);
+        }
+      }
+
+      // ignore: invalid_use_of_protected_member
+      spoilerContext.stopRecordingIfNeeded();
+
+      if (_rectsDirty && layerContext == context) {
+        _onInit?.call(spoilerContext.spoilerRects);
+        _rectsDirty = false;
+      }
+    }
+
+    // We no longer wrap the entire paintSpoilerLayer in pushClipPath.
+    // We strictly use SpoilerPaintingContext to capture rects.
+    final rootSpoilerContext = SpoilerPaintingContext(
       layer: layer!,
       estimatedBounds: paintBounds.shift(offset),
       calculateRects: _rectsDirty,
     );
 
-    // 1. User custom paint (particles, etc.) - Background
-    if (_onPaint != null) {
-      final canvas = spoilerContext.canvas;
-      canvas.save();
-      canvas.translate(offset.dx, offset.dy);
-      _onPaint!(canvas, size);
-      canvas.restore();
-    }
-
-    // 2. Paint child (with optional clip)
-    if (_onClipPath != null) {
-      final clipPath = _onClipPath!(size);
-      // pushClipPath handles shifting the path by offset
-      spoilerContext.pushClipPath(
-        needsCompositing,
-        offset,
-        paintBounds.shift(offset), // bounds
-        clipPath,
-        (context, offset) {
-          super.paint(context, offset);
-        },
-      );
-    } else {
-      super.paint(spoilerContext, offset);
-    }
+    paintSpoilerLayer(rootSpoilerContext, offset);
 
     // ignore: invalid_use_of_protected_member
-    spoilerContext.stopRecordingIfNeeded();
+    rootSpoilerContext.stopRecordingIfNeeded();
 
-    // If we recalculated rects, update our cache and notify
     if (_rectsDirty) {
-      _onInit?.call(spoilerContext.spoilerRects);
+      _onInit?.call(rootSpoilerContext.spoilerRects);
       _rectsDirty = false;
+    }
+  }
+
+  void _paintOverlayContent(PaintingContext context, Offset offset) {
+    // 1. Background Particles
+    _drawParticles(context, offset, _onPaint);
+
+    // 2. Blur + Foreground
+    if (_imageFilter != null) {
+      context.pushLayer(BackdropFilterLayer(filter: _imageFilter!), (childContext, childOffset) {
+        _drawParticles(childContext, childOffset, _onAfterPaint);
+      }, offset);
+    } else {
+      _drawParticles(context, offset, _onAfterPaint);
+    }
+  }
+
+  void _drawParticles(PaintingContext currentContext, Offset currentOffset, PaintCallback? callback) {
+    if (callback != null) {
+      final canvas = currentContext.canvas;
+      canvas.save();
+      canvas.translate(currentOffset.dx, currentOffset.dy);
+      callback(canvas, size);
+      canvas.restore();
+    }
+  }
+
+  void _paintChildWithFilter(PaintingContext context, Offset offset) {
+    if (_imageFilter != null) {
+      context.pushLayer(
+        ImageFilterLayer(imageFilter: _imageFilter!),
+        super.paint,
+        offset,
+      );
+    } else {
+      super.paint(context, offset);
     }
   }
 }
@@ -172,8 +324,7 @@ class SpoilerPaintingContext extends PaintingContext {
   }
 
   @override
-  PaintingContext createChildContext(
-      ContainerLayer childLayer, ui.Rect bounds) {
+  PaintingContext createChildContext(ContainerLayer childLayer, ui.Rect bounds) {
     return _ChildSpoilerPaintingContext(
       layer: childLayer,
       estimatedBounds: bounds,
@@ -209,8 +360,7 @@ class SpoilerCanvas implements Canvas {
     if (context.calculateRects) {
       var currentOffset = 0;
       while (true) {
-        final range =
-            paragraph.getWordBoundary(ui.TextPosition(offset: currentOffset));
+        final range = paragraph.getWordBoundary(ui.TextPosition(offset: currentOffset));
         if (range.start == range.end) break;
 
         final fullText = context.currentText ?? '';
@@ -265,25 +415,20 @@ class SpoilerCanvas implements Canvas {
   @override
   Float64List getTransform() => parent.getTransform();
   @override
-  void clipRect(Rect rect,
-          {ui.ClipOp clipOp = ui.ClipOp.intersect, bool doAntiAlias = true}) =>
+  void clipRect(Rect rect, {ui.ClipOp clipOp = ui.ClipOp.intersect, bool doAntiAlias = true}) =>
       parent.clipRect(rect, clipOp: clipOp, doAntiAlias: doAntiAlias);
   @override
-  void clipRRect(RRect rrect, {bool doAntiAlias = true}) =>
-      parent.clipRRect(rrect, doAntiAlias: doAntiAlias);
+  void clipRRect(RRect rrect, {bool doAntiAlias = true}) => parent.clipRRect(rrect, doAntiAlias: doAntiAlias);
   @override
-  void clipPath(Path path, {bool doAntiAlias = true}) =>
-      parent.clipPath(path, doAntiAlias: doAntiAlias);
+  void clipPath(Path path, {bool doAntiAlias = true}) => parent.clipPath(path, doAntiAlias: doAntiAlias);
   @override
   Rect getLocalClipBounds() => parent.getLocalClipBounds();
   @override
   Rect getDestinationClipBounds() => parent.getDestinationClipBounds();
   @override
-  void drawColor(Color color, BlendMode blendMode) =>
-      parent.drawColor(color, blendMode);
+  void drawColor(Color color, BlendMode blendMode) => parent.drawColor(color, blendMode);
   @override
-  void drawLine(Offset p1, Offset p2, Paint paint) =>
-      parent.drawLine(p1, p2, paint);
+  void drawLine(Offset p1, Offset p2, Paint paint) => parent.drawLine(p1, p2, paint);
   @override
   void drawPaint(Paint paint) => parent.drawPaint(paint);
   @override
@@ -291,25 +436,20 @@ class SpoilerCanvas implements Canvas {
   @override
   void drawRRect(RRect rrect, Paint paint) => parent.drawRRect(rrect, paint);
   @override
-  void drawDRRect(RRect outer, RRect inner, Paint paint) =>
-      parent.drawDRRect(outer, inner, paint);
+  void drawDRRect(RRect outer, RRect inner, Paint paint) => parent.drawDRRect(outer, inner, paint);
   @override
   void drawOval(Rect rect, Paint paint) => parent.drawOval(rect, paint);
   @override
-  void drawCircle(Offset c, double radius, Paint paint) =>
-      parent.drawCircle(c, radius, paint);
+  void drawCircle(Offset c, double radius, Paint paint) => parent.drawCircle(c, radius, paint);
   @override
-  void drawArc(Rect rect, double startAngle, double sweepAngle, bool useCenter,
-          Paint paint) =>
+  void drawArc(Rect rect, double startAngle, double sweepAngle, bool useCenter, Paint paint) =>
       parent.drawArc(rect, startAngle, sweepAngle, useCenter, paint);
   @override
   void drawPath(Path path, Paint paint) => parent.drawPath(path, paint);
   @override
-  void drawImage(ui.Image image, Offset p, Paint paint) =>
-      parent.drawImage(image, p, paint);
+  void drawImage(ui.Image image, Offset p, Paint paint) => parent.drawImage(image, p, paint);
   @override
-  void drawImageRect(ui.Image image, Rect src, Rect dst, Paint paint) =>
-      parent.drawImageRect(image, src, dst, paint);
+  void drawImageRect(ui.Image image, Rect src, Rect dst, Paint paint) => parent.drawImageRect(image, src, dst, paint);
   @override
   void drawImageNine(ui.Image image, Rect center, Rect dst, Paint paint) =>
       parent.drawImageNine(image, center, dst, paint);
@@ -322,30 +462,15 @@ class SpoilerCanvas implements Canvas {
   void drawVertices(ui.Vertices vertices, BlendMode blendMode, Paint paint) =>
       parent.drawVertices(vertices, blendMode, paint);
   @override
-  void drawAtlas(
-          ui.Image atlas,
-          List<RSTransform> transforms,
-          List<Rect> rects,
-          List<Color>? colors,
-          BlendMode? blendMode,
-          Rect? cullRect,
-          Paint paint) =>
-      parent.drawAtlas(
-          atlas, transforms, rects, colors, blendMode, cullRect, paint);
+  void drawAtlas(ui.Image atlas, List<RSTransform> transforms, List<Rect> rects, List<Color>? colors,
+          BlendMode? blendMode, Rect? cullRect, Paint paint) =>
+      parent.drawAtlas(atlas, transforms, rects, colors, blendMode, cullRect, paint);
   @override
-  void drawRawAtlas(
-          ui.Image atlas,
-          Float32List rstTransforms,
-          Float32List rects,
-          Int32List? colors,
-          BlendMode? blendMode,
-          Rect? cullRect,
-          Paint paint) =>
-      parent.drawRawAtlas(
-          atlas, rstTransforms, rects, colors, blendMode, cullRect, paint);
+  void drawRawAtlas(ui.Image atlas, Float32List rstTransforms, Float32List rects, Int32List? colors,
+          BlendMode? blendMode, Rect? cullRect, Paint paint) =>
+      parent.drawRawAtlas(atlas, rstTransforms, rects, colors, blendMode, cullRect, paint);
   @override
-  void drawShadow(
-          Path path, Color color, double elevation, bool transparentOccluder) =>
+  void drawShadow(Path path, Color color, double elevation, bool transparentOccluder) =>
       parent.drawShadow(path, color, elevation, transparentOccluder);
   @override
   void drawRawPoints(ui.PointMode pointMode, Float32List points, Paint paint) =>
@@ -354,8 +479,7 @@ class SpoilerCanvas implements Canvas {
   @override
   void clipRSuperellipse(dynamic rsuperellipse, {bool doAntiAlias = true}) {
     // ignore: avoid_dynamic_calls
-    (parent as dynamic)
-        .clipRSuperellipse(rsuperellipse, doAntiAlias: doAntiAlias);
+    (parent as dynamic).clipRSuperellipse(rsuperellipse, doAntiAlias: doAntiAlias);
   }
 
   @override

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:spoiler_widget/models/spoiler_spots_controller.dart';
 import 'package:spoiler_widget/models/widget_spoiler_config.dart';
-import 'package:spoiler_widget/widgets/canvas_callback_painter.dart';
-import 'package:spoiler_widget/widgets/path_clipper.dart';
+import 'package:spoiler_widget/widgets/spoiler_render_object.dart';
 
 class SpoilerOverlay extends StatefulWidget {
   const SpoilerOverlay({
@@ -17,10 +16,8 @@ class SpoilerOverlay extends StatefulWidget {
   State<SpoilerOverlay> createState() => _SpoilerOverlayState();
 }
 
-class _SpoilerOverlayState extends State<SpoilerOverlay>
-    with TickerProviderStateMixin {
-  late final SpoilerSpotsController _spoilerController =
-      SpoilerSpotsController(vsync: this);
+class _SpoilerOverlayState extends State<SpoilerOverlay> with TickerProviderStateMixin {
+  late final SpoilerSpotsController _spoilerController = SpoilerSpotsController(vsync: this);
   Rect _spoilerBounds = Rect.zero;
 
   void _initializeSpoilerBounds(Size size) {
@@ -62,26 +59,23 @@ class _SpoilerOverlayState extends State<SpoilerOverlay>
       },
       child: ListenableBuilder(
         listenable: _spoilerController,
-        builder: (context, snapshot) {
-          return Stack(
-            alignment: Alignment.center,
-            children: [
-              widget.child,
-              CustomPaint(
-                foregroundPainter: CustomPainterCanvasCallback(
-                  onPaint: _onPaint,
-                ),
-                child: ClipPath(
-                  clipper:
-                      PathClipper(builder: _spoilerController.createClipPath),
-                  child: ImageFiltered(
-                    imageFilter: widget.config.imageFilter,
-                    enabled: _spoilerController.isEnabled,
-                    child: widget.child,
-                  ),
-                ),
-              ),
-            ],
+        child: widget.child,
+        builder: (context, child) {
+          return SpoilerRenderObjectWidget(
+            onAfterPaint: (canvas, size) => _onPaint(canvas, size),
+            onClipPath: (size) {
+              // If not fading (locked), return full path to show full spoiler overlay.
+              if (_spoilerController.isEnabled && !_spoilerController.isFading) {
+                return Path()..addRect(Offset.zero & size);
+              }
+              // During fade, return the punch-hole path (Intersect/Spot logic)
+              // This creates a "Shrinking Spot" effect (Max Radius -> 0)
+              // which matches SpoilerController's "Value 1 = Max Radius" logic.
+              return _spoilerController.createClipPath(size);
+            },
+            enableOverlay: true,
+            imageFilter: _spoilerController.isEnabled ? widget.config.imageFilter : null,
+            child: child!,
           );
         },
       ),
