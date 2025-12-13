@@ -22,5 +22,5 @@ dev_dependencies:
 flutter:
   shaders:
     - shaders/clouds.frag
-    - shaders/particles.frag
+
   uses-material-design: true

@@ -16,28 +16,28 @@ class SpoilerConfig {
   /// Kept for backward compatibility. When [particleConfig] is not provided,
   /// this value is used as the source for [ParticleConfig.density].
   @Deprecated('Use particleConfig.density instead')
-  final double particleDensity;
+  final double? particleDensity;
 
   /// The speed at which particles move.
   ///
   /// Kept for backward compatibility. When [particleConfig] is not provided,
   /// this value is used as the source for [ParticleConfig.speed].
   @Deprecated('Use particleConfig.speed instead')
-  final double particleSpeed;
+  final double? particleSpeed;
 
   /// The color of the particles.
   ///
   /// Kept for backward compatibility. When [particleConfig] is not provided,
   /// this value is used as the source for [ParticleConfig.color].
   @Deprecated('Use particleConfig.color instead')
-  final Color particleColor;
+  final Color? particleColor;
 
   /// The maximum size a particle can have.
   ///
   /// Kept for backward compatibility. When [particleConfig] is not provided,
   /// this value is used as the source for [ParticleConfig.maxParticleSize].
   @Deprecated('Use particleConfig.maxSize instead')
-  final double maxParticleSize;
+  final double? maxParticleSize;
 
   /// Determines whether the particles will fade out over time.
   ///
@@ -45,21 +45,21 @@ class SpoilerConfig {
   /// [fadeConfig]; when [fadeConfig] is not provided, the default
   /// [FadeConfig] is created based on the deprecated fade fields.
   @Deprecated('Use fadeConfig instead')
-  final bool enableFadeAnimation;
+  final bool? enableFadeAnimation;
 
   /// The radius over which the fade effect is applied.
   ///
   /// Kept for backward compatibility. When [fadeConfig] is not provided,
   /// this value is used as the source for [FadeConfig.radius].
   @Deprecated('Use fadeConfig.radius instead')
-  final double fadeRadius;
+  final double? fadeRadius;
 
   /// Padding near the fade radius where particles get brighter/larger in shader.
   ///
   /// Kept for backward compatibility. When [fadeConfig] is not provided,
   /// this value is used as the source for [FadeConfig.edgeThickness].
   @Deprecated('Use fadeConfig.edgeThickness instead')
-  final double fadeEdgeThickness;
+  final double? fadeEdgeThickness;
 
   /// Controls whether the spoiler effect is active.
   final bool isEnabled;
@@ -91,15 +91,27 @@ class SpoilerConfig {
   /// ([fadeRadius], [fadeEdgeThickness]) for backward compatibility.
   final FadeConfig? fadeConfig;
 
+  static const ParticleConfig _defaultParticleConfig = ParticleConfig(
+    density: 0.1,
+    speed: 0.2,
+    color: Colors.white,
+    maxParticleSize: 1.0,
+  );
+
+  static const FadeConfig _defaultFadeConfig = FadeConfig(
+    padding: 3.0,
+    edgeThickness: 20.0,
+  );
+
   /// Constructor for the SpoilerConfig class.
   SpoilerConfig({
-    required this.particleDensity,
-    required this.particleSpeed,
-    required this.particleColor,
-    required this.maxParticleSize,
-    required this.enableFadeAnimation,
-    required this.fadeRadius,
-    required this.fadeEdgeThickness,
+    @Deprecated('Use particleConfig.density instead') this.particleDensity,
+    @Deprecated('Use particleConfig.speed instead') this.particleSpeed,
+    @Deprecated('Use particleConfig.color instead') this.particleColor,
+    @Deprecated('Use particleConfig.maxSize instead') this.maxParticleSize,
+    @Deprecated('Use fadeConfig instead') this.enableFadeAnimation,
+    @Deprecated('Use fadeConfig.radius instead') this.fadeRadius,
+    @Deprecated('Use fadeConfig.edgeThickness instead') this.fadeEdgeThickness,
     required this.isEnabled,
     required this.enableGestureReveal,
     ParticleConfig? particleConfig,
@@ -109,32 +121,58 @@ class SpoilerConfig {
     this.shaderConfig,
   })  : particleConfig = particleConfig ??
             ParticleConfig(
-              density: particleDensity,
-              speed: particleSpeed,
-              color: particleColor,
-              maxParticleSize: maxParticleSize,
+              density: particleDensity ?? _defaultParticleConfig.density,
+              speed: particleSpeed ?? _defaultParticleConfig.speed,
+              color: particleColor ?? _defaultParticleConfig.color,
+              maxParticleSize:
+                  maxParticleSize ?? _defaultParticleConfig.maxParticleSize,
             ),
-        fadeConfig = fadeConfig ??
-            (enableFadeAnimation
-                ? FadeConfig(
-                    radius: fadeRadius,
-                    edgeThickness: fadeEdgeThickness,
-                  )
-                : null);
+        fadeConfig = _resolveFadeConfig(
+          fadeConfig: fadeConfig,
+          enableFadeAnimation: enableFadeAnimation,
+          fadePadding: fadeRadius,
+          fadeEdgeThickness: fadeEdgeThickness,
+        ) {
+    assert(
+      particleConfig == null ||
+          (particleDensity == null &&
+              particleSpeed == null &&
+              particleColor == null &&
+              maxParticleSize == null),
+    );
+    assert(
+      fadeConfig == null ||
+          (enableFadeAnimation == null &&
+              fadeRadius == null &&
+              fadeEdgeThickness == null),
+    );
+  }
+
+  static FadeConfig? _resolveFadeConfig({
+    required FadeConfig? fadeConfig,
+    required bool? enableFadeAnimation,
+    required double? fadePadding,
+    required double? fadeEdgeThickness,
+  }) {
+    if (fadeConfig != null) return fadeConfig;
+
+    final bool enabled = enableFadeAnimation ?? true;
+    if (!enabled) return null;
+
+    return FadeConfig(
+      padding: fadePadding ?? _defaultFadeConfig.padding,
+      edgeThickness: fadeEdgeThickness ?? _defaultFadeConfig.edgeThickness,
+    );
+  }
 
   /// Returns a default configuration for the spoiler effect.
   ///
   /// This provides a balanced set of default values suitable for most cases.
   factory SpoilerConfig.defaultConfig() => SpoilerConfig(
-        particleDensity: 0.1,
-        particleSpeed: 0.2,
-        particleColor: Colors.white,
-        maxParticleSize: 1.0,
-        enableFadeAnimation: true,
-        fadeRadius: 3.0,
-        fadeEdgeThickness: 20.0,
         isEnabled: true,
         enableGestureReveal: true,
+        particleConfig: _defaultParticleConfig,
+        fadeConfig: _defaultFadeConfig,
       );
 
   SpoilerConfig copyWith({
@@ -147,24 +185,59 @@ class SpoilerConfig {
     double? fadeEdgeThickness,
     bool? isEnabled,
     bool? enableGestureReveal,
+    ParticleConfig? particleConfig,
+    FadeConfig? fadeConfig,
     SpoilerMask? maskConfig,
     ValueChanged<bool>? onSpoilerVisibilityChanged,
     ShaderConfig? shaderConfig,
-  }) =>
-      SpoilerConfig(
-        particleDensity: particleDensity ?? this.particleDensity,
-        particleSpeed: particleSpeed ?? this.particleSpeed,
-        particleColor: particleColor ?? this.particleColor,
-        maxParticleSize: maxParticleSize ?? this.maxParticleSize,
-        enableFadeAnimation: enableFadeAnimation ?? this.enableFadeAnimation,
-        fadeRadius: fadeRadius ?? this.fadeRadius,
-        fadeEdgeThickness: fadeEdgeThickness ?? this.fadeEdgeThickness,
-        isEnabled: isEnabled ?? this.isEnabled,
-        enableGestureReveal: enableGestureReveal ?? this.enableGestureReveal,
-        maskConfig: maskConfig ?? this.maskConfig,
-        onSpoilerVisibilityChanged: onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
-        shaderConfig: shaderConfig ?? this.shaderConfig,
-      );
+  }) {
+    final bool legacyParticleOverridesProvided = particleDensity != null ||
+        particleSpeed != null ||
+        particleColor != null ||
+        maxParticleSize != null;
+
+    final bool legacyFadeOverridesProvided = enableFadeAnimation != null ||
+        fadeRadius != null ||
+        fadeEdgeThickness != null;
+
+    final ParticleConfig? nextParticleConfig = legacyParticleOverridesProvided
+        ? null
+        : (particleConfig ?? this.particleConfig);
+
+    final FadeConfig? nextFadeConfig =
+        legacyFadeOverridesProvided ? null : (fadeConfig ?? this.fadeConfig);
+
+    return SpoilerConfig(
+      particleDensity: legacyParticleOverridesProvided
+          ? (particleDensity ?? this.particleDensity)
+          : null,
+      particleSpeed: legacyParticleOverridesProvided
+          ? (particleSpeed ?? this.particleSpeed)
+          : null,
+      particleColor: legacyParticleOverridesProvided
+          ? (particleColor ?? this.particleColor)
+          : null,
+      maxParticleSize: legacyParticleOverridesProvided
+          ? (maxParticleSize ?? this.maxParticleSize)
+          : null,
+      enableFadeAnimation: legacyFadeOverridesProvided
+          ? (enableFadeAnimation ?? this.enableFadeAnimation)
+          : null,
+      fadeRadius:
+          legacyFadeOverridesProvided ? (fadeRadius ?? this.fadeRadius) : null,
+      fadeEdgeThickness: legacyFadeOverridesProvided
+          ? (fadeEdgeThickness ?? this.fadeEdgeThickness)
+          : null,
+      particleConfig: nextParticleConfig,
+      fadeConfig: nextFadeConfig,
+      isEnabled: isEnabled ?? this.isEnabled,
+      enableGestureReveal: enableGestureReveal ?? this.enableGestureReveal,
+      maskConfig: maskConfig ?? this.maskConfig,
+      onSpoilerVisibilityChanged:
+          onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
+      shaderConfig: shaderConfig ?? this.shaderConfig,
+    );
+  }
 
   @override
   int get hashCode => Object.hash(
@@ -180,6 +253,8 @@ class SpoilerConfig {
         maskConfig,
         shaderConfig,
         onSpoilerVisibilityChanged,
+        particleConfig,
+        fadeConfig,
       );
 
   @override
@@ -197,7 +272,9 @@ class SpoilerConfig {
           enableGestureReveal == other.enableGestureReveal &&
           maskConfig == other.maskConfig &&
           shaderConfig == other.shaderConfig &&
-          onSpoilerVisibilityChanged == other.onSpoilerVisibilityChanged;
+          onSpoilerVisibilityChanged == other.onSpoilerVisibilityChanged &&
+          particleConfig == other.particleConfig &&
+          fadeConfig == other.fadeConfig;
 }
 
 /// Configuration for applying a mask to the spoiler effect.
@@ -243,6 +320,46 @@ class ShaderConfig {
     required this.onGetShaderUniforms,
     required this.customShaderPath,
   });
+
+  factory ShaderConfig.particles() => ShaderConfig(
+        customShaderPath: 'packages/spoiler_widget/shaders/particles.frag',
+        onGetShaderUniforms:
+            (rect, time, seed, fadeOffset, isFading, fadeRadius, config) {
+          return [
+            // 1. uResolution
+            rect.width,
+            rect.height,
+            // 2. uTime
+            time,
+            // 3. uRect
+            rect.left,
+            rect.top,
+            rect.width,
+            rect.height,
+            // 4. uSeed
+            seed,
+            // 5. uColor
+            config.particleConfig.color.red / 255.0,
+            config.particleConfig.color.green / 255.0,
+            config.particleConfig.color.blue / 255.0,
+            // 6. uDensity
+            config.particleConfig.density,
+            // 7. uSize
+            config.particleConfig.maxParticleSize,
+            // 8. uSpeed
+            config.particleConfig.speed,
+            // 9. uFadeCenter
+            fadeOffset.dx,
+            fadeOffset.dy,
+            // 10. uFadeRadius
+            fadeRadius,
+            // 11. uIsFading
+            isFading ? 1.0 : 0.0,
+            // 12. uFadeEdgeThickness
+            (config.fadeConfig?.edgeThickness ?? 1.0) * 10.0,
+          ];
+        },
+      );
 }
 
 typedef ShaderCallback = List<double> Function(
@@ -251,29 +368,54 @@ typedef ShaderCallback = List<double> Function(
   double seed,
   Offset fadeCenter,
   bool isFading,
+  double fadeRadius,
   SpoilerConfig config,
 );
 
+@immutable
 class FadeConfig {
-  final double radius;
+  final double padding;
   final double edgeThickness;
 
   const FadeConfig({
-    required this.radius,
+    required this.padding,
     required this.edgeThickness,
   });
+
+  @override
+  int get hashCode => Object.hash(padding, edgeThickness);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FadeConfig &&
+          padding == other.padding &&
+          edgeThickness == other.edgeThickness;
 }
 
+@immutable
 class ParticleConfig {
   final double density;
   final double speed;
   final Color color;
   final double maxParticleSize;
 
-  ParticleConfig({
+  const ParticleConfig({
     required this.density,
     required this.speed,
     required this.color,
     required this.maxParticleSize,
   });
+
+  @override
+  int get hashCode => Object.hash(density, speed, color, maxParticleSize);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ParticleConfig &&
+          density == other.density &&
+          speed == other.speed &&
+          color == other.color &&
+          maxParticleSize == other.maxParticleSize;
 }

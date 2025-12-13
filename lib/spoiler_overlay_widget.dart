@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:spoiler_widget/models/spoiler_spots_controller.dart';
-import 'package:spoiler_widget/models/widget_spoiler.dart';
+import 'package:spoiler_widget/models/widget_spoiler_config.dart';
 import 'package:spoiler_widget/widgets/canvas_callback_painter.dart';
 import 'package:spoiler_widget/widgets/path_clipper.dart';
 
