@@ -17,6 +17,9 @@ uniform vec2  uFadeCenter;
 uniform float uFadeRadius;
 uniform float uIsFading;
 uniform float uEdgeThickness;
+uniform float uEnableWaves;
+uniform float uMaxWaveRadius;
+uniform float uMaxWaveCount;
 
 out vec4 fragColor;
 
@@ -110,11 +113,79 @@ void main() {
             // normalized life (1 → newborn, 0 → dying)
             float life = 1.0 - timeInCycle / lifetimeSec;
 
-            // same movement equation you use on the CPU: speed * frames * time
+            // normal particle movement
             float displacementPx = speedPxFrame * fps * timeInCycle;
-
-            // actual particle position
             vec2 particlePosPx = basePosPx + vel * displacementPx;
+    
+            float waveMultiplier = step(0.5, uEnableWaves);
+            
+            // Allow up to 100 concurrent procedural waves
+            for (int i = 0; i < 100; i++) {
+                // Break if we exceed the configured count
+                if (float(i) >= uMaxWaveCount) break;
+                
+                // Pseudo-random parameters for this wave instance
+                // We divide time into "cycles" for each wave index
+                float waveDuration = 3.0; // Seconds per wave
+                float timeOffset = float(i) * 1.23; // Stagger waves
+                
+                float globalTime = uTime + timeOffset;
+                float cycleIdx = floor(globalTime / waveDuration);
+                float cycleTime = mod(globalTime, waveDuration);
+                
+                // Progress 0.0 -> 1.0
+                float progress = cycleTime / waveDuration;
+                
+                // Randomize center & radius based on cycle ID and wave index
+                // Seed needs to be stable for the duration of the cycle
+                vec2 waveSeed = vec2(float(i), cycleIdx) + uSeed;
+                vec2 rnd = hash2(waveSeed * 13.57);
+                
+                // Map rnd to screen space bounds
+                vec2 waveCenter = rnd * vec2(uRect.z, uRect.w);
+                
+                // Random max radius (e.g., 20% to 50% of screen min dimension)
+                float minDim = min(uRect.z, uRect.w);
+                float calculatedMaxRadius = (0.2 + 0.3 * hash2(waveSeed + 1.0).x) * minDim;
+                
+                // Use configured radius if > 0, otherwise use calculated random radius
+                float maxRadius = (uMaxWaveRadius > 0.0) ? uMaxWaveRadius : calculatedMaxRadius;
+                
+                // Current wavefront radius
+                float limitOffset = 25.0;
+                float currentRadius = (maxRadius + limitOffset) * progress;
+
+                vec2 distVec = waveCenter - particlePosPx;
+                float dist = length(distVec);
+
+                // Check if particle is INSIDE the current wave radius
+                if (dist < currentRadius) {
+                    vec2 direction = distVec / dist;
+                    
+                    // Ratio: 0.0 at center, 1.0 at wavefront.
+                    float ratio = dist / currentRadius;
+
+                    float strength = pow(ratio, 8.0);
+                    
+                    // Soften the hard edge at 1.0 slightly to avoid a "line" cut, 
+                    // but keep it mostly rising.
+                    // actually, let's just use the exponential rise.
+                    // The particles at 1.0 will be pushed maximally OUT (joining the outside).
+                    // The particles at 0.9 will be pushed a bit.
+                    // The center is untouched.
+                    
+                    // Displacement:
+                    // Reduced magnitude to prevent creating a massive empty ring.
+                    float displacement = strength * currentRadius * 0.25 * waveMultiplier;
+                    
+                    // Smooth Fade Out at end of life
+                    float fadeOut = 1.0 - smoothstep(0.7, 1.0, progress);
+                    displacement *= fadeOut;
+                    
+                    // Apply displacement away from center
+                    particlePosPx -= direction * displacement;
+                }
+            }
 
             // particles near "death" become invisible and will respawn
             float visible   = step(0.1, life);

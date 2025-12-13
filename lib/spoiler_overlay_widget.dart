@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:spoiler_widget/models/spoiler_spots_controller.dart';
+import 'package:spoiler_widget/models/spoiler_controller.dart';
 import 'package:spoiler_widget/models/widget_spoiler_config.dart';
 import 'package:spoiler_widget/widgets/spoiler_render_object.dart';
 
@@ -17,12 +18,22 @@ class SpoilerOverlay extends StatefulWidget {
 }
 
 class _SpoilerOverlayState extends State<SpoilerOverlay> with TickerProviderStateMixin {
-  late final SpoilerSpotsController _spoilerController = SpoilerSpotsController(vsync: this);
+  late SpoilerController _spoilerController;
   Rect _spoilerBounds = Rect.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.config.shaderConfig == null) {
+      _spoilerController = SpoilerSpotsController(vsync: this);
+    } else {
+      _spoilerController = SpoilerController(vsync: this);
+    }
+  }
 
   void _initializeSpoilerBounds(Size size) {
     _spoilerBounds = Rect.fromLTWH(0, 0, size.width, size.height);
-    _spoilerController.initParticles(_spoilerBounds, widget.config);
+    _spoilerController.initializeParticles(Path()..addRect(_spoilerBounds), widget.config);
   }
 
   @override

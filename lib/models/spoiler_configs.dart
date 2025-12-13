@@ -124,8 +124,7 @@ class SpoilerConfig {
               density: particleDensity ?? _defaultParticleConfig.density,
               speed: particleSpeed ?? _defaultParticleConfig.speed,
               color: particleColor ?? _defaultParticleConfig.color,
-              maxParticleSize:
-                  maxParticleSize ?? _defaultParticleConfig.maxParticleSize,
+              maxParticleSize: maxParticleSize ?? _defaultParticleConfig.maxParticleSize,
             ),
         fadeConfig = _resolveFadeConfig(
           fadeConfig: fadeConfig,
@@ -135,16 +134,10 @@ class SpoilerConfig {
         ) {
     assert(
       particleConfig == null ||
-          (particleDensity == null &&
-              particleSpeed == null &&
-              particleColor == null &&
-              maxParticleSize == null),
+          (particleDensity == null && particleSpeed == null && particleColor == null && maxParticleSize == null),
     );
     assert(
-      fadeConfig == null ||
-          (enableFadeAnimation == null &&
-              fadeRadius == null &&
-              fadeEdgeThickness == null),
+      fadeConfig == null || (enableFadeAnimation == null && fadeRadius == null && fadeEdgeThickness == null),
     );
   }
 
@@ -191,50 +184,31 @@ class SpoilerConfig {
     ValueChanged<bool>? onSpoilerVisibilityChanged,
     ShaderConfig? shaderConfig,
   }) {
-    final bool legacyParticleOverridesProvided = particleDensity != null ||
-        particleSpeed != null ||
-        particleColor != null ||
-        maxParticleSize != null;
+    final bool legacyParticleOverridesProvided =
+        particleDensity != null || particleSpeed != null || particleColor != null || maxParticleSize != null;
 
-    final bool legacyFadeOverridesProvided = enableFadeAnimation != null ||
-        fadeRadius != null ||
-        fadeEdgeThickness != null;
+    final bool legacyFadeOverridesProvided =
+        enableFadeAnimation != null || fadeRadius != null || fadeEdgeThickness != null;
 
-    final ParticleConfig? nextParticleConfig = legacyParticleOverridesProvided
-        ? null
-        : (particleConfig ?? this.particleConfig);
+    final ParticleConfig? nextParticleConfig =
+        legacyParticleOverridesProvided ? null : (particleConfig ?? this.particleConfig);
 
-    final FadeConfig? nextFadeConfig =
-        legacyFadeOverridesProvided ? null : (fadeConfig ?? this.fadeConfig);
+    final FadeConfig? nextFadeConfig = legacyFadeOverridesProvided ? null : (fadeConfig ?? this.fadeConfig);
 
     return SpoilerConfig(
-      particleDensity: legacyParticleOverridesProvided
-          ? (particleDensity ?? this.particleDensity)
-          : null,
-      particleSpeed: legacyParticleOverridesProvided
-          ? (particleSpeed ?? this.particleSpeed)
-          : null,
-      particleColor: legacyParticleOverridesProvided
-          ? (particleColor ?? this.particleColor)
-          : null,
-      maxParticleSize: legacyParticleOverridesProvided
-          ? (maxParticleSize ?? this.maxParticleSize)
-          : null,
-      enableFadeAnimation: legacyFadeOverridesProvided
-          ? (enableFadeAnimation ?? this.enableFadeAnimation)
-          : null,
-      fadeRadius:
-          legacyFadeOverridesProvided ? (fadeRadius ?? this.fadeRadius) : null,
-      fadeEdgeThickness: legacyFadeOverridesProvided
-          ? (fadeEdgeThickness ?? this.fadeEdgeThickness)
-          : null,
+      particleDensity: legacyParticleOverridesProvided ? (particleDensity ?? this.particleDensity) : null,
+      particleSpeed: legacyParticleOverridesProvided ? (particleSpeed ?? this.particleSpeed) : null,
+      particleColor: legacyParticleOverridesProvided ? (particleColor ?? this.particleColor) : null,
+      maxParticleSize: legacyParticleOverridesProvided ? (maxParticleSize ?? this.maxParticleSize) : null,
+      enableFadeAnimation: legacyFadeOverridesProvided ? (enableFadeAnimation ?? this.enableFadeAnimation) : null,
+      fadeRadius: legacyFadeOverridesProvided ? (fadeRadius ?? this.fadeRadius) : null,
+      fadeEdgeThickness: legacyFadeOverridesProvided ? (fadeEdgeThickness ?? this.fadeEdgeThickness) : null,
       particleConfig: nextParticleConfig,
       fadeConfig: nextFadeConfig,
       isEnabled: isEnabled ?? this.isEnabled,
       enableGestureReveal: enableGestureReveal ?? this.enableGestureReveal,
       maskConfig: maskConfig ?? this.maskConfig,
-      onSpoilerVisibilityChanged:
-          onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
+      onSpoilerVisibilityChanged: onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
       shaderConfig: shaderConfig ?? this.shaderConfig,
     );
   }
@@ -323,8 +297,7 @@ class ShaderConfig {
 
   factory ShaderConfig.particles() => ShaderConfig(
         customShaderPath: 'packages/spoiler_widget/shaders/particles.frag',
-        onGetShaderUniforms:
-            (rect, time, seed, fadeOffset, isFading, fadeRadius, config) {
+        onGetShaderUniforms: (rect, time, seed, fadeOffset, isFading, fadeRadius, config) {
           return [
             // 1. uResolution
             rect.width,
@@ -357,6 +330,12 @@ class ShaderConfig {
             isFading ? 1.0 : 0.0,
             // 12. uFadeEdgeThickness
             (config.fadeConfig?.edgeThickness ?? 1.0) * 10.0,
+            // 13. uEnableWaves
+            config.particleConfig.enableWaves ? 1.0 : 0.0,
+            // 14. uMaxWaveRadius
+            config.particleConfig.maxWaveRadius,
+            // 15. uMaxWaveCount
+            config.particleConfig.maxWaveCount.toDouble(),
           ];
         },
       );
@@ -387,10 +366,7 @@ class FadeConfig {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is FadeConfig &&
-          padding == other.padding &&
-          edgeThickness == other.edgeThickness;
+      identical(this, other) || other is FadeConfig && padding == other.padding && edgeThickness == other.edgeThickness;
 }
 
 @immutable
@@ -399,16 +375,22 @@ class ParticleConfig {
   final double speed;
   final Color color;
   final double maxParticleSize;
+  final bool enableWaves;
+  final double maxWaveRadius;
+  final int maxWaveCount;
 
   const ParticleConfig({
     required this.density,
     required this.speed,
     required this.color,
     required this.maxParticleSize,
+    this.enableWaves = false,
+    this.maxWaveRadius = 0.0,
+    this.maxWaveCount = 3,
   });
 
   @override
-  int get hashCode => Object.hash(density, speed, color, maxParticleSize);
+  int get hashCode => Object.hash(density, speed, color, maxParticleSize, enableWaves, maxWaveRadius, maxWaveCount);
 
   @override
   bool operator ==(Object other) =>
@@ -417,5 +399,8 @@ class ParticleConfig {
           density == other.density &&
           speed == other.speed &&
           color == other.color &&
-          maxParticleSize == other.maxParticleSize;
+          maxParticleSize == other.maxParticleSize &&
+          enableWaves == other.enableWaves &&
+          maxWaveRadius == other.maxWaveRadius &&
+          maxWaveCount == other.maxWaveCount;
 }

@@ -67,11 +67,14 @@ class SpoilerSpotsController extends SpoilerController {
   ///
   /// [rect] is the bounding area.
   /// [configuration] includes fields like [maxActiveWaves], which limit concurrency.
-  void initParticles(Rect rect, WidgetSpoilerConfig configuration) {
-    _config = configuration;
+  @override
+  void initializeParticles(Path path, SpoilerConfig configuration, {List<Rect>? rects}) {
+    if (configuration is WidgetSpoilerConfig) {
+      _config = configuration;
+    }
 
     // Call the base spoiler initialization (particles, fade, etc.).
-    initializeParticles(Path()..addRect(rect), configuration);
+    super.initializeParticles(path, configuration, rects: rects);
 
     // Cancel any existing timer to avoid duplicates.
     _periodicWaveTimer?.cancel();
@@ -162,12 +165,8 @@ class SpoilerSpotsController extends SpoilerController {
       var waveEndpoint = adjustedEnd;
       if (!spoilerBounds.containsOffset(waveEndpoint)) {
         waveEndpoint = Offset(
-          spoilerBounds.left +
-              margin +
-              _random.nextDouble() * (spoilerBounds.width - 2 * margin),
-          spoilerBounds.top +
-              margin +
-              _random.nextDouble() * (spoilerBounds.height - 2 * margin),
+          spoilerBounds.left + margin + _random.nextDouble() * (spoilerBounds.width - 2 * margin),
+          spoilerBounds.top + margin + _random.nextDouble() * (spoilerBounds.height - 2 * margin),
         );
       }
 
@@ -180,8 +179,7 @@ class SpoilerSpotsController extends SpoilerController {
       );
 
       // If that offset is inside, use it; otherwise revert to waveEndpoint.
-      final finalOffset =
-          current.path.contains(randomOffset) ? randomOffset : waveEndpoint;
+      final finalOffset = current.path.contains(randomOffset) ? randomOffset : waveEndpoint;
 
       // Build a two-phase tween: (current -> waveEndpoint -> finalOffset)
       final offsetTween = TweenSequence<Offset>([

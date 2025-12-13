@@ -108,17 +108,6 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
         canvas.clipRect(spoilerBounds);
       }
 
-      final p = config.particleConfig;
-
-      final physicalConfig = config.copyWith(
-        particleConfig: ParticleConfig(
-          density: p.density,
-          speed: p.speed,
-          color: p.color,
-          maxParticleSize: p.maxParticleSize,
-        ),
-      );
-
       // Keep callback in logical space for backward compatibility.
       final params = (config.shaderConfig?.onGetShaderUniforms?.call(
                 logicalBounds,
@@ -127,7 +116,7 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
                 fadeCenter,
                 isFading,
                 fadeRadius,
-                physicalConfig,
+                config,
               ) ??
               <double>[])
           .toList();
@@ -168,12 +157,6 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
         canvas.clipRect(rect);
       }
 
-      final physicalConfig = config.copyWith(
-        maxParticleSize: config.particleConfig.maxParticleSize,
-        particleSpeed: config.particleConfig.speed,
-        particleDensity: config.particleConfig.density,
-      );
-
       // Keep callback in logical space for backward compatibility.
       final params = (config.shaderConfig?.onGetShaderUniforms?.call(
                 rect,
@@ -182,7 +165,7 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
                 fadeCenter,
                 isFading,
                 fadeRadius,
-                physicalConfig,
+                config,
               ) ??
               <double>[])
           .toList();
@@ -219,8 +202,7 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
   final List<Particle> _particles = [];
 
   // Visual assets & config
-  CircleImage _circleImage =
-      CircleImageFactory.create(diameter: 1, color: Colors.white);
+  CircleImage _circleImage = CircleImageFactory.create(diameter: 1, color: Colors.white);
   double _maxParticleSize = 1;
   Color _particleColor = Colors.white;
   double _particleSpeed = 1;
@@ -268,8 +250,7 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
 
     for (final path in paths) {
       final rect = path.getBounds();
-      final particleCount =
-          (rect.width * rect.height) * config.particleConfig.density;
+      final particleCount = (rect.width * rect.height) * config.particleConfig.density;
       for (int i = 0; i < particleCount; i++) {
         _particles.add(_createRandomParticlePath(path));
       }
@@ -283,9 +264,7 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
 
     for (int i = 0; i < _particles.length; i++) {
       final p = _particles[i];
-      _particles[i] = (p.life <= 0.1)
-          ? _createRandomParticlePath(p.path)
-          : p.moveToRandomAngle();
+      _particles[i] = (p.life <= 0.1) ? _createRandomParticlePath(p.path) : p.moveToRandomAngle();
     }
   }
 
@@ -336,8 +315,7 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
         if (distSq < radiusSq) {
           final dist = sqrt(distSq);
           final scale = (dist > fadeRadius - fadeEdgeThickness) ? 1.5 : 1.0;
-          final color =
-              (dist > fadeRadius - fadeEdgeThickness) ? Colors.white : p.color;
+          final color = (dist > fadeRadius - fadeEdgeThickness) ? Colors.white : p.color;
 
           transforms[transformIndex + 0] = scale;
           transforms[transformIndex + 1] = 0.0;
