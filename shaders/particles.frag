@@ -22,11 +22,10 @@ out vec4 fragColor;
 
 // simple hash for pseudo-random values per cell
 vec2 hash2(vec2 p) {
-    p = vec2(
-        dot(p, vec2(127.1, 311.7)),
-        dot(p, vec2(269.5, 183.3))
-    );
-    return fract(sin(p) * 43758.5453);
+    // works better across mobile GPUs
+    vec3 p3 = fract(vec3(p.x, p.y, p.x) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.xx + p3.yz) * p3.zy);
 }
 
 void main() {

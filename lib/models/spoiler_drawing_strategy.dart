@@ -78,10 +78,6 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
     Canvas canvas,
     SpoilerContext context,
   ) {
-    // Get global translation and scale from canvas matrix
-    final transform = canvas.getTransform();
-    final double dpr = transform[0];
-
     final isFading = context.isFading;
     final fadeRadius = context.fadeRadius;
     final fadeCenter = context.fadeCenter;
@@ -173,9 +169,9 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
       }
 
       final physicalConfig = config.copyWith(
-        maxParticleSize: config.particleConfig.maxParticleSize * dpr,
-        particleSpeed: config.particleConfig.speed * dpr,
-        particleDensity: config.particleConfig.density / (dpr * dpr),
+        maxParticleSize: config.particleConfig.maxParticleSize,
+        particleSpeed: config.particleConfig.speed,
+        particleDensity: config.particleConfig.density,
       );
 
       // Keep callback in logical space for backward compatibility.
