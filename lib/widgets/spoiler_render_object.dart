@@ -3,7 +3,6 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
@@ -31,7 +30,6 @@ class SpoilerRenderObjectWidget extends SingleChildRenderObjectWidget {
   @override
   RenderSpoiler createRenderObject(BuildContext context) {
     return RenderSpoiler(
-      textDirection: Directionality.of(context),
       onPaint: onPaint,
       onAfterPaint: onAfterPaint,
       onClipPath: onClipPath,
@@ -50,14 +48,12 @@ class SpoilerRenderObjectWidget extends SingleChildRenderObjectWidget {
       ..onClipPath = onClipPath
       ..onInit = onInit
       ..imageFilter = imageFilter
-      ..enableOverlay = enableOverlay
-      ..textDirection = Directionality.of(context);
+      ..enableOverlay = enableOverlay;
   }
 }
 
 class RenderSpoiler extends RenderProxyBox {
   RenderSpoiler({
-    required TextDirection textDirection,
     PaintCallback? onPaint,
     PaintCallback? onAfterPaint,
     Path Function(Size size)? onClipPath,
@@ -65,8 +61,7 @@ class RenderSpoiler extends RenderProxyBox {
     ui.ImageFilter? imageFilter,
     bool enableOverlay = false,
     RenderBox? child,
-  })  : _textDirection = textDirection,
-        _onPaint = onPaint,
+  })  : _onPaint = onPaint,
         _onAfterPaint = onAfterPaint,
         _onClipPath = onClipPath,
         _onInit = onInit,
@@ -79,14 +74,6 @@ class RenderSpoiler extends RenderProxyBox {
 
   @override
   bool hitTestSelf(Offset position) => true;
-
-  TextDirection _textDirection;
-  set textDirection(TextDirection value) {
-    if (_textDirection != value) {
-      _textDirection = value;
-      markNeedsPaint();
-    }
-  }
 
   PaintCallback? _onPaint;
   set onPaint(PaintCallback? value) {
@@ -147,11 +134,8 @@ class RenderSpoiler extends RenderProxyBox {
   @override
   void paint(PaintingContext context, Offset offset) {
     if (_enableOverlay) {
-      // 1. Paint Base (Clear child) normally.
       super.paint(context, offset);
 
-      // 2. Prepare for Overlay (Backdrop Blur + Particles)
-      // Check if we have anything to draw on top.
       if (_onClipPath == null &&
           _onPaint == null &&
           _onAfterPaint == null &&
@@ -161,13 +145,6 @@ class RenderSpoiler extends RenderProxyBox {
 
       final clipPath = _onClipPath?.call(size);
 
-      // Logic:
-      // A. Clip Scope (defines the "Spoiler Area"). Outside of clip = clean base.
-      // B. Inside Clip:
-      //    i.   Background Particles (obscured by blur?).
-      //    ii.  BackdropFilter (Blur the base + bg particles).
-      //    iii. Foreground Particles (Sharp).
-
       if (clipPath != null) {
         context.pushClipPath(
             needsCompositing, offset, paintBounds.shift(offset), clipPath,
@@ -175,18 +152,13 @@ class RenderSpoiler extends RenderProxyBox {
           _paintOverlayContent(c, o);
         });
       } else {
-        // No Clip (Full Rect)
         _paintOverlayContent(context, offset);
       }
       return;
     }
 
-    // --- Legacy Mode (enableOverlay = false) ---
-    // Used by SpoilerTextWrapper to intercept text rects.
-
     final clipPath = _onClipPath?.call(size);
 
-    // Helper to paint the "Spoiler Layer"
     void paintSpoilerLayer(PaintingContext layerContext, Offset layerOffset) {
       final spoilerContext = layerContext is SpoilerPaintingContext
           ? layerContext
@@ -208,7 +180,6 @@ class RenderSpoiler extends RenderProxyBox {
         );
       }
 
-      // 1. Background Particles (Clipped to Text Area)
       if (_onPaint != null) {
         if (particleClipPath != null) {
           spoilerContext.pushClipPath(needsCompositing, layerOffset,
@@ -220,7 +191,6 @@ class RenderSpoiler extends RenderProxyBox {
         }
       }
 
-      // 2. Child (Clipped to Hide Text)
       if (clipPath != null) {
         spoilerContext.pushClipPath(needsCompositing, layerOffset,
             paintBounds.shift(layerOffset), clipPath, (c, o) {
@@ -230,7 +200,6 @@ class RenderSpoiler extends RenderProxyBox {
         _paintChildWithFilter(spoilerContext, layerOffset);
       }
 
-      // 3. Foreground Particles (Clipped to Text Area)
       if (_onAfterPaint != null) {
         if (particleClipPath != null) {
           spoilerContext.pushClipPath(needsCompositing, layerOffset,
@@ -241,18 +210,8 @@ class RenderSpoiler extends RenderProxyBox {
           _drawParticles(spoilerContext, layerOffset, _onAfterPaint);
         }
       }
-
-      // ignore: invalid_use_of_protected_member
-      spoilerContext.stopRecordingIfNeeded();
-
-      if (_rectsDirty && layerContext == context) {
-        _onInit?.call(spoilerContext.spoilerRects);
-        _rectsDirty = false;
-      }
     }
 
-    // We no longer wrap the entire paintSpoilerLayer in pushClipPath.
-    // We strictly use SpoilerPaintingContext to capture rects.
     final rootSpoilerContext = SpoilerPaintingContext(
       layer: layer!,
       estimatedBounds: paintBounds.shift(offset),
@@ -271,10 +230,8 @@ class RenderSpoiler extends RenderProxyBox {
   }
 
   void _paintOverlayContent(PaintingContext context, Offset offset) {
-    // 1. Background Particles
     _drawParticles(context, offset, _onPaint);
 
-    // 2. Blur + Foreground
     if (_imageFilter != null) {
       context.pushLayer(BackdropFilterLayer(filter: _imageFilter!),
           (childContext, childOffset) {
@@ -366,7 +323,6 @@ class SpoilerCanvas implements Canvas {
 
   @override
   void drawParagraph(ui.Paragraph paragraph, ui.Offset offset) {
-    // Only calculate rects if needed (layout changed)
     if (context.calculateRects) {
       var currentOffset = 0;
       while (true) {
@@ -387,7 +343,6 @@ class SpoilerCanvas implements Canvas {
 
             final boxes = paragraph.getBoxesForRange(start, end);
             for (final box in boxes) {
-              // Rects are collected in local coordinates because we paint at (0,0) with translation
               final rect = box.toRect().shift(offset);
               context.spoilerRects.add(rect);
             }
@@ -402,7 +357,6 @@ class SpoilerCanvas implements Canvas {
     parent.drawParagraph(paragraph, offset);
   }
 
-  // --- Boilerplate delegation for other Canvas methods ---
   @override
   void save() => parent.save();
   @override
