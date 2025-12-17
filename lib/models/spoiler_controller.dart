@@ -182,6 +182,9 @@ class SpoilerController extends ChangeNotifier {
   ///          If provided, this is preferred for shader rendering to ensure precise per-rect shapes.
   void initializeParticles(Path path, SpoilerConfig config,
       {List<Rect>? rects}) {
+    final previousShaderPath = _config.shaderConfig?.customShaderPath;
+    final nextShaderPath = config.shaderConfig?.customShaderPath;
+
     // Ensure maxParticleSize is valid
     assert(config.particleConfig.maxParticleSize >= 1,
         'maxParticleSize must be >= 1');
@@ -215,6 +218,14 @@ class SpoilerController extends ChangeNotifier {
     }
 
     _initFadeIfNeeded();
+
+    // If shader changed (or removed), allow re-init and fall back to atlas while loading.
+    if (previousShaderPath != nextShaderPath) {
+      _shaderInitAttempted = false;
+      if (_drawer is ShaderSpoilerDrawer || nextShaderPath == null) {
+        _drawer = AtlasSpoilerDrawer();
+      }
+    }
 
     // Ensure we are using Atlas drawer initially or if config changes
     final subPaths = _spoilerPath.subPaths;

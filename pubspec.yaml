@@ -39,3 +39,8 @@ dev_dependencies:
 flutter:
   shaders:
     - shaders/particles.frag
+    - shaders/bokeh_cover.frag
+    - shaders/liquid_metal.frag
+    - shaders/glitch_stripes.frag
+    - shaders/mosaic_censor.frag
+    - shaders/liquid_spectrum.frag

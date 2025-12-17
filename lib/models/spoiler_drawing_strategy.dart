@@ -92,21 +92,7 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
       // Fallback if no rects
       canvas.save();
 
-      if (isFading && fadeRadius > 0) {
-        final circlePath = Path()
-          ..addOval(
-            Rect.fromCircle(center: fadeCenter, radius: fadeRadius),
-          );
-        final clipPath = Path.combine(
-          PathOperation.intersect,
-          spoilerPath,
-          circlePath,
-        );
-        canvas.clipPath(clipPath);
-      } else {
-        // When fade is disabled or radius is tiny, draw full bounds.
-        canvas.clipRect(spoilerBounds);
-      }
+      canvas.clipRect(spoilerBounds);
 
       // Keep callback in logical space for backward compatibility.
       final params = (config.shaderConfig?.onGetShaderUniforms?.call(
@@ -138,24 +124,8 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
 
       canvas.save();
 
-      if (isFading && fadeRadius > 0) {
-        final rectPath = Path()..addRect(rect);
-        final circlePath = Path()
-          ..addOval(
-            Rect.fromCircle(center: fadeCenter, radius: fadeRadius),
-          );
-
-        final clipPath = Path.combine(
-          PathOperation.intersect,
-          rectPath,
-          circlePath,
-        );
-
-        canvas.clipPath(clipPath);
-      } else {
-        // Draw the full rect when fade is disabled or radius is tiny.
-        canvas.clipRect(rect);
-      }
+      // Draw the full rect; shader handles fade via uniforms.
+      canvas.clipRect(rect);
 
       // Keep callback in logical space for backward compatibility.
       final params = (config.shaderConfig?.onGetShaderUniforms?.call(
