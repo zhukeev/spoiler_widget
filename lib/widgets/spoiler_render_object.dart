@@ -180,7 +180,8 @@ class RenderSpoiler extends RenderProxyBox {
   void paint(PaintingContext context, Offset offset) {
     final visitedOffsets = <ViewportOffset>{};
     final childRo = child;
-    final editables = childRo != null ? _findRenderEditables(childRo, offsets: visitedOffsets) : const <RenderEditable>[];
+    final editables =
+        childRo != null ? _findRenderEditables(childRo, offsets: visitedOffsets) : const <RenderEditable>[];
     final selection = _textSelection;
 
     if (selection != null) {
