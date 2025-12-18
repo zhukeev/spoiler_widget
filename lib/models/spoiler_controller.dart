@@ -304,7 +304,11 @@ class SpoilerController extends ChangeNotifier {
   }
 
   void setFadeCenter(Offset fadeCenter) {
-    _fadeCenter = fadeCenter;
+    _fadeCenter = _spoilerBounds == Rect.zero ? fadeCenter : _spoilerBounds.getNearestPoint(fadeCenter);
+    _cachedClipPath = null;
+    if (_fadeAnim != null) {
+      _updateFadeRadius();
+    }
   }
 
   /// Called by [toggle] after setting [_fadeCenter].

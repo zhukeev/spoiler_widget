@@ -31,19 +31,25 @@ extension RectX on Rect {
 
   /// Get the farthest corner from {offset}
   Offset getFarthestPoint(Offset offset) {
-    final (topLeft, topRight, bottomLeft, bottomRight) = divideRect();
+    final corners = [
+      topLeft,
+      topRight,
+      bottomLeft,
+      bottomRight,
+    ];
 
-    if (topLeft.containsOffset(offset)) {
-      return bottomRight.bottomRight;
-    } else if (topRight.containsOffset(offset)) {
-      return bottomLeft.bottomLeft;
-    } else if (bottomLeft.containsOffset(offset)) {
-      return topRight.topRight;
-    } else if (bottomRight.containsOffset(offset)) {
-      return topLeft.topLeft;
-    } else {
-      return center;
+    var farthest = corners.first;
+    var maxDistance = (farthest - offset).distanceSquared;
+
+    for (final corner in corners.skip(1)) {
+      final distance = (corner - offset).distanceSquared;
+      if (distance > maxDistance) {
+        maxDistance = distance;
+        farthest = corner;
+      }
     }
+
+    return farthest;
   }
 
   /// Get the nearest corner from {offset}

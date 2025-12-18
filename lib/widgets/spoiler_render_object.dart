@@ -8,6 +8,8 @@ import 'package:flutter/widgets.dart';
 
 import 'canvas_callback_painter.dart';
 
+/// Render object widget that paints a child while exposing hook points
+/// for clipping, particle painting, and rectangle collection.
 class SpoilerRenderObjectWidget extends SingleChildRenderObjectWidget {
   const SpoilerRenderObjectWidget({
     super.key,
@@ -55,6 +57,8 @@ class SpoilerRenderObjectWidget extends SingleChildRenderObjectWidget {
   }
 }
 
+/// RenderBox that can paint overlay effects (before/after child), apply
+/// an optional clip, and report text rects for spoiler effects.
 class RenderSpoiler extends RenderProxyBox {
   RenderSpoiler({
     PaintCallback? onPaint,
@@ -137,6 +141,12 @@ class RenderSpoiler extends RenderProxyBox {
   set textSelection(TextSelection? value) {
     if (_textSelection != value) {
       _textSelection = value;
+      _rectsDirty = true;
+      if (value == null) {
+        _lastSelection = null;
+        _cachedSelectionRects = const [];
+        _lastInitRectsHash = 0;
+      }
       markNeedsPaint();
     }
   }
@@ -153,58 +163,66 @@ class RenderSpoiler extends RenderProxyBox {
   void performLayout() {
     super.performLayout();
     _rectsDirty = true;
+    _cachedSelectionRects = const [];
   }
 
   bool _rectsDirty = true;
   int _lastInitRectsHash = 0;
+  TextSelection? _lastSelection;
+  List<Rect> _cachedSelectionRects = const [];
 
   @override
   void paint(PaintingContext context, Offset offset) {
     final selection = _textSelection;
 
     if (selection != null) {
-      final childRo = child;
-      if (childRo != null) {
-        final editables = _findRenderEditables(childRo);
-        if (editables.isNotEmpty) {
-          final collected = <Rect>[];
+      final shouldRecalculate = _rectsDirty || _lastSelection != selection || _cachedSelectionRects.isEmpty;
+      if (shouldRecalculate) {
+        final childRo = child;
+        if (childRo != null) {
+          final editables = _findRenderEditables(childRo);
+          if (editables.isNotEmpty) {
+            final collected = <Rect>[];
 
-          for (final re in editables) {
-            final text = re.plainText;
-            if (text.isEmpty) continue;
+            for (final re in editables) {
+              final text = re.plainText;
+              if (text.isEmpty) continue;
 
-            final boxes = re.getBoxesForSelection(selection);
+              final boxes = re.getBoxesForSelection(selection);
 
-            final reBox = re as RenderBox;
-            final Matrix4 m = reBox.getTransformTo(this);
-            final Offset topLeft = MatrixUtils.transformPoint(m, Offset.zero);
+              final reBox = re as RenderBox;
+              final Matrix4 m = reBox.getTransformTo(this);
+              final Offset topLeft = MatrixUtils.transformPoint(m, Offset.zero);
 
-            for (final b in boxes) {
-              collected.add(b.toRect().shift(topLeft));
+              for (final b in boxes) {
+                collected.add(b.toRect().shift(topLeft));
+              }
             }
-          }
 
-          if (collected.isNotEmpty) {
-            final h = _hashRects(collected);
-            if (h != _lastInitRectsHash) {
-              _lastInitRectsHash = h;
-              _onInit?.call(collected);
+            if (collected.isNotEmpty) {
+              _cachedSelectionRects = collected;
+              final h = _hashRects(collected);
+              if (h != _lastInitRectsHash) {
+                _lastInitRectsHash = h;
+                _onInit?.call(collected);
+              }
             }
           }
         }
+        _lastSelection = selection;
       }
 
       _rectsDirty = false;
     }
 
+    final clipPath = _normalizeClipPath(_onClipPath?.call(size));
+
     if (_enableOverlay) {
       super.paint(context, offset);
 
-      if (_onClipPath == null && _onPaint == null && _onAfterPaint == null && _imageFilter == null) {
+      if (clipPath == null && _onPaint == null && _onAfterPaint == null && _imageFilter == null) {
         return;
       }
-
-      final clipPath = _onClipPath?.call(size);
 
       if (clipPath != null) {
         context.pushClipPath(needsCompositing, offset, paintBounds.shift(offset), clipPath, (c, o) {
@@ -215,8 +233,6 @@ class RenderSpoiler extends RenderProxyBox {
       }
       return;
     }
-
-    final clipPath = _onClipPath?.call(size);
 
     void paintSpoilerLayer(PaintingContext layerContext, Offset layerOffset) {
       final spoilerContext = layerContext is SpoilerPaintingContext
@@ -310,19 +326,9 @@ class RenderSpoiler extends RenderProxyBox {
   }
 
   int _hashRects(List<Rect> rects) {
-    var h = 0x1fffffff;
-    for (final r in rects) {
-      h = 0x1fffffff & (h + r.left.toInt());
-      h = 0x1fffffff & (h + r.top.toInt());
-      h = 0x1fffffff & (h + r.right.toInt());
-      h = 0x1fffffff & (h + r.bottom.toInt());
-      h = 0x1fffffff & (h + (h << 10));
-      h ^= (h >> 6);
-    }
-    h = 0x1fffffff & (h + (h << 3));
-    h ^= (h >> 11);
-    h = 0x1fffffff & (h + (h << 15));
-    return h;
+    return Object.hashAll(
+      rects.expand((r) => <double>[r.left, r.top, r.right, r.bottom]),
+    );
   }
 
   void _paintChildWithFilter(PaintingContext context, Offset offset) {
@@ -336,8 +342,16 @@ class RenderSpoiler extends RenderProxyBox {
       super.paint(context, offset);
     }
   }
+
+  Path? _normalizeClipPath(Path? path) {
+    if (path == null) return null;
+    final metrics = path.computeMetrics();
+    return metrics.isEmpty ? null : path;
+  }
 }
 
+/// Painting context that captures text bounding rects while delegating
+/// normal painting to Flutter's pipeline.
 class SpoilerPaintingContext extends PaintingContext {
   SpoilerPaintingContext({
     required ContainerLayer layer,
@@ -382,6 +396,8 @@ class SpoilerPaintingContext extends PaintingContext {
   }
 }
 
+/// Child context that appends rects into the root's collection so nested
+/// children contribute to a single list.
 class _ChildSpoilerPaintingContext extends SpoilerPaintingContext {
   _ChildSpoilerPaintingContext({
     required super.layer,
@@ -396,6 +412,8 @@ class _ChildSpoilerPaintingContext extends SpoilerPaintingContext {
   List<Rect> get spoilerRects => rootRects;
 }
 
+/// Canvas wrapper that collects paragraph word bounds while forwarding all
+/// drawing to the underlying canvas.
 class SpoilerCanvas implements Canvas {
   SpoilerCanvas(this.parent, this.context);
 

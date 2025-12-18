@@ -58,7 +58,7 @@ class _MainAppState extends State<MainApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      showPerformanceOverlay: true,
+      showPerformanceOverlay: false,
       home: Scaffold(
         backgroundColor: Colors.black,
         body: SingleChildScrollView(
@@ -68,12 +68,9 @@ class _MainAppState extends State<MainApp> {
               const SizedBox(height: 100),
               RepaintBoundary(
                 child: SpoilerTextFieldWrapper(
-                  config: TextSpoilerConfig(
-                    particleDensity: .2,
+                  config: SpoilerConfig(
+                    isEnabled: enable,
                     enableGestureReveal: true,
-                    enableFadeAnimation: true,
-                    textSelection: const TextSelection(baseOffset: 3, extentOffset: 8),
-                    textStyle: const TextStyle(fontSize: 50, color: Colors.white),
                   ),
                   builder: (context, contextMenuBuilder) => TextFormField(
                     controller: controller,
@@ -81,6 +78,10 @@ class _MainAppState extends State<MainApp> {
                     contextMenuBuilder: contextMenuBuilder,
                     cursorColor: Colors.deepPurple,
                     maxLines: 3,
+                    style: const TextStyle(
+                      fontSize: 50,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
