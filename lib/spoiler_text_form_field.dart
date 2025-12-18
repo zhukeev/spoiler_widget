@@ -4,8 +4,8 @@ import 'package:spoiler_widget/models/spoiler_configs.dart';
 import 'package:spoiler_widget/models/spoiler_controller.dart';
 import 'package:spoiler_widget/widgets/spoiler_render_object.dart';
 
-class SpoilerTextFormField extends StatefulWidget {
-  const SpoilerTextFormField({
+class SpoilerTextFieldWrapper extends StatefulWidget {
+  const SpoilerTextFieldWrapper({
     super.key,
     required this.builder,
     required this.config,
@@ -22,16 +22,16 @@ class SpoilerTextFormField extends StatefulWidget {
   final ValueChanged<TextSelection?>? onSelectionChanged;
 
   @override
-  State<SpoilerTextFormField> createState() => _SpoilerTextFormFieldState();
+  State<SpoilerTextFieldWrapper> createState() => _SpoilerTextFieldWrapperState();
 }
 
-class _SpoilerTextFormFieldState extends State<SpoilerTextFormField> with TickerProviderStateMixin {
+class _SpoilerTextFieldWrapperState extends State<SpoilerTextFieldWrapper> with TickerProviderStateMixin {
   late final SpoilerController _spoilerController = SpoilerController(vsync: this);
 
   TextSelection? _spoilerSelection;
 
   @override
-  void didUpdateWidget(covariant SpoilerTextFormField oldWidget) {
+  void didUpdateWidget(covariant SpoilerTextFieldWrapper oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     final configChanged = oldWidget.config != widget.config;

@@ -67,7 +67,7 @@ class _MainAppState extends State<MainApp> {
             children: [
               const SizedBox(height: 100),
               RepaintBoundary(
-                child: SpoilerTextFormField(
+                child: SpoilerTextFieldWrapper(
                   config: TextSpoilerConfig(
                     particleDensity: .2,
                     enableGestureReveal: true,
