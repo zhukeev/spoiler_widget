@@ -75,13 +75,10 @@ class _SpoilerOverlayState extends State<SpoilerOverlay> with TickerProviderStat
           return SpoilerRenderObjectWidget(
             onAfterPaint: (canvas, size) => _onPaint(canvas, size),
             onClipPath: (size) {
-              // If not fading (locked), return full path to show full spoiler overlay.
               if (_spoilerController.isEnabled && !_spoilerController.isFading) {
                 return Path()..addRect(Offset.zero & size);
               }
-              // During fade, return the punch-hole path (Intersect/Spot logic)
-              // This creates a "Shrinking Spot" effect (Max Radius -> 0)
-              // which matches SpoilerController's "Value 1 = Max Radius" logic.
+
               return _spoilerController.createClipPath(size);
             },
             enableOverlay: true,

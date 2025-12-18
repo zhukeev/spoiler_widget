@@ -26,8 +26,7 @@ class SpoilerShaderRenderer {
       final shader = program.fragmentShader();
       return SpoilerShaderRenderer._(shader: shader);
     } catch (e) {
-      debugPrint(
-          'SpoilerShaderRenderer: Failed to load shader "$assetPath". Error: $e');
+      debugPrint('SpoilerShaderRenderer: Failed to load shader "$assetPath". Error: $e');
       return null;
     }
   }

@@ -109,14 +109,12 @@ class SpoilerController extends ChangeNotifier {
   bool get isEnabled => _isEnabled;
 
   /// True if the fade animation is active.
-  bool get isFading =>
-      _config.fadeConfig != null && _fadeCtrl != null && _fadeCtrl!.isAnimating;
+  bool get isFading => _config.fadeConfig != null && _fadeCtrl != null && _fadeCtrl!.isAnimating;
 
   /// The bounding rectangle for the spoiler region.
   Rect get spoilerBounds => _spoilerBounds;
 
-  Rect get _splashRect =>
-      Rect.fromCircle(center: _fadeCenter, radius: _fadeRadius);
+  Rect get _splashRect => Rect.fromCircle(center: _fadeCenter, radius: _fadeRadius);
 
   /// A path function that clips only the circular fade area if there’s a non-zero fade radius.
   Path createClipPath(Size size) {
@@ -180,14 +178,12 @@ class SpoilerController extends ChangeNotifier {
   /// [config]: Configuration for speed, density, color, etc.
   /// [rects]: Optional explicit list of rectangles (e.g. for individual words).
   ///          If provided, this is preferred for shader rendering to ensure precise per-rect shapes.
-  void initializeParticles(Path path, SpoilerConfig config,
-      {List<Rect>? rects}) {
+  void initializeParticles(Path path, SpoilerConfig config, {List<Rect>? rects}) {
     final previousShaderPath = _config.shaderConfig?.customShaderPath;
     final nextShaderPath = config.shaderConfig?.customShaderPath;
 
     // Ensure maxParticleSize is valid
-    assert(config.particleConfig.maxParticleSize >= 1,
-        'maxParticleSize must be >= 1');
+    assert(config.particleConfig.maxParticleSize >= 1, 'maxParticleSize must be >= 1');
     _config = config;
     _spoilerRects = rects ?? [];
     _cachedClipPath = null; // Invalidate cache
@@ -262,8 +258,7 @@ class SpoilerController extends ChangeNotifier {
         duration: const Duration(milliseconds: 300),
         vsync: _tickerProvider,
       );
-      _fadeAnim = Tween<double>(begin: 0, end: 1).animate(_fadeCtrl!)
-        ..addListener(_updateFadeRadius);
+      _fadeAnim = Tween<double>(begin: 0, end: 1).animate(_fadeCtrl!)..addListener(_updateFadeRadius);
     }
   }
 
@@ -296,8 +291,7 @@ class SpoilerController extends ChangeNotifier {
   /// Toggle the spoiler effect on/off. Optional [fadeOffset] for the radial center.
   bool toggle(Offset fadeOffset) {
     // If we’re mid-fade, skip to avoid partial toggles.
-    if ((_config.fadeConfig != null && isFading) ||
-        !_spoilerPath.contains(fadeOffset)) {
+    if ((_config.fadeConfig != null && isFading) || !_spoilerPath.contains(fadeOffset)) {
       return false;
     }
 
@@ -386,7 +380,6 @@ class SpoilerController extends ChangeNotifier {
       isFading: isFading,
       fadeRadius: _fadeRadius,
       fadeCenter: _fadeCenter,
-      spoilerPath: _spoilerPath,
       spoilerBounds: _spoilerBounds,
       spoilerRects: _spoilerRects,
       config: _config,

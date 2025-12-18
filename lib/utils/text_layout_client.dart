@@ -7,37 +7,7 @@ abstract class TextLayoutClient {
   List<TextBox> getBoxesForSelection(TextSelection selection);
 }
 
-class RenderEditableLayoutClient implements TextLayoutClient {
-  RenderEditableLayoutClient(this.render);
 
-  final RenderEditable render;
-
-  @override
-  Size get size => render.size;
-
-  @override
-  double get preferredLineHeight => render.preferredLineHeight;
-
-  @override
-  List<TextBox> getBoxesForSelection(TextSelection selection) =>
-      render.getBoxesForSelection(selection);
-}
-
-class TextPainterLayoutClient implements TextLayoutClient {
-  TextPainterLayoutClient(this.painter);
-
-  final TextPainter painter;
-
-  @override
-  Size get size => painter.size;
-
-  @override
-  double get preferredLineHeight => painter.preferredLineHeight;
-
-  @override
-  List<TextBox> getBoxesForSelection(TextSelection selection) =>
-      painter.getBoxesForSelection(selection);
-}
 
 /// Build a path for a selection using any [TextLayoutClient].
 (Path?, List<Rect>) buildSelectionPath({
@@ -46,10 +16,8 @@ class TextPainterLayoutClient implements TextLayoutClient {
   required TextSelection selection,
   bool skipWhitespace = true,
 }) {
-  final int rawStart =
-      selection.start < selection.end ? selection.start : selection.end;
-  final int rawEnd =
-      selection.start > selection.end ? selection.start : selection.end;
+  final int rawStart = selection.start < selection.end ? selection.start : selection.end;
+  final int rawEnd = selection.start > selection.end ? selection.start : selection.end;
   final int start = rawStart.clamp(0, text.length);
   final int end = rawEnd.clamp(0, text.length);
   if (start >= end) return (null, []);
@@ -62,8 +30,7 @@ class TextPainterLayoutClient implements TextLayoutClient {
     final ch = text[i];
     if (skipWhitespace && ch.trim().isEmpty) continue;
 
-    final boxes = layout.getBoxesForSelection(
-        TextSelection(baseOffset: i, extentOffset: i + 1));
+    final boxes = layout.getBoxesForSelection(TextSelection(baseOffset: i, extentOffset: i + 1));
     for (final box in boxes) {
       boxList.add(box.toRect());
       path.addRect(box.toRect());

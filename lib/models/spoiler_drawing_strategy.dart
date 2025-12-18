@@ -14,7 +14,6 @@ class SpoilerContext {
     required this.isFading,
     required this.fadeRadius,
     required this.fadeCenter,
-    required this.spoilerPath,
     required this.spoilerBounds,
     required this.spoilerRects,
     required this.config,
@@ -23,7 +22,6 @@ class SpoilerContext {
   final bool isFading;
   final double fadeRadius;
   final Offset fadeCenter;
-  final Path spoilerPath;
   final Rect spoilerBounds;
   final List<Rect> spoilerRects;
   final SpoilerConfig config;
@@ -81,7 +79,6 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
     final isFading = context.isFading;
     final fadeRadius = context.fadeRadius;
     final fadeCenter = context.fadeCenter;
-    final spoilerPath = context.spoilerPath;
     final spoilerBounds = context.spoilerBounds;
     final spoilerRects = context.spoilerRects;
     final config = context.config;

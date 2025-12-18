@@ -68,8 +68,6 @@ class _MainAppState extends State<MainApp> {
               const SizedBox(height: 100),
               RepaintBoundary(
                 child: SpoilerTextFormField(
-                  controller: controller,
-                  focusNode: FocusNode(),
                   config: TextSpoilerConfig(
                     particleDensity: .2,
                     enableGestureReveal: true,
@@ -77,8 +75,13 @@ class _MainAppState extends State<MainApp> {
                     textSelection: const TextSelection(baseOffset: 3, extentOffset: 8),
                     textStyle: const TextStyle(fontSize: 50, color: Colors.white),
                   ),
-                  cursorColor: Colors.deepPurple,
-                  maxLines: 3,
+                  builder: (context, contextMenuBuilder) => TextFormField(
+                    controller: controller,
+                    focusNode: FocusNode(),
+                    contextMenuBuilder: contextMenuBuilder,
+                    cursorColor: Colors.deepPurple,
+                    maxLines: 3,
+                  ),
                 ),
               ),
               RepaintBoundary(

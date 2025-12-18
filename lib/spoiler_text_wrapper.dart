@@ -25,10 +25,8 @@ class SpoilerTextWrapper extends StatefulWidget {
   State<SpoilerTextWrapper> createState() => _SpoilerTextWrapperState();
 }
 
-class _SpoilerTextWrapperState extends State<SpoilerTextWrapper>
-    with TickerProviderStateMixin {
-  late final SpoilerController _spoilerController =
-      SpoilerController(vsync: this);
+class _SpoilerTextWrapperState extends State<SpoilerTextWrapper> with TickerProviderStateMixin {
+  late final SpoilerController _spoilerController = SpoilerController(vsync: this);
 
   @override
   void didUpdateWidget(covariant SpoilerTextWrapper oldWidget) {
@@ -66,15 +64,13 @@ class _SpoilerTextWrapperState extends State<SpoilerTextWrapper>
               _spoilerController.drawParticles(canvas);
             }
           },
-          onClipPath: (size) =>
-              _spoilerController.createSplashPathMaskClipper(size),
+          onClipPath: (size) => _spoilerController.createSplashPathMaskClipper(size),
           onInit: (rects) {
             final path = Path();
             for (final rect in rects) {
               path.addRect(rect);
             }
-            _spoilerController.initializeParticles(path, widget.config,
-                rects: rects);
+            _spoilerController.initializeParticles(path, widget.config, rects: rects);
           },
           child: child,
         ),
