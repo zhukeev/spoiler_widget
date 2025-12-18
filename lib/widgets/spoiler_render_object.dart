@@ -188,14 +188,18 @@ class RenderSpoiler extends RenderProxyBox {
               final text = re.plainText;
               if (text.isEmpty) continue;
 
-              final boxes = re.getBoxesForSelection(selection);
+              final ranges = _nonWhitespaceSelections(text, selection);
+              if (ranges.isEmpty) continue;
 
               final reBox = re as RenderBox;
               final Matrix4 m = reBox.getTransformTo(this);
               final Offset topLeft = MatrixUtils.transformPoint(m, Offset.zero);
 
-              for (final b in boxes) {
-                collected.add(b.toRect().shift(topLeft));
+              for (final range in ranges) {
+                final boxes = re.getBoxesForSelection(range);
+                for (final b in boxes) {
+                  collected.add(b.toRect().shift(topLeft));
+                }
               }
             }
 
@@ -347,6 +351,37 @@ class RenderSpoiler extends RenderProxyBox {
     if (path == null) return null;
     final metrics = path.computeMetrics();
     return metrics.isEmpty ? null : path;
+  }
+
+  List<TextSelection> _nonWhitespaceSelections(String text, TextSelection selection) {
+    if (!selection.isValid) return const [];
+    final start = selection.start.clamp(0, text.length).toInt();
+    final end = selection.end.clamp(0, text.length).toInt();
+    if (start == end) return const [];
+
+    final ranges = <TextSelection>[];
+    var i = start;
+
+    bool isWhitespace(int codeUnit) {
+      // Covers space, tab, newline, carriage return.
+      return codeUnit == 0x20 || codeUnit == 0x09 || codeUnit == 0x0a || codeUnit == 0x0d;
+    }
+
+    while (i < end) {
+      while (i < end && isWhitespace(text.codeUnitAt(i))) {
+        i++;
+      }
+      if (i >= end) break;
+      var j = i;
+      while (j < end && !isWhitespace(text.codeUnitAt(j))) {
+        j++;
+      }
+      if (j > i) {
+        ranges.add(TextSelection(baseOffset: i, extentOffset: j));
+      }
+      i = j;
+    }
+    return ranges;
   }
 }
 
