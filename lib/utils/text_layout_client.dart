@@ -7,7 +7,20 @@ abstract class TextLayoutClient {
   List<TextBox> getBoxesForSelection(TextSelection selection);
 }
 
+class RenderEditableLayoutClient implements TextLayoutClient {
+  RenderEditableLayoutClient(this.render);
 
+  final RenderEditable render;
+
+  @override
+  Size get size => render.size;
+
+  @override
+  double get preferredLineHeight => render.preferredLineHeight;
+
+  @override
+  List<TextBox> getBoxesForSelection(TextSelection selection) => render.getBoxesForSelection(selection);
+}
 
 /// Build a path for a selection using any [TextLayoutClient].
 (Path?, List<Rect>) buildSelectionPath({

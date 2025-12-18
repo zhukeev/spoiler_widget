@@ -7,6 +7,8 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 import 'canvas_callback_painter.dart';
+import '../utils/spoiler_path_builder.dart';
+import '../utils/text_layout_client.dart';
 
 /// Render object widget that paints a child while exposing hook points
 /// for clipping, particle painting, and rectangle collection.
@@ -83,12 +85,15 @@ class RenderSpoiler extends RenderProxyBox {
   @override
   bool hitTestSelf(Offset position) => true;
 
-  List<RenderEditable> _findRenderEditables(RenderObject root) {
+  final Set<ViewportOffset> _listenedOffsets = <ViewportOffset>{};
+
+  List<RenderEditable> _findRenderEditables(RenderObject root, {Set<ViewportOffset>? offsets}) {
     final out = <RenderEditable>[];
 
     void visit(RenderObject node) {
       if (node is RenderEditable) {
         out.add(node);
+        if (offsets != null) offsets.add(node.offset);
       }
       node.visitChildren(visit);
     }
@@ -173,43 +178,31 @@ class RenderSpoiler extends RenderProxyBox {
 
   @override
   void paint(PaintingContext context, Offset offset) {
+    final visitedOffsets = <ViewportOffset>{};
+    final childRo = child;
+    final editables = childRo != null ? _findRenderEditables(childRo, offsets: visitedOffsets) : const <RenderEditable>[];
     final selection = _textSelection;
 
     if (selection != null) {
       final shouldRecalculate = _rectsDirty || _lastSelection != selection || _cachedSelectionRects.isEmpty;
       if (shouldRecalculate) {
-        final childRo = child;
-        if (childRo != null) {
-          final editables = _findRenderEditables(childRo);
-          if (editables.isNotEmpty) {
-            final collected = <Rect>[];
+        if (editables.isNotEmpty) {
+          final collected = <Rect>[];
 
-            for (final re in editables) {
-              final text = re.plainText;
-              if (text.isEmpty) continue;
+          for (final re in editables) {
+            final geom = _buildEditableGeometry(re, selection);
+            if (geom == null) continue;
 
-              final ranges = _nonWhitespaceSelections(text, selection);
-              if (ranges.isEmpty) continue;
+            final Matrix4 m = re.getTransformTo(this);
+            collected.addAll(geom.rects.map((r) => MatrixUtils.transformRect(m, r)));
+          }
 
-              final reBox = re as RenderBox;
-              final Matrix4 m = reBox.getTransformTo(this);
-              final Offset topLeft = MatrixUtils.transformPoint(m, Offset.zero);
-
-              for (final range in ranges) {
-                final boxes = re.getBoxesForSelection(range);
-                for (final b in boxes) {
-                  collected.add(b.toRect().shift(topLeft));
-                }
-              }
-            }
-
-            if (collected.isNotEmpty) {
-              _cachedSelectionRects = collected;
-              final h = _hashRects(collected);
-              if (h != _lastInitRectsHash) {
-                _lastInitRectsHash = h;
-                _onInit?.call(collected);
-              }
+          if (collected.isNotEmpty) {
+            _cachedSelectionRects = collected;
+            final h = _hashRects(collected);
+            if (h != _lastInitRectsHash) {
+              _lastInitRectsHash = h;
+              _onInit?.call(collected);
             }
           }
         }
@@ -225,6 +218,7 @@ class RenderSpoiler extends RenderProxyBox {
       super.paint(context, offset);
 
       if (clipPath == null && _onPaint == null && _onAfterPaint == null && _imageFilter == null) {
+        _syncEditableOffsets(visitedOffsets);
         return;
       }
 
@@ -235,6 +229,7 @@ class RenderSpoiler extends RenderProxyBox {
       } else {
         _paintOverlayContent(context, offset);
       }
+      _syncEditableOffsets(visitedOffsets);
       return;
     }
 
@@ -305,6 +300,7 @@ class RenderSpoiler extends RenderProxyBox {
       _onInit?.call(rootSpoilerContext.spoilerRects);
       _rectsDirty = false;
     }
+    _syncEditableOffsets(visitedOffsets);
   }
 
   void _paintOverlayContent(PaintingContext context, Offset offset) {
@@ -353,35 +349,44 @@ class RenderSpoiler extends RenderProxyBox {
     return metrics.isEmpty ? null : path;
   }
 
-  List<TextSelection> _nonWhitespaceSelections(String text, TextSelection selection) {
-    if (!selection.isValid) return const [];
-    final start = selection.start.clamp(0, text.length).toInt();
-    final end = selection.end.clamp(0, text.length).toInt();
-    if (start == end) return const [];
-
-    final ranges = <TextSelection>[];
-    var i = start;
-
-    bool isWhitespace(int codeUnit) {
-      // Covers space, tab, newline, carriage return.
-      return codeUnit == 0x20 || codeUnit == 0x09 || codeUnit == 0x0a || codeUnit == 0x0d;
+  void _syncEditableOffsets(Set<ViewportOffset> visited) {
+    for (final offset in visited) {
+      if (_listenedOffsets.add(offset)) {
+        offset.addListener(_onEditableOffsetChanged);
+      }
     }
 
-    while (i < end) {
-      while (i < end && isWhitespace(text.codeUnitAt(i))) {
-        i++;
-      }
-      if (i >= end) break;
-      var j = i;
-      while (j < end && !isWhitespace(text.codeUnitAt(j))) {
-        j++;
-      }
-      if (j > i) {
-        ranges.add(TextSelection(baseOffset: i, extentOffset: j));
-      }
-      i = j;
+    final stale = _listenedOffsets.difference(visited).toList(growable: false);
+    for (final offset in stale) {
+      offset.removeListener(_onEditableOffsetChanged);
     }
-    return ranges;
+    _listenedOffsets.removeAll(stale);
+  }
+
+  void _onEditableOffsetChanged() {
+    _rectsDirty = true;
+    _cachedSelectionRects = const [];
+    markNeedsPaint();
+  }
+
+  @override
+  void detach() {
+    for (final offset in _listenedOffsets) {
+      offset.removeListener(_onEditableOffsetChanged);
+    }
+    _listenedOffsets.clear();
+    super.detach();
+  }
+
+  SpoilerGeometry? _buildEditableGeometry(RenderEditable editable, TextSelection selection) {
+    final text = editable.plainText;
+    if (text.isEmpty) return null;
+    return buildSpoilerGeometry(
+      layout: RenderEditableLayoutClient(editable),
+      text: text,
+      selection: selection,
+      skipWhitespace: true,
+    );
   }
 }
 
