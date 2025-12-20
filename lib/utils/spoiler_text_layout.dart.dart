@@ -1,21 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Result of laying out spoiler text:
-///  - [painter]: ready-to-paint TextPainter
-///  - [wordRects]: rects for either all words or the given range
-///  - [wordPath]: union of all [wordRects] as a Path
-@immutable
-class SpoilerTextLayoutResult {
-  const SpoilerTextLayoutResult({
-    required this.painter,
-    required this.wordRects,
-    required this.wordPath,
-  });
-
-  final TextPainter painter;
-  final Set<Rect> wordRects;
-  final Path wordPath;
-}
+import 'spoiler_path_builder.dart';
+import 'text_layout_client.dart';
 
 /// Compute layout and word regions for spoiler text.
 ///
@@ -23,7 +9,7 @@ class SpoilerTextLayoutResult {
 ///   - walk the whole text and collect non-whitespace "words".
 /// If [range] != null:
 ///   - collect selection boxes only for that range.
-SpoilerTextLayoutResult computeSpoilerTextLayout({
+(SpoilerGeometry geometry, TextPainter painter) computeSpoilerTextLayout({
   required String text,
   required TextStyle? style,
   required TextAlign textAlign,
@@ -51,76 +37,19 @@ SpoilerTextLayoutResult computeSpoilerTextLayout({
 
   painter.layout(maxWidth: maxWidth);
 
-  final rects = <Rect>{};
-  final path = Path();
+  final selection = range == null
+      ? TextSelection(baseOffset: 0, extentOffset: text.length)
+      : TextSelection(
+          baseOffset: range.start.clamp(0, text.length),
+          extentOffset: range.end.clamp(0, text.length),
+        );
 
-  if (text.isEmpty) {
-    return SpoilerTextLayoutResult(
-      painter: painter,
-      wordRects: rects,
-      wordPath: path,
-    );
-  }
-
-  if (range != null) {
-    final clamped = TextRange(
-      start: range.start.clamp(0, text.length),
-      end: range.end.clamp(0, text.length),
-    );
-
-    if (clamped.isValid && !clamped.isCollapsed) {
-      final boxes = painter.getBoxesForSelection(
-        TextSelection(baseOffset: clamped.start, extentOffset: clamped.end),
-      );
-      for (final box in boxes) {
-        final rect = box.toRect();
-        rects.add(rect);
-        path.addRect(rect);
-      }
-    }
-
-    return SpoilerTextLayoutResult(
-      painter: painter,
-      wordRects: rects,
-      wordPath: path,
-    );
-  }
-
-  // No explicit range → walk all word boundaries.
-  int index = 0;
-  final end = text.length;
-
-  while (index < end) {
-    // Skip whitespace.
-    while (index < end && text[index].trim().isEmpty) {
-      index++;
-    }
-    if (index >= end) break;
-
-    final wordStart = index;
-
-    // Consume non-whitespace characters.
-    while (index < end && text[index].trim().isNotEmpty) {
-      index++;
-    }
-    final wordEnd = index;
-
-    final selection = TextSelection(
-      baseOffset: wordStart,
-      extentOffset: wordEnd,
-    );
-    final boxes = painter.getBoxesForSelection(selection);
-
-    if (boxes.isNotEmpty) {
-      final rect = boxes.first.toRect();
-      rects.add(rect);
-      path.addRect(rect);
-    }
-  }
-
-  return SpoilerTextLayoutResult(
-    painter: painter,
-    wordRects: rects,
-    wordPath: path,
+  final geom = buildSpoilerGeometry(
+    layout: TextPainterLayoutClient(painter),
+    text: text,
+    selection: selection,
+    skipWhitespace: true,
   );
+
+  return (geom!, painter);
 }

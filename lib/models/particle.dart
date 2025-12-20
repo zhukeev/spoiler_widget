@@ -77,9 +77,7 @@ class Particle extends Offset {
 
     final lifetime = life - 0.01;
 
-    final color = lifetime > .1
-        ? this.color.withValues(alpha: lifetime.clamp(0, 1))
-        : this.color;
+    final color = lifetime > .1 ? this.color.withValues(alpha: lifetime.clamp(0, 1)) : this.color;
 
     return copyWith(
       dx: next.dx,

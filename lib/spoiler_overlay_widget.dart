@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:spoiler_widget/models/spoiler_spots_controller.dart';
-import 'package:spoiler_widget/models/widget_spoiler.dart';
-import 'package:spoiler_widget/widgets/canvas_callback_painter.dart';
-import 'package:spoiler_widget/widgets/path_clipper.dart';
+import 'package:spoiler_widget/models/spoiler_controller.dart';
+import 'package:spoiler_widget/models/widget_spoiler_config.dart';
+import 'package:spoiler_widget/widgets/spoiler_render_object.dart';
 
 class SpoilerOverlay extends StatefulWidget {
   const SpoilerOverlay({
@@ -17,15 +17,23 @@ class SpoilerOverlay extends StatefulWidget {
   State<SpoilerOverlay> createState() => _SpoilerOverlayState();
 }
 
-class _SpoilerOverlayState extends State<SpoilerOverlay>
-    with TickerProviderStateMixin {
-  late final SpoilerSpotsController _spoilerController =
-      SpoilerSpotsController(vsync: this);
+class _SpoilerOverlayState extends State<SpoilerOverlay> with TickerProviderStateMixin {
+  late SpoilerController _spoilerController;
   Rect _spoilerBounds = Rect.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.config.shaderConfig == null) {
+      _spoilerController = SpoilerSpotsController(vsync: this);
+    } else {
+      _spoilerController = SpoilerController(vsync: this);
+    }
+  }
 
   void _initializeSpoilerBounds(Size size) {
     _spoilerBounds = Rect.fromLTWH(0, 0, size.width, size.height);
-    _spoilerController.initParticles(_spoilerBounds, widget.config);
+    _spoilerController.initializeParticles(Path()..addRect(_spoilerBounds), widget.config);
   }
 
   @override
@@ -62,26 +70,20 @@ class _SpoilerOverlayState extends State<SpoilerOverlay>
       },
       child: ListenableBuilder(
         listenable: _spoilerController,
-        builder: (context, snapshot) {
-          return Stack(
-            alignment: Alignment.center,
-            children: [
-              widget.child,
-              CustomPaint(
-                foregroundPainter: CustomPainterCanvasCallback(
-                  onPaint: _onPaint,
-                ),
-                child: ClipPath(
-                  clipper:
-                      PathClipper(builder: _spoilerController.createClipPath),
-                  child: ImageFiltered(
-                    imageFilter: widget.config.imageFilter,
-                    enabled: _spoilerController.isEnabled,
-                    child: widget.child,
-                  ),
-                ),
-              ),
-            ],
+        child: widget.child,
+        builder: (context, child) {
+          return SpoilerRenderObjectWidget(
+            onAfterPaint: (canvas, size) => _onPaint(canvas, size),
+            onClipPath: (size) {
+              if (_spoilerController.isEnabled && !_spoilerController.isFading) {
+                return Path()..addRect(Offset.zero & size);
+              }
+
+              return _spoilerController.createClipPath(size);
+            },
+            enableOverlay: true,
+            imageFilter: _spoilerController.isEnabled ? widget.config.imageFilter : null,
+            child: child!,
           );
         },
       ),

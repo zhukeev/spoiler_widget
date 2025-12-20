@@ -1,66 +1,35 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:spoiler_widget/models/spoiler_configs.dart';
 
-/// Configuration for the text-based spoiler effect.
+/// Configuration for the widget-based spoiler effect.
 ///
-/// This extends [SpoilerConfig] to provide additional customization options
-/// specific to text-based spoilers, such as styling, alignment, and text selection handling.
+/// This extends [SpoilerConfig] and adds additional properties specific to
+/// widgets, including an image filter effect and wave animations.
 @immutable
-class TextSpoilerConfig extends SpoilerConfig {
-  /// The text style to be applied to the spoiler text.
+class WidgetSpoilerConfig extends SpoilerConfig {
+  /// The image filter applied to the widget when the spoiler is active.
   ///
-  /// This allows customization of the font, color, weight, and other
-  /// text-related properties.
-  final TextStyle? textStyle;
+  /// This can be used to blur, pixelate, or otherwise obscure the content
+  /// before it is revealed.
+  final ImageFilter imageFilter;
 
-  /// The selection range within the text.
+  /// The maximum number of active waves used for the spoiler effect.
   ///
-  /// This defines the portion of the text that should be affected by the
-  /// spoiler effect, allowing for partial text obfuscation.
-  final TextSelection? textSelection;
+  /// This controls how many simultaneous wave animations are allowed when
+  /// interacting with the spoiler.
+  final int maxActiveWaves;
 
-  /// The alignment of the text within the spoiler widget.
+  /// Creates a widget spoiler configuration with the specified parameters.
   ///
-  /// This allows controlling the horizontal alignment of the text,
-  /// such as [TextAlign.center], [TextAlign.left], [TextAlign.right], etc.
-  /// If null, the default alignment of the parent widget will be used.
-  final TextAlign? textAlign;
-
-  /// An optional maximum number of lines for the text to span, wrapping if necessary.
-  ///
-  /// If the text exceeds the given number of lines, it will be truncated according
-  /// to [isEllipsis].
-  ///
-  /// If this is 1, the text will not wrap. Otherwise, text will wrap at the
-  /// edge of the box.
-  ///
-  /// If this is null, but there is an ambient [DefaultTextStyle] that specifies
-  /// an explicit number for its [DefaultTextStyle.maxLines], then the
-  /// [DefaultTextStyle] value will take precedence. You can use a [RichText]
-  /// widget directly to entirely override the [DefaultTextStyle].
-  final int? maxLines;
-
-  /// Determines whether overflowing text should display an ellipsis ("…") at the end.
-  ///
-  /// If [isEllipsis] is true and the text exceeds [maxLines], a "…" will be
-  /// appended to indicate that the text has been truncated.
-  ///
-  /// If the value is null or false, the ellipsis will not be used
-  final bool? isEllipsis;
-
-  /// Creates a text spoiler configuration with the specified parameters.
-  ///
-  /// Inherits base properties from [SpoilerConfig] while adding
-  /// text-specific customizations such as styling, alignment, and selection.
-  TextSpoilerConfig({
-    this.textStyle,
-    this.textSelection,
-    this.textAlign,
-    this.maxLines,
-    this.isEllipsis,
-    double particleDensity = 20.0,
+  /// Inherits base properties from [SpoilerConfig] while adding an image filter
+  /// and wave control for additional customization.
+  WidgetSpoilerConfig({
+    required this.imageFilter,
+    this.maxActiveWaves = 4,
+    double particleDensity = 0.1,
     double particleSpeed = 0.2,
-    Color particleColor = Colors.white70,
+    Color particleColor = Colors.white,
     double maxParticleSize = 1.0,
     bool enableFadeAnimation = false,
     double fadeRadius = 10.0,
@@ -69,6 +38,7 @@ class TextSpoilerConfig extends SpoilerConfig {
     bool enableGestureReveal = false,
     SpoilerMask? maskConfig,
     ValueChanged<bool>? onSpoilerVisibilityChanged,
+    ShaderConfig? shaderConfig,
     ParticleConfig? particleConfig,
     FadeConfig? fadeConfig,
   }) : super(
@@ -76,7 +46,7 @@ class TextSpoilerConfig extends SpoilerConfig {
           enableGestureReveal: enableGestureReveal,
           maskConfig: maskConfig,
           onSpoilerVisibilityChanged: onSpoilerVisibilityChanged,
-          shaderConfig: null,
+          shaderConfig: shaderConfig,
           particleConfig: particleConfig ??
               ParticleConfig(
                 density: particleDensity,
@@ -93,8 +63,15 @@ class TextSpoilerConfig extends SpoilerConfig {
                   : null),
         );
 
+  /// Returns a default configuration for the widget spoiler effect.
+  ///
+  /// This includes a strong blur effect and other default settings.
+  factory WidgetSpoilerConfig.defaultConfig() => WidgetSpoilerConfig(
+        imageFilter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+      );
+
   @override
-  TextSpoilerConfig copyWith({
+  WidgetSpoilerConfig copyWith({
     double? particleDensity,
     double? particleSpeed,
     Color? particleColor,
@@ -104,22 +81,19 @@ class TextSpoilerConfig extends SpoilerConfig {
     double? fadeEdgeThickness,
     bool? isEnabled,
     bool? enableGestureReveal,
-    ParticleConfig? particleConfig,
-    FadeConfig? fadeConfig,
     SpoilerMask? maskConfig,
     ValueChanged<bool>? onSpoilerVisibilityChanged,
     ShaderConfig? shaderConfig,
-    TextStyle? textStyle,
-    TextSelection? textSelection,
-    TextAlign? textAlign,
-    int? maxLines,
-    bool? isEllipsis,
+    FadeConfig? fadeConfig,
+    ParticleConfig? particleConfig,
+    ImageFilter? imageFilter,
+    int? maxActiveWaves,
   }) {
-    final bool legacyParticleOverrides =
+    final bool legacyParticleOverridesProvided =
         particleDensity != null || particleSpeed != null || particleColor != null || maxParticleSize != null;
 
     final ParticleConfig nextParticleConfig = particleConfig ??
-        (legacyParticleOverrides
+        (legacyParticleOverridesProvided
             ? ParticleConfig(
                 density: particleDensity ?? this.particleConfig.density,
                 speed: particleSpeed ?? this.particleConfig.speed,
@@ -128,10 +102,11 @@ class TextSpoilerConfig extends SpoilerConfig {
               )
             : this.particleConfig);
 
-    final bool legacyFadeOverrides = enableFadeAnimation != null || fadeRadius != null || fadeEdgeThickness != null;
+    final bool legacyFadeOverridesProvided =
+        enableFadeAnimation != null || fadeRadius != null || fadeEdgeThickness != null;
 
     final FadeConfig? nextFadeConfig = fadeConfig ??
-        (legacyFadeOverrides
+        (legacyFadeOverridesProvided
             ? ((enableFadeAnimation ?? (this.fadeConfig != null))
                 ? FadeConfig(
                     padding: fadeRadius ?? (this.fadeConfig?.padding ?? 10.0),
@@ -140,49 +115,43 @@ class TextSpoilerConfig extends SpoilerConfig {
                 : null)
             : this.fadeConfig);
 
-    return TextSpoilerConfig(
+    return WidgetSpoilerConfig(
+      imageFilter: imageFilter ?? this.imageFilter,
+      maxActiveWaves: maxActiveWaves ?? this.maxActiveWaves,
+      shaderConfig: shaderConfig ?? this.shaderConfig,
       particleConfig: nextParticleConfig,
       fadeConfig: nextFadeConfig,
       isEnabled: isEnabled ?? this.isEnabled,
       enableGestureReveal: enableGestureReveal ?? this.enableGestureReveal,
       maskConfig: maskConfig ?? this.maskConfig,
       onSpoilerVisibilityChanged: onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
-      textStyle: textStyle ?? this.textStyle,
-      textSelection: textSelection ?? this.textSelection,
-      textAlign: textAlign ?? this.textAlign,
-      maxLines: maxLines ?? this.maxLines,
-      isEllipsis: isEllipsis ?? this.isEllipsis,
     );
   }
 
   @override
   int get hashCode => Object.hash(
+        imageFilter,
+        maxActiveWaves,
         particleConfig,
         fadeConfig,
         isEnabled,
         enableGestureReveal,
         maskConfig,
         onSpoilerVisibilityChanged,
-        textStyle,
-        textSelection,
-        textAlign,
-        maxLines,
-        isEllipsis,
+        shaderConfig,
       );
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is TextSpoilerConfig &&
+      other is WidgetSpoilerConfig &&
+          imageFilter == other.imageFilter &&
+          maxActiveWaves == other.maxActiveWaves &&
           particleConfig == other.particleConfig &&
           fadeConfig == other.fadeConfig &&
           isEnabled == other.isEnabled &&
           enableGestureReveal == other.enableGestureReveal &&
           maskConfig == other.maskConfig &&
           onSpoilerVisibilityChanged == other.onSpoilerVisibilityChanged &&
-          textStyle == other.textStyle &&
-          textSelection == other.textSelection &&
-          textAlign == other.textAlign &&
-          maxLines == other.maxLines &&
-          isEllipsis == other.isEllipsis;
+          shaderConfig == other.shaderConfig;
 }

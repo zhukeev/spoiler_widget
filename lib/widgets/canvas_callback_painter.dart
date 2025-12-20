@@ -14,6 +14,5 @@ class CustomPainterCanvasCallback extends CustomPainter {
   void paint(Canvas canvas, Size size) => onPaint.call(canvas, size);
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) =>
-      oldDelegate != this;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => oldDelegate != this;
 }

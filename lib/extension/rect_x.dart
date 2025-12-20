@@ -14,43 +14,42 @@ extension RectX on Rect {
   /// ```
   ///
   bool containsOffset(Offset offset) {
-    return bottom >= offset.dy &&
-        top <= offset.dy &&
-        left <= offset.dx &&
-        right >= offset.dx;
+    return bottom >= offset.dy && top <= offset.dy && left <= offset.dx && right >= offset.dx;
   }
 
   (Rect, Rect, Rect, Rect) divideRect() {
     final halfWidth = width / 2;
     final halfHeight = height / 2;
 
-    final topLeft =
-        Rect.fromLTRB(left, top, left + halfWidth, top + halfHeight);
-    final topRight =
-        Rect.fromLTRB(left + halfWidth, top, right, top + halfHeight);
-    final bottomLeft =
-        Rect.fromLTRB(left, top + halfHeight, left + halfWidth, bottom);
-    final bottomRight =
-        Rect.fromLTRB(left + halfWidth, top + halfHeight, right, bottom);
+    final topLeft = Rect.fromLTRB(left, top, left + halfWidth, top + halfHeight);
+    final topRight = Rect.fromLTRB(left + halfWidth, top, right, top + halfHeight);
+    final bottomLeft = Rect.fromLTRB(left, top + halfHeight, left + halfWidth, bottom);
+    final bottomRight = Rect.fromLTRB(left + halfWidth, top + halfHeight, right, bottom);
 
     return (topLeft, topRight, bottomLeft, bottomRight);
   }
 
   /// Get the farthest corner from {offset}
   Offset getFarthestPoint(Offset offset) {
-    final (topLeft, topRight, bottomLeft, bottomRight) = divideRect();
+    final corners = [
+      topLeft,
+      topRight,
+      bottomLeft,
+      bottomRight,
+    ];
 
-    if (topLeft.containsOffset(offset)) {
-      return bottomRight.bottomRight;
-    } else if (topRight.containsOffset(offset)) {
-      return bottomLeft.bottomLeft;
-    } else if (bottomLeft.containsOffset(offset)) {
-      return topRight.topRight;
-    } else if (bottomRight.containsOffset(offset)) {
-      return topLeft.topLeft;
-    } else {
-      return center;
+    var farthest = corners.first;
+    var maxDistance = (farthest - offset).distanceSquared;
+
+    for (final corner in corners.skip(1)) {
+      final distance = (corner - offset).distanceSquared;
+      if (distance > maxDistance) {
+        maxDistance = distance;
+        farthest = corner;
+      }
     }
+
+    return farthest;
   }
 
   /// Get the nearest corner from {offset}

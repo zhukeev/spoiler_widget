@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.0.19
+
+* **New Features:**
+  * Added `ShaderConfig` to enable a variety of new spoiler effects through custom fragment shaders.
+  * Included five new built-in shader effects:
+    * `ShaderConfig.bokehCover()` – A soft, out-of-focus blur.
+    * `ShaderConfig.liquidMetal()` – A flowing, metallic distortion.
+    * `ShaderConfig.glitchStripes()` – A digital glitch with RGB-split stripes.
+    * `ShaderConfig.mosaicCensor()` – A pixelated censorship block effect.
+    * `ShaderConfig.liquidSpectrum()` – A vibrant, shifting spectrum distortion.
+
+* **Refactoring:**
+  * Deprecated direct particle and fade properties in `SpoilerConfig`.
+  * Introduced `ParticleConfig` and `FadeConfig` to provide a more structured and extensible way to configure spoiler appearance and behavior. Legacy properties are now mapped to these new classes for backward compatibility.
+
 ## 1.0.18
 
 * Matrix translate fix

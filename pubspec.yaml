@@ -1,6 +1,6 @@
 name: spoiler_widget
 description: A Flutter package to create spoiler animations similar to the one used in Telegram, allowing you to hide sensitive or spoiler-filled content until it's tapped or clicked.
-version: 1.0.18
+version: 1.0.19
 homepage: https://github.com/zhukeev/spoiler_widget
 issue_tracker: https://github.com/zhukeev/spoiler_widget/issues
 
@@ -35,3 +35,12 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^2.0.0
+
+flutter:
+  shaders:
+    - shaders/particles.frag
+    - shaders/bokeh_cover.frag
+    - shaders/liquid_metal.frag
+    - shaders/glitch_stripes.frag
+    - shaders/mosaic_censor.frag
+    - shaders/liquid_spectrum.frag
