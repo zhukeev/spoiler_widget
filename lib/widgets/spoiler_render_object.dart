@@ -195,7 +195,12 @@ class RenderSpoiler extends RenderProxyBox {
             if (geom == null) continue;
 
             final Matrix4 m = re.getTransformTo(this);
-            collected.addAll(geom.rects.map((r) => MatrixUtils.transformRect(m, r)));
+            final Offset paintOffset = _editablePaintOffset(re);
+            collected.addAll(
+              geom.rects
+                  .map((r) => _normalizeEditableRect(r.shift(paintOffset), re))
+                  .map((r) => MatrixUtils.transformRect(m, r)),
+            );
           }
 
           if (collected.isNotEmpty) {
@@ -245,9 +250,6 @@ class RenderSpoiler extends RenderProxyBox {
 
       Path? particleClipPath;
       if (clipPath != null) {
-        // Invert the clip for particles so they are shown where the text is hidden.
-        // Assumes clipPath cuts out the text (Difference).
-        // Inverse = Screen - clipPath = Text Area.
         particleClipPath = Path.combine(
           PathOperation.difference,
           Path()..addRect(Offset.zero & size),
@@ -417,8 +419,9 @@ class SpoilerPaintingContext extends PaintingContext {
         final boxes = child.getBoxesForSelection(
           TextSelection(baseOffset: 0, extentOffset: currentText!.length),
         );
+        final paintOffset = _editablePaintOffset(child);
         for (final b in boxes) {
-          spoilerRects.add(b.toRect().shift(offset));
+          spoilerRects.add(_normalizeEditableRect(b.toRect().shift(offset + paintOffset), child));
         }
       }
     }
@@ -451,6 +454,46 @@ class _ChildSpoilerPaintingContext extends SpoilerPaintingContext {
 
   @override
   List<Rect> get spoilerRects => rootRects;
+}
+
+Offset _editablePaintOffset(RenderEditable editable) {
+  // Use a stable reference: first glyph box vs caret at offset 0.
+  try {
+    final text = editable.plainText;
+    if (text.isNotEmpty) {
+      final caret = editable.getLocalRectForCaret(
+        const TextPosition(offset: 0),
+      );
+      final boxes = editable.getBoxesForSelection(
+        const TextSelection(baseOffset: 0, extentOffset: 1),
+      );
+      if (boxes.isNotEmpty) {
+        return caret.topLeft - boxes.first.toRect().topLeft;
+      }
+    }
+  } catch (_) {
+    // ignore and fall back
+  }
+
+  // Fallback to scroll-based approximation if caret metrics aren't available.
+  final pixels = editable.offset.pixels;
+  if (pixels == 0) return Offset.zero;
+  final isSingleLine = editable.maxLines == 1;
+  if (isSingleLine) {
+    return editable.textDirection == TextDirection.rtl ? Offset(pixels, 0) : Offset(-pixels, 0);
+  }
+  return Offset(0, -pixels);
+}
+
+Rect _normalizeEditableRect(Rect rect, RenderEditable editable) {
+  final minHeight = editable.preferredLineHeight;
+  const double leftPadding = 2.0; // cover leading-side clipping (e.g., descenders at start)
+  return Rect.fromLTRB(
+    rect.left - leftPadding,
+    rect.top,
+    rect.right,
+    rect.top + minHeight,
+  );
 }
 
 /// Canvas wrapper that collects paragraph word bounds while forwarding all
