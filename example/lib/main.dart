@@ -1,8 +1,8 @@
-import 'dart:math';
-
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:spoiler_widget/spoiler_widget.dart';
+import 'pages/spoiler_overlay_page.dart';
+import 'pages/spoiler_text_field_page.dart';
+import 'pages/spoiler_text_page.dart';
+import 'pages/spoiler_text_wrapper_page.dart';
 
 void main() {
   runApp(const MainApp());
@@ -16,176 +16,53 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> {
-  final controller = TextEditingController(
-    text: 'This is a spoiler! Tap to reveal',
-  );
-  bool enable = true;
-  final text = 'This is a spoiler! Tap to reveal';
-
-  final url =
-      'https://img.freepik.com/premium-photo/drawing-female-superhero-female-character_1308175-151081.jpg?w=1800';
-
-  SpoilerMask createStarPath(Size size, Offset offset) {
-    Path path = Path();
-    final cx = size.width / 2;
-    final cy = size.height / 3;
-    final radiusOuter = size.width;
-    final radiusInner = radiusOuter / 2;
-    const numPoints = 5;
-
-    const angle = pi / (numPoints);
-    path.moveTo(cx + radiusOuter * cos(0), cy + radiusOuter * sin(0));
-
-    for (int i = 1; i <= numPoints * 2; i++) {
-      final r = (i % 2 == 0) ? radiusOuter : radiusInner;
-      final x = cx + r * cos(i * angle);
-      final y = cy + r * sin(i * angle);
-      path.lineTo(x, y);
-    }
-    path.close();
-
-    final Matrix4 matrix = Matrix4.identity()
-      ..translate(cx, cy, 0.0)
-      ..rotateZ(1)
-      ..translate(-cx, -cy, 0.0);
-    return SpoilerMask(
-      maskPath: path.transform(matrix.storage),
-      maskOperation: PathOperation.intersect,
-      offset: offset,
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      showPerformanceOverlay: true,
+      home: _DemoListPage(),
     );
   }
+}
+
+class _DemoListPage extends StatelessWidget {
+  const _DemoListPage();
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      showPerformanceOverlay: false,
-      home: Scaffold(
-        backgroundColor: Colors.black,
-        body: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(height: 100),
-              SpoilerText(
-                config: TextSpoilerConfig(
-                  isEnabled: enable,
-                  enableGestureReveal: true,
-                  particleConfig: const ParticleConfig(
-                    maxParticleSize: 1,
-                    color: Colors.white,
-                    density: .2,
-                    speed: .2,
-                  ),
-                  fadeConfig: const FadeConfig(
-                    padding: 10,
-                    edgeThickness: 20,
-                  ),
-                  onSpoilerVisibilityChanged: (isVisible) {
-                    debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
-                  },
-                ),
-                text: text,
-              ),
-              RepaintBoundary(
-                child: SpoilerTextFieldWrapper(
-                  config: SpoilerConfig(
-                    isEnabled: enable,
-                    enableGestureReveal: true,
-                  ),
-                  builder: (context, contextMenuBuilder) => TextFormField(
-                    controller: controller,
-                    focusNode: FocusNode(),
-                    contextMenuBuilder: contextMenuBuilder,
-                    cursorColor: Colors.deepPurple,
-                    maxLines: 3,
-                    style: const TextStyle(
-                      fontSize: 50,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-              RepaintBoundary(
-                child: SpoilerTextWrapper(
-                  config: SpoilerConfig(
-                    isEnabled: enable,
-                    enableGestureReveal: true,
-                    particleConfig: const ParticleConfig(
-                      maxParticleSize: 1,
-                      color: Colors.white,
-                      density: .2,
-                      speed: .2,
-                    ),
-                    fadeConfig: const FadeConfig(
-                      padding: 10,
-                      edgeThickness: 20,
-                    ),
-                    shaderConfig: ShaderConfig.particles(),
-                    onSpoilerVisibilityChanged: (isVisible) {
-                      debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
-                    },
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        text,
-                        style: const TextStyle(fontSize: 50, color: Colors.white),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Container(
-                            color: Colors.amber,
-                            width: 100,
-                            height: 100,
-                          ),
-                          Container(
-                            color: Colors.blue,
-                            width: 100,
-                            height: 100,
-                          ),
-                        ],
-                      ),
-                      Text(
-                        text,
-                        style: const TextStyle(fontSize: 50, color: Colors.white),
-                      ),
-                      const Text.rich(
-                        TextSpan(
-                          text: 'This is a spoiler! Tap to reveal а.аа. с  \n asd',
-                          style: TextStyle(fontSize: 20, color: Colors.red),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              RepaintBoundary(
-                  child: SpoilerOverlay(
-                config: WidgetSpoilerConfig.defaultConfig().copyWith(
-                  enableGestureReveal: true,
-                  enableFadeAnimation: true,
-                  particleConfig: const ParticleConfig(
-                    density: 0.1,
-                    speed: 0.15,
-                    color: Colors.white,
-                    maxParticleSize: 1.0,
-                    enableWaves: true,
-                    maxWaveRadius: 100.0,
-                    maxWaveCount: 5,
-                  ),
-                  shaderConfig: ShaderConfig.particles(),
-                ),
-                child: CachedNetworkImage(
-                  imageUrl: url,
-                  placeholder: (context, url) => const CircularProgressIndicator(),
-                  errorWidget: (context, url, error) => const Icon(Icons.error),
-                ),
-              )),
-            ],
-          ),
-        ),
+    final demos = <_DemoEntry>[
+      _DemoEntry('SpoilerText', () => const SpoilerTextPage()),
+      _DemoEntry('SpoilerTextField', () => const SpoilerTextFieldPage()),
+      _DemoEntry('SpoilerTextWrapper', () => const SpoilerTextWrapperPage()),
+      _DemoEntry('SpoilerOverlay', () => const SpoilerOverlayPage()),
+      _DemoEntry('SpoilerOverlay Full', () => const SpoilerOverlayPage(fullPage: true)),
+    ];
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Spoiler Widget Demos')),
+      backgroundColor: Colors.white,
+      body: ListView.separated(
+        itemCount: demos.length,
+        separatorBuilder: (_, __) => const Divider(height: 1),
+        itemBuilder: (context, index) {
+          final demo = demos[index];
+          return ListTile(
+            title: Text(demo.title),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => demo.builder()),
+              );
+            },
+          );
+        },
       ),
     );
   }
+}
+
+class _DemoEntry {
+  _DemoEntry(this.title, this.builder);
+  final String title;
+  final Widget Function() builder;
 }
