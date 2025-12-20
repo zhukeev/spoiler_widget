@@ -22,6 +22,21 @@ class RenderEditableLayoutClient implements TextLayoutClient {
   List<TextBox> getBoxesForSelection(TextSelection selection) => render.getBoxesForSelection(selection);
 }
 
+class TextPainterLayoutClient implements TextLayoutClient {
+  TextPainterLayoutClient(this.painter);
+
+  final TextPainter painter;
+
+  @override
+  List<TextBox> getBoxesForSelection(TextSelection selection) => painter.getBoxesForSelection(selection);
+
+  @override
+  double get preferredLineHeight => painter.preferredLineHeight;
+
+  @override
+  Size get size => painter.size;
+}
+
 /// Build a path for a selection using any [TextLayoutClient].
 (Path?, List<Rect>) buildSelectionPath({
   required TextLayoutClient layout,

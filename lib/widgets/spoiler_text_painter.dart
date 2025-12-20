@@ -55,7 +55,7 @@ class _SpoilerTextPainterState extends State<SpoilerTextPainter> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final result = computeSpoilerTextLayout(
+        final (geom, painter) = computeSpoilerTextLayout(
           text: widget.text,
           style: widget.style,
           textAlign: widget.textAlign,
@@ -72,15 +72,15 @@ class _SpoilerTextPainterState extends State<SpoilerTextPainter> {
         );
 
         final textSize = Size(
-          result.painter.width,
-          result.painter.height,
+          painter.width,
+          painter.height,
         );
 
         if (_previousSize != textSize) {
           _previousSize = textSize;
           _spoilerRegions
             ..clear()
-            ..addAll(result.wordRects);
+            ..addAll(geom.rects);
           widget.onInit(_spoilerRegions.toList().mergeRects());
         }
 
@@ -90,7 +90,7 @@ class _SpoilerTextPainterState extends State<SpoilerTextPainter> {
               // 1) First draw spoiler / particles / clip.
               widget.onPaint(canvas, size);
               // 2) Then paint text.
-              result.painter.paint(canvas, Offset.zero);
+              painter.paint(canvas, Offset.zero);
             },
           ),
           size: textSize,

@@ -66,6 +66,26 @@ class _MainAppState extends State<MainApp> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(height: 100),
+              SpoilerText(
+                config: TextSpoilerConfig(
+                  isEnabled: enable,
+                  enableGestureReveal: true,
+                  particleConfig: const ParticleConfig(
+                    maxParticleSize: 1,
+                    color: Colors.white,
+                    density: .2,
+                    speed: .2,
+                  ),
+                  fadeConfig: const FadeConfig(
+                    padding: 10,
+                    edgeThickness: 20,
+                  ),
+                  onSpoilerVisibilityChanged: (isVisible) {
+                    debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
+                  },
+                ),
+                text: text,
+              ),
               RepaintBoundary(
                 child: SpoilerTextFieldWrapper(
                   config: SpoilerConfig(
