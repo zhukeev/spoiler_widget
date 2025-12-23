@@ -322,7 +322,7 @@ class ShaderConfig {
       config.particleConfig.color.green / 255.0,
       config.particleConfig.color.blue / 255.0,
       // 6. uDensity
-      config.particleConfig.density,
+      config.particleConfig.density.clamp(0.0, 1.0),
       // 7. uSize
       config.particleConfig.maxParticleSize,
       // 8. uSpeed
@@ -476,6 +476,7 @@ class FadeConfig {
 
 @immutable
 class ParticleConfig {
+  /// Fraction of area covered by particles (0..1 => 0%..100%).
   final double density;
   final double speed;
   final Color color;

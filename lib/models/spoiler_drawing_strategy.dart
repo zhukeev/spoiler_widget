@@ -162,6 +162,7 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
 
 /// Strategy for drawing particles using Flutter's drawRawAtlas (CPU/hybrid).
 class AtlasSpoilerDrawer implements SpoilerDrawer {
+  static const double _lifeSizeMin = 0.6;
   AtlasSpoilerDrawer();
 
   // Particle state
@@ -214,10 +215,20 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
       diameter: _maxParticleSize,
       color: _particleColor,
     );
+    final coverage = config.particleConfig.density.clamp(0.0, 1.0);
 
     for (final path in paths) {
       final rect = path.getBounds();
-      final particleCount = (rect.width * rect.height) * config.particleConfig.density;
+
+      final screenArea = rect.width * rect.height;
+      final particleArea = pi * pow(config.particleConfig.maxParticleSize * 0.5, 2);
+
+      final rawCount = (screenArea * coverage) / particleArea;
+      final particleCount = rawCount.round();
+      if (particleCount <= 0) {
+        continue;
+      }
+
       for (int i = 0; i < particleCount; i++) {
         _particles.add(_createRandomParticlePath(path));
       }
@@ -274,6 +285,7 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
     int index = 0;
     for (final p in _particles) {
       final transformIndex = index * 4;
+      final lifeScale = _lifeSizeMin + (1.0 - _lifeSizeMin) * p.life;
 
       if (isFading) {
         final distSq = (fadeCenter - p).distanceSquared;
@@ -284,7 +296,7 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
           final scale = (dist > fadeRadius - fadeEdgeThickness) ? 1.5 : 1.0;
           final color = (dist > fadeRadius - fadeEdgeThickness) ? Colors.white : p.color;
 
-          transforms[transformIndex + 0] = scale;
+          transforms[transformIndex + 0] = scale * lifeScale;
           transforms[transformIndex + 1] = 0.0;
           transforms[transformIndex + 2] = p.dx;
           transforms[transformIndex + 3] = p.dy;
@@ -306,7 +318,7 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
         }
       } else {
         // normal
-        transforms[transformIndex + 0] = 1.0;
+        transforms[transformIndex + 0] = lifeScale;
         transforms[transformIndex + 1] = 0.0;
         transforms[transformIndex + 2] = p.dx;
         transforms[transformIndex + 3] = p.dy;
