@@ -24,10 +24,11 @@ class _SpoilerOverlayPageState extends State<SpoilerOverlayPage> {
           density: .1,
           speed: 0.25,
           color: Colors.white,
-          maxParticleSize: 1.0,
+          maxParticleSize: 10.0,
           enableWaves: true,
           maxWaveRadius: 100.0,
           maxWaveCount: 5,
+          shape: ParticleShape.star,
         ),
         shaderConfig: shaders ? ShaderConfig.particles() : null,
       );

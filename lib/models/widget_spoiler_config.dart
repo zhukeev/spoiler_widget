@@ -31,6 +31,7 @@ class WidgetSpoilerConfig extends SpoilerConfig {
     double particleSpeed = 0.2,
     Color particleColor = Colors.white,
     double maxParticleSize = 1.0,
+    ParticleShape particleShape = ParticleShape.circle,
     bool enableFadeAnimation = false,
     double fadeRadius = 10.0,
     double fadeEdgeThickness = 20.0,
@@ -53,6 +54,7 @@ class WidgetSpoilerConfig extends SpoilerConfig {
                 speed: particleSpeed,
                 color: particleColor,
                 maxParticleSize: maxParticleSize,
+                shape: particleShape,
               ),
           fadeConfig: fadeConfig ??
               (enableFadeAnimation
@@ -76,6 +78,7 @@ class WidgetSpoilerConfig extends SpoilerConfig {
     double? particleSpeed,
     Color? particleColor,
     double? maxParticleSize,
+    ParticleShape? particleShape,
     bool? enableFadeAnimation,
     double? fadeRadius,
     double? fadeEdgeThickness,
@@ -89,8 +92,11 @@ class WidgetSpoilerConfig extends SpoilerConfig {
     ImageFilter? imageFilter,
     int? maxActiveWaves,
   }) {
-    final bool legacyParticleOverridesProvided =
-        particleDensity != null || particleSpeed != null || particleColor != null || maxParticleSize != null;
+    final bool legacyParticleOverridesProvided = particleDensity != null ||
+        particleSpeed != null ||
+        particleColor != null ||
+        maxParticleSize != null ||
+        particleShape != null;
 
     final ParticleConfig nextParticleConfig = particleConfig ??
         (legacyParticleOverridesProvided
@@ -99,6 +105,7 @@ class WidgetSpoilerConfig extends SpoilerConfig {
                 speed: particleSpeed ?? this.particleConfig.speed,
                 color: particleColor ?? this.particleConfig.color,
                 maxParticleSize: maxParticleSize ?? this.particleConfig.maxParticleSize,
+                shape: particleShape ?? this.particleConfig.shape,
               )
             : this.particleConfig);
 

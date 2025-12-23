@@ -214,6 +214,7 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
     _circleImage = CircleImageFactory.create(
       diameter: _maxParticleSize,
       color: _particleColor,
+      shape: config.particleConfig.shape,
     );
     final coverage = config.particleConfig.density.clamp(0.0, 1.0);
 
@@ -221,7 +222,8 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
       final rect = path.getBounds();
 
       final screenArea = rect.width * rect.height;
-      final particleArea = pi * pow(config.particleConfig.maxParticleSize * 0.5, 2);
+      final particleArea =
+          pi * pow(config.particleConfig.maxParticleSize * 0.5, 2) * config.particleConfig.shape.areaFactor;
 
       final rawCount = (screenArea * coverage) / particleArea;
       final particleCount = rawCount.round();
@@ -281,6 +283,7 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
     final transforms = _valTransforms!;
     final rects = _valRects!;
     final colors = _valColors!;
+    final spriteRadius = _circleImage.dimension * 0.5;
 
     int index = 0;
     for (final p in _particles) {
@@ -295,11 +298,12 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
           final dist = sqrt(distSq);
           final scale = (dist > fadeRadius - fadeEdgeThickness) ? 1.5 : 1.0;
           final color = (dist > fadeRadius - fadeEdgeThickness) ? Colors.white : p.color;
+          final scaled = scale * lifeScale;
 
-          transforms[transformIndex + 0] = scale * lifeScale;
+          transforms[transformIndex + 0] = scaled;
           transforms[transformIndex + 1] = 0.0;
-          transforms[transformIndex + 2] = p.dx;
-          transforms[transformIndex + 3] = p.dy;
+          transforms[transformIndex + 2] = p.dx - spriteRadius * scaled;
+          transforms[transformIndex + 3] = p.dy - spriteRadius * scaled;
 
           rects[transformIndex + 0] = 0.0;
           rects[transformIndex + 1] = 0.0;
@@ -320,8 +324,8 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
         // normal
         transforms[transformIndex + 0] = lifeScale;
         transforms[transformIndex + 1] = 0.0;
-        transforms[transformIndex + 2] = p.dx;
-        transforms[transformIndex + 3] = p.dy;
+        transforms[transformIndex + 2] = p.dx - spriteRadius * lifeScale;
+        transforms[transformIndex + 3] = p.dy - spriteRadius * lifeScale;
 
         rects[transformIndex + 0] = 0.0;
         rects[transformIndex + 1] = 0.0;
@@ -340,7 +344,7 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
         transforms,
         rects,
         colors,
-        BlendMode.srcOver,
+        BlendMode.modulate,
         null,
         _particlePaint,
       );

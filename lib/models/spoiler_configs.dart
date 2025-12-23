@@ -343,6 +343,8 @@ class ShaderConfig {
       config.particleConfig.maxWaveRadius,
       // 15. uMaxWaveCount
       config.particleConfig.maxWaveCount.toDouble(),
+      // 16. uShape
+      config.particleConfig.shape.index.toDouble(),
     ];
   }
 
@@ -474,6 +476,25 @@ class FadeConfig {
       identical(this, other) || other is FadeConfig && padding == other.padding && edgeThickness == other.edgeThickness;
 }
 
+enum ParticleShape {
+  circle,
+  star,
+  snowflake,
+}
+
+extension ParticleShapeX on ParticleShape {
+  double get areaFactor {
+    switch (this) {
+      case ParticleShape.circle:
+        return 1.0;
+      case ParticleShape.star:
+        return 0.421;
+      case ParticleShape.snowflake:
+        return 0.239;
+    }
+  }
+}
+
 @immutable
 class ParticleConfig {
   /// Fraction of area covered by particles (0..1 => 0%..100%).
@@ -481,6 +502,9 @@ class ParticleConfig {
   final double speed;
   final Color color;
   final double maxParticleSize;
+
+  /// Shape of each particle.
+  final ParticleShape shape;
   final bool enableWaves;
   final double maxWaveRadius;
   final int maxWaveCount;
@@ -490,13 +514,23 @@ class ParticleConfig {
     required this.speed,
     required this.color,
     required this.maxParticleSize,
+    this.shape = ParticleShape.circle,
     this.enableWaves = false,
     this.maxWaveRadius = 0.0,
     this.maxWaveCount = 3,
   });
 
   @override
-  int get hashCode => Object.hash(density, speed, color, maxParticleSize, enableWaves, maxWaveRadius, maxWaveCount);
+  int get hashCode => Object.hash(
+        density,
+        speed,
+        color,
+        maxParticleSize,
+        shape,
+        enableWaves,
+        maxWaveRadius,
+        maxWaveCount,
+      );
 
   @override
   bool operator ==(Object other) =>
@@ -506,6 +540,7 @@ class ParticleConfig {
           speed == other.speed &&
           color == other.color &&
           maxParticleSize == other.maxParticleSize &&
+          shape == other.shape &&
           enableWaves == other.enableWaves &&
           maxWaveRadius == other.maxWaveRadius &&
           maxWaveCount == other.maxWaveCount;
