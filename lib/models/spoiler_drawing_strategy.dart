@@ -303,11 +303,26 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
     final rects = _valRects!;
     final colors = _valColors!;
     final spriteRadius = _circleImage.dimension * 0.5;
+    final bounds = context.spoilerBounds;
+    final boundaryFadePx = max(spriteRadius * 3.0, 6.0);
+
+    double smoothstep(double edge0, double edge1, double x) {
+      final t = ((x - edge0) / (edge1 - edge0)).clamp(0.0, 1.0);
+      return t * t * (3.0 - 2.0 * t);
+    }
 
     int index = 0;
     for (final p in _particles) {
       final transformIndex = index * 4;
       final lifeScale = _lifeSizeMin + (1.0 - _lifeSizeMin) * p.life;
+      final edgeDist = min(
+        min(p.dx - bounds.left, bounds.right - p.dx),
+        min(p.dy - bounds.top, bounds.bottom - p.dy),
+      );
+      final edgeFade = edgeDist <= 0.0 ? 0.0 : smoothstep(0.0, boundaryFadePx, edgeDist);
+      final particleRadius = max(spriteRadius * lifeScale, 0.0001);
+      final edgeClamp = (edgeDist / particleRadius).clamp(0.0, 1.0);
+      final edgeScale = edgeFade * edgeClamp;
 
       if (isFading) {
         final distSq = (fadeCenter - p).distanceSquared;
@@ -317,7 +332,9 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
           final dist = sqrt(distSq);
           final scale = (dist > fadeRadius - fadeEdgeThickness) ? 1.5 : 1.0;
           final color = (dist > fadeRadius - fadeEdgeThickness) ? Colors.white : p.color;
-          final scaled = scale * lifeScale;
+          final scaled = scale * lifeScale * edgeScale;
+          // ignore: deprecated_member_use
+          final edgeColor = color.withValues(alpha: color.opacity * edgeScale);
 
           transforms[transformIndex + 0] = scaled;
           transforms[transformIndex + 1] = 0.0;
@@ -330,7 +347,10 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
           rects[transformIndex + 3] = _circleImage.dimension.toDouble();
 
           // ignore: deprecated_member_use
-          colors[index] = color.value;
+          colors[index] = edgeScale > 0.0 ? edgeColor.value : Colors.transparent.value;
+          if (edgeScale <= 0.0) {
+            transforms[transformIndex + 0] = 0.0;
+          }
           index++;
         } else {
           // outside fade circle
@@ -341,10 +361,11 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
         }
       } else {
         // normal
-        transforms[transformIndex + 0] = lifeScale;
+        final scaled = lifeScale * edgeScale;
+        transforms[transformIndex + 0] = scaled;
         transforms[transformIndex + 1] = 0.0;
-        transforms[transformIndex + 2] = p.dx - spriteRadius * lifeScale;
-        transforms[transformIndex + 3] = p.dy - spriteRadius * lifeScale;
+        transforms[transformIndex + 2] = p.dx - spriteRadius * scaled;
+        transforms[transformIndex + 3] = p.dy - spriteRadius * scaled;
 
         rects[transformIndex + 0] = 0.0;
         rects[transformIndex + 1] = 0.0;
@@ -352,7 +373,11 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
         rects[transformIndex + 3] = _circleImage.dimension.toDouble();
 
         // ignore: deprecated_member_use
-        colors[index] = p.color.value;
+        final edgeColor = p.color.withValues(alpha: p.color.opacity * edgeScale);
+        colors[index] = edgeScale > 0.0 ? edgeColor.value : Colors.transparent.value;
+        if (edgeScale <= 0.0) {
+          transforms[transformIndex + 0] = 0.0;
+        }
         index++;
       }
     }

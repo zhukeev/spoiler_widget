@@ -24,7 +24,7 @@ class _SpoilerOverlayPageState extends State<SpoilerOverlayPage> {
           density: .1,
           speed: 0.25,
           color: Colors.white,
-          maxParticleSize: 10.0,
+          maxParticleSize: 1.0,
           enableWaves: true,
           maxWaveRadius: 100.0,
           maxWaveCount: 5,

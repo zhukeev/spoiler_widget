@@ -29,7 +29,7 @@ out vec4 fragColor;
 // Fixed max to encourage loop unrolling; uMaxWaveCount clamps inside.
 const int kMaxWaves = 6;
 const float kWaveInvDuration = 0.33333334; // 1/3 sec^-1 => 3s cycles
-const float kLifeFloor = 0.1;
+const float kLifeFloor = 0.0;
 const float kLifeSizeMin = 0.6;
 
 // ---------- Utils ----------
@@ -92,7 +92,7 @@ void main() {
 
     // lifetime / movement parameters — intentionally matched with the CPU version
     float fps = 60.0;
-    float lifetimeSec = 1.5;
+    float lifetimeSec = 2.6;
     float speedPxFrame = (uSpeed > 0.0) ? uSpeed : 0.2;
     speedPxFrame *= 0.5; // visual match with Canvas
 
@@ -238,11 +238,18 @@ void main() {
                 }
             }
 
-            vec2 outside = max(vec2(0.0), max(-particlePosPx, particlePosPx - uRect.zw));
-            float outsideDist = max(outside.x, outside.y);
-            float boundaryFade = 1.0 - smoothstep(0.0, boundaryFadePx, outsideDist);
+            float edgeDist = min(min(particlePosPx.x, particlePosPx.y), min(rectSize.x - particlePosPx.x, rectSize.y - particlePosPx.y));
+            float edgeFade = smoothstep(0.0, boundaryFadePx, edgeDist);
 
-            float alphaLife = mix(lifeAlpha, 1.0, edgeBand) * boundaryFade;
+            float bandScale = mix(1.0, 1.5, edgeBand);
+            float lifeScale = mix(kLifeSizeMin, 1.0, life);
+            float particleRadiusPx = baseRadiusPx * bandScale * lifeScale;
+
+            float edgeClamp = clamp(edgeDist / max(particleRadiusPx, 0.0001), 0.0, 1.0);
+            float edgeScale = mix(0.35, 1.0, edgeFade) * edgeClamp;
+            particleRadiusPx *= edgeScale;
+
+            float alphaLife = mix(lifeAlpha, 1.0, edgeBand) * edgeFade * edgeClamp;
             if(alphaLife <= 0.0001) {
                 continue;
             }
@@ -256,10 +263,6 @@ void main() {
                     float n = hash2(localFragCoord * 0.45 + uSeed).x;
                     sparkle = frontPop * mask * smoothstep(0.15, 0.95, n);
                 }
-
-                float edgeScale = mix(1.0, 1.5, edgeBand);
-                float lifeScale = mix(kLifeSizeMin, 1.0, life);
-                float particleRadiusPx = baseRadiusPx * edgeScale * lifeScale;
 
                 // sparkle changes feel: prefer alpha over size (Telegram)
                 particleRadiusPx *= mix(1.0, kFrontBoostSize, sparkle);
