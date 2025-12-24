@@ -4,24 +4,39 @@ precision highp float;
 #include <flutter/runtime_effect.glsl>
 
 // uniforms coming from Flutter
-uniform vec2  uResolution;
+uniform vec2 uResolution;
 uniform float uTime;
-uniform vec4  uRect;      // target rect we're rendering into
+uniform vec4 uRect;      // target rect we're rendering into
 uniform float uSeed;      // randomization seed
-uniform vec3  uColor;     // base particle color
-uniform float uDensity;   // number of particles per area
+uniform vec3 uColor;     // base particle color
+uniform float uDensity;   // fraction of area covered (0..1)
 uniform float uSize;      // particle diameter in px
 uniform float uSpeed;     // speed per frame (same semantics as in Dart)
 
-uniform vec2  uFadeCenter;
+uniform vec2 uFadeCenter;
 uniform float uFadeRadius;
 uniform float uIsFading;
 uniform float uEdgeThickness;
 uniform float uEnableWaves;
 uniform float uMaxWaveRadius;
 uniform float uMaxWaveCount;
+uniform float uShapeArea;
+uniform float uUseSprite;
+uniform sampler2D uParticleTex;
 
 out vec4 fragColor;
+
+// Fixed max to encourage loop unrolling; uMaxWaveCount clamps inside.
+const int kMaxWaves = 6;
+const float kWaveInvDuration = 0.33333334; // 1/3 sec^-1 => 3s cycles
+const float kLifeFloor = 0.0;
+const float kLifeSizeMin = 0.6;
+
+// ---------- Utils ----------
+
+float saturate(float x) {
+    return clamp(x, 0.0, 1.0);
+}
 
 // simple hash for pseudo-random values per cell
 vec2 hash2(vec2 p) {
@@ -29,6 +44,16 @@ vec2 hash2(vec2 p) {
     vec3 p3 = fract(vec3(p.x, p.y, p.x) * 0.1031);
     p3 += dot(p3, p3.yzx + 33.33);
     return fract((p3.xx + p3.yz) * p3.zy);
+}
+
+// cheap smoothstep band around wavefront (0..1 peak at front)
+float waveFrontBand(float dist, float radius, float bandPx) {
+    float d = abs(dist - radius);
+    return 1.0 - smoothstep(0.0, bandPx, d);
+}
+
+float sdCircle(vec2 p) {
+    return length(p) - 1.0;
 }
 
 void main() {
@@ -39,216 +64,253 @@ void main() {
     vec2 localFragCoord = fragCoord - uRect.xy;
 
     // hard clip — exactly like Canvas clipRect
-    if (localFragCoord.x < 0.0 || localFragCoord.y < 0.0 ||
+    if(localFragCoord.x < 0.0 || localFragCoord.y < 0.0 ||
         localFragCoord.x > uRect.z || localFragCoord.y > uRect.w) {
         fragColor = vec4(0.0);
         return;
     }
 
-    // compute grid cell spacing from density (more density → smaller cells)
-    float safeDensity = max(uDensity, 0.0001);
+    // base radius derived from particle size
+    float baseRadiusPx = max(uSize * 0.5, 0.5);
+    float boundaryFadePx = max(baseRadiusPx * 3.0, 6.0);
+    float density = clamp(uDensity, 0.0, 1.0);
+    if(density <= 0.0) {
+        fragColor = vec4(0.0);
+        return;
+    }
+
+    float shapeAreaFactor = max(uShapeArea, 0.0001);
+
+    // compute grid cell spacing from density
+    float particleArea = 3.14159265 * baseRadiusPx * baseRadiusPx * shapeAreaFactor;
+    float safeDensity = max(density / max(particleArea, 0.0001), 0.000001);
     float cellSpacing = sqrt(1.0 / safeDensity);
 
     // find which cell this fragment belongs to
     vec2 cellCoord = localFragCoord / cellSpacing;
-    vec2 gridID    = floor(cellCoord);
-
-    // base radius derived from particle size; 
-    // keep a very small floor to avoid disappearing on tiny values
-    float particleRadiusPx = max(uSize * 0.5, 0.5);
-    float aaPx = max(0.75, particleRadiusPx * 0.5);
+    vec2 gridID = floor(cellCoord);
 
     // lifetime / movement parameters — intentionally matched with the CPU version
-    float fps          = 60.0;
-    float lifetimeSec  = 1.5; 
+    float fps = 60.0;
+    float lifetimeSec = 2.6;
     float speedPxFrame = (uSpeed > 0.0) ? uSpeed : 0.2;
+    speedPxFrame *= 0.5; // visual match with Canvas
 
-    // halving speed to visually match the Canvas motion characteristics
-    speedPxFrame *= 0.5;
-
-    // will accumulate alpha via a src-over blend model
+    // accumulators for src-over blend model
+    vec3 colorAccum = vec3(0.0);
     float alphaAccum = 0.0;
-    float edgeAlphaAccum = 0.0; // tracks contribution of edge-boosted particles for white tinting
 
-    // Per-pixel edge factor (band near the fade radius)
-    float edgeFactorPx = 0.0;
-    if (uIsFading > 0.5 && uFadeRadius > 0.0001) {
-        vec2 fadeCenterLocal = uFadeCenter - uRect.xy;
-        float distToCenter   = length(localFragCoord - fadeCenterLocal);
-        if (distToCenter <= uFadeRadius && uEdgeThickness > 0.0) {
-            edgeFactorPx = smoothstep(
-                uFadeRadius - uEdgeThickness,
-                uFadeRadius,
-                distToCenter
-            );
-        }
-    }
+    // Fade setup
+    vec2 fadeCenterLocal = uFadeCenter - uRect.xy;
+    bool fading = (uIsFading > 0.5) && (uFadeRadius > 0.0001);
+
+    float fadeRadiusSq = uFadeRadius * uFadeRadius;
+    float innerFadeRadius = max(uFadeRadius - max(uEdgeThickness, 0.0), 0.0);
+    float innerFadeRadiusSq = innerFadeRadius * innerFadeRadius;
+
+    vec2 rectSize = uRect.zw;
+    float minDim = min(rectSize.x, rectSize.y);
+
+    float waveCount = clamp(uMaxWaveCount, 0.0, float(kMaxWaves));
+    bool wavesEnabled = (uEnableWaves > 0.5) && (waveCount > 0.5);
+
+    // Wave feel tuning (keep cheap)
+    const float kWaveLimitOffset = 25.0;
+    const float kPushScale = 0.46;  // stronger displacement but still avoids "hole"
+    const float kFrontBandPx = 28.0;  // thicker sparkle band
+    const float kFrontBoostSize = 1.38;
+    const float kFrontBoostBri = 2.80;
+    const float kEdgeBoostBri = 2.1;
 
     // sample 3x3 neighbor cells — each may contribute one particle
-    for (int y = -1; y <= 1; y++) {
-        for (int x = -1; x <= 1; x++) {
+    for(int y = -1; y <= 1; y++) {
+        for(int x = -1; x <= 1; x++) {
 
             vec2 neighbor = vec2(float(x), float(y));
-            vec2 cellID   = gridID + neighbor;
+            vec2 cellID = gridID + neighbor;
 
             // random values per cell (stable across frames)
-            vec2 rnd = hash2(cellID + uSeed);
+            vec2 rndPhase = hash2(cellID + vec2(uSeed));
 
-            // pick a direction angle for this particle
-            float cycleHash = hash2(cellID + uSeed + 13.37).x;
-            float angle = cycleHash * 6.2831853;
-            vec2  vel   = vec2(cos(angle), sin(angle));
-
-            // base spawn position inside this cell
-            vec2 basePosPx = (cellID + rnd) * cellSpacing;
+            // pick a direction angle for this particle (no trig)
+            vec2 dirSeed = hash2(cellID + uSeed + 13.37) * 2.0 - 1.0;
+            float dirInvLen = inversesqrt(max(dot(dirSeed, dirSeed), 0.0001));
+            vec2 vel = dirSeed * dirInvLen;
 
             // --- life cycle & motion ---
-            // slightly desync particles inside cells so they don’t pulse in unison
-            float phaseSec    = rnd.y * lifetimeSec;
-            float tShifted    = uTime + phaseSec;
-
-            // how far this particle is into its life cycle (0..lifetimeSec)
-            float timeInCycle = mod(tShifted, lifetimeSec);
-
-            // normalized life (1 → newborn, 0 → dying)
+            float phaseSec = rndPhase.y * lifetimeSec;
+            float tShifted = uTime + phaseSec;
+            float cycleIdx = floor(tShifted / lifetimeSec);
+            float timeInCycle = tShifted - cycleIdx * lifetimeSec;
             float life = 1.0 - timeInCycle / lifetimeSec;
+            float lifeAlpha = mix(kLifeFloor, 1.0, life);
 
-            // normal particle movement
+            // base spawn position inside this cell (changes per cycle)
+            vec2 rndPos = hash2(cellID + vec2(uSeed) + cycleIdx * 17.13);
+            vec2 basePosPx = (cellID + rndPos) * cellSpacing;
+
             float displacementPx = speedPxFrame * fps * timeInCycle;
             vec2 particlePosPx = basePosPx + vel * displacementPx;
-    
-            float waveMultiplier = step(0.5, uEnableWaves);
-            
-            // Allow up to 100 concurrent procedural waves
-            for (int i = 0; i < 100; i++) {
-                // Break if we exceed the configured count
-                if (float(i) >= uMaxWaveCount) break;
-                
-                // Pseudo-random parameters for this wave instance
-                // We divide time into "cycles" for each wave index
-                float waveDuration = 3.0; // Seconds per wave
-                float timeOffset = float(i) * 1.23; // Stagger waves
-                
-                float globalTime = uTime + timeOffset;
-                float cycleIdx = floor(globalTime / waveDuration);
-                float cycleTime = mod(globalTime, waveDuration);
-                
-                // Progress 0.0 -> 1.0
-                float progress = cycleTime / waveDuration;
-                
-                // Randomize center & radius based on cycle ID and wave index
-                // Seed needs to be stable for the duration of the cycle
-                vec2 waveSeed = vec2(float(i), cycleIdx) + uSeed;
-                vec2 rnd = hash2(waveSeed * 13.57);
-                
-                // Map rnd to screen space bounds
-                vec2 waveCenter = rnd * vec2(uRect.z, uRect.w);
-                
-                // Random max radius (e.g., 20% to 50% of screen min dimension)
-                float minDim = min(uRect.z, uRect.w);
-                float calculatedMaxRadius = (0.2 + 0.3 * hash2(waveSeed + 1.0).x) * minDim;
-                
-                // Use configured radius if > 0, otherwise use calculated random radius
-                float maxRadius = (uMaxWaveRadius > 0.0) ? uMaxWaveRadius : calculatedMaxRadius;
-                
-                // Current wavefront radius
-                float limitOffset = 25.0;
-                float currentRadius = (maxRadius + limitOffset) * progress;
 
-                vec2 distVec = waveCenter - particlePosPx;
-                float dist = length(distVec);
+            // per-particle stable randoms
+            float rndBri = hash2(cellID + uSeed + 201.700).x;
 
-                // Check if particle is INSIDE the current wave radius
-                if (dist < currentRadius) {
-                    vec2 direction = distVec / dist;
-                    
-                    // Ratio: 0.0 at center, 1.0 at wavefront.
-                    float ratio = dist / currentRadius;
+            float frontPop = 0.0;
 
-                    float strength = pow(ratio, 8.0);
-                    
-                    // Soften the hard edge at 1.0 slightly to avoid a "line" cut, 
-                    // but keep it mostly rising.
-                    // actually, let's just use the exponential rise.
-                    // The particles at 1.0 will be pushed maximally OUT (joining the outside).
-                    // The particles at 0.9 will be pushed a bit.
-                    // The center is untouched.
-                    
-                    // Displacement:
-                    // Reduced magnitude to prevent creating a massive empty ring.
-                    float displacement = strength * currentRadius * 0.25 * waveMultiplier;
-                    
-                    // Smooth Fade Out at end of life
-                    float fadeOut = 1.0 - smoothstep(0.7, 1.0, progress);
-                    displacement *= fadeOut;
-                    
-                    // Apply displacement away from center
-                    particlePosPx -= direction * displacement;
+            if(wavesEnabled) {
+                // Only a subset gets pushed (tune threshold).
+                float affect = step(0.70, rndBri); // ~30% affected
+
+                if(affect > 0.5) {
+                    for(int i = 0; i < kMaxWaves; i++) {
+                        if(float(i) >= waveCount)
+                            break;
+
+                        float timeOffset = float(i) * 1.23;
+                        float globalTime = uTime + timeOffset;
+
+                        float cycleIdx = floor(globalTime * kWaveInvDuration);
+                        float progress = fract(globalTime * kWaveInvDuration);
+
+                        // IMPORTANT: keep vec2 math (avoid vec2+float surprises)
+                        vec2 seed2 = vec2(uSeed);
+                        vec2 waveSeed = vec2(float(i), cycleIdx) + seed2;
+
+                        vec2 waveRnd = hash2(waveSeed * 13.57);
+
+                        // Bias centers toward middle so effect is visible more often
+                        vec2 waveCenter = (waveRnd * 0.70 + 0.15) * rectSize;
+
+                        float randomMaxRadius = (0.30 + 0.45 * waveRnd.y) * minDim;
+                        float maxRadius = (uMaxWaveRadius > 0.0) ? uMaxWaveRadius : randomMaxRadius;
+
+                        float currentRadius = (maxRadius + kWaveLimitOffset) * progress;
+                        float currentRadiusSq = currentRadius * currentRadius;
+
+                        vec2 distVec = particlePosPx - waveCenter;
+                        float distSq = dot(distVec, distVec);
+
+                        // inside => push outward
+                        if(distSq < currentRadiusSq) {
+                            float invDist = inversesqrt(max(distSq, 0.0001));
+                            vec2 direction = distVec * invDist;
+                            float dist = 1.0 / invDist;
+
+                            // 0 at front, 1 at center (but not too aggressive)
+                            float ratio = dist / max(currentRadius, 0.0001);
+                            float deep = saturate(1.0 - ratio);
+
+                            // softer than pow8: deep^2 * (0.75 + 0.25*deep)
+                            float deepShape = deep * deep * (0.75 + 0.25 * deep);
+
+                            // push proportional to remaining distance to front
+                            float remain = currentRadius - dist;
+
+                            // fade out at end of cycle (like you did)
+                            float fadeOut = 1.0 - smoothstep(0.72, 1.0, progress);
+
+                            float displacement = remain * deepShape * kPushScale * fadeOut;
+
+                            // apply
+                            particlePosPx += direction * displacement;
+
+                            // compute front pop too
+                            float fp = waveFrontBand(dist, currentRadius, kFrontBandPx) * fadeOut;
+                            frontPop = max(frontPop, fp);
+                        }
+                    }
                 }
             }
 
-            // particles near "death" become invisible and will respawn
-            float visible   = step(0.1, life);
-            float alphaLife = life * visible;
-            // ---------------------------
+            // ---------------- Fade edge band (match canvas: hard edge) ----------------
+            float edgeBand = 0.0;
+            float fadeMask = 1.0;
 
-            // --- visual “dustiness” ---
-            // dying particles appear smaller; newborn ones appear larger
-            float lifeScale = mix(0.4, 1.0, life);
+            if(fading) {
+                vec2 toFade = particlePosPx - fadeCenterLocal;
+                float distSqF = dot(toFade, toFade);
 
-            // subtle per-particle random jitter to break uniform look
-            float randSize     = hash2(cellID + uSeed + 99.123).x;
-            float jitterScale  = mix(0.8, 1.2, randSize);
+                if(distSqF > fadeRadiusSq) {
+                    fadeMask = 0.0;
+                } else if(distSqF > innerFadeRadiusSq) {
+                    // hard band in [inner..outer]
+                    edgeBand = 1.0;
+                }
+            }
 
-            // final radius for this particle instance
-            float particleRadiusPx = max(uSize * 0.5, 0.5) * lifeScale * jitterScale;
+            float edgeDist = min(min(particlePosPx.x, particlePosPx.y), min(rectSize.x - particlePosPx.x, rectSize.y - particlePosPx.y));
+            float edgeFade = smoothstep(0.0, boundaryFadePx, edgeDist);
 
-            particleRadiusPx *= mix(1.0, 1.5, edgeFactorPx);
+            float bandScale = mix(1.0, 1.5, edgeBand);
+            float lifeScale = mix(kLifeSizeMin, 1.0, life);
+            float particleRadiusPx = baseRadiusPx * bandScale * lifeScale;
 
-            // AA proportional to particle size
-            float aaPx = max(0.5, particleRadiusPx * 0.5);
+            float edgeClamp = clamp(edgeDist / max(particleRadiusPx, 0.0001), 0.0, 1.0);
+            float edgeScale = mix(0.35, 1.0, edgeFade) * edgeClamp;
+            particleRadiusPx *= edgeScale;
 
-            // compute distance of this pixel from the particle’s center
-            vec2  diffPx = particlePosPx - localFragCoord;
-            float distPx = length(diffPx);
+            float alphaLife = mix(lifeAlpha, 1.0, edgeBand) * edgeFade * edgeClamp;
+            if(alphaLife <= 0.0001) {
+                continue;
+            }
 
-            // soft-ish disk; visually closer to the rawAtlas circle texture
-            float intensity = 1.0 - smoothstep(
-                particleRadiusPx - aaPx,
-                particleRadiusPx + aaPx,
-                distPx
-            );
+            if(fadeMask > 0.5) {
+                // front sparkle: make some particles pop near front, but not perfect ring
+                float sparkle = 0.0;
+                if(wavesEnabled && frontPop > 0.0) {
+                    // selective mask + spatial noise to avoid a clean circle
+                    float mask = step(0.50, rndBri);
+                    float n = hash2(localFragCoord * 0.45 + uSeed).x;
+                    sparkle = frontPop * mask * smoothstep(0.15, 0.95, n);
+                }
 
-            // this particle’s opacity contribution
-            float candidateAlpha = intensity * alphaLife;
-            // Boost alpha near fade edge
-            float alphaBoost = mix(1.0, 1.5, edgeFactorPx);
-            candidateAlpha *= alphaBoost;
+                // sparkle changes feel: prefer alpha over size (Telegram)
+                particleRadiusPx *= mix(1.0, kFrontBoostSize, sparkle);
 
-            // classic src-over alpha blending (same behavior Canvas uses)
-            alphaAccum = alphaAccum + candidateAlpha * (1.0 - alphaAccum);
+                // compute shape SDF around this particle
+                vec2 diffPx = localFragCoord - particlePosPx;
+                float intensity = 0.0;
 
-            // Track edge-weighted alpha separately for white tint mix later
-            float edgeAlpha = candidateAlpha * edgeFactorPx;
-            edgeAlphaAccum = edgeAlphaAccum + edgeAlpha * (1.0 - edgeAlphaAccum);
+                if(uUseSprite > 0.5) {
+                    float invDiameter = 1.0 / max(particleRadiusPx * 2.0, 0.0001);
+                    vec2 uv = diffPx * invDiameter + 0.5;
+                    if(uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
+                        continue;
+                    }
+                    intensity = texture(uParticleTex, uv).a;
+                } else {
+                    vec2 p = diffPx / max(particleRadiusPx, 0.0001);
+                    float distPx = sdCircle(p) * particleRadiusPx;
+
+                    float aaPx = max(0.5, particleRadiusPx * 0.5);
+                    intensity = 1.0 - smoothstep(0.0, aaPx, distPx);
+                }
+
+                float candidateAlpha = intensity * alphaLife;
+                candidateAlpha *= mix(1.0, kFrontBoostBri, sparkle);
+                candidateAlpha *= mix(1.0, kEdgeBoostBri, edgeBand);
+
+                // color: base, and edge band tends to white (like your old behavior)
+                vec3 particleColor = mix(uColor, vec3(1.0), edgeBand);
+
+                // apply color into src-over
+                vec3 src = particleColor;
+
+                // classic src-over alpha blending
+                colorAccum = colorAccum + src * candidateAlpha * (1.0 - alphaAccum);
+                alphaAccum = alphaAccum + candidateAlpha * (1.0 - alphaAccum);
+            }
         }
     }
 
-    // final color modulated by accumulated alpha
     float alpha = clamp(alphaAccum, 0.0, 1.0);
-    vec3  col   = uColor * alpha;
 
-    // Fade edge highlight: tint only where edge-boosted particles contributed.
-    if (uIsFading > 0.5 && uFadeRadius > 0.0001 && alpha > 0.0) {
-        float edgeMix = clamp(edgeAlphaAccum / alpha, 0.0, 1.0);
-        col = mix(col, vec3(1.0) * alpha, edgeMix * 0.6);
-    }
-
-    // small trick so compiler doesn’t drop this uniform
-    float resSum        = uResolution.x + uResolution.y;
+    // prevent compiler dropping uniform
+    float resSum = uResolution.x + uResolution.y;
     float resMultiplier = step(0.0, resSum);
 
     alpha *= resMultiplier;
+    colorAccum *= resMultiplier;
 
-    fragColor = vec4(col, alpha);
+    fragColor = vec4(colorAccum, alpha);
 }

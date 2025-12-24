@@ -14,7 +14,7 @@ class SpoilerTextPage extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: SpoilerText(
-            config:  TextSpoilerConfig(
+            config: TextSpoilerConfig(
               isEnabled: true,
               enableGestureReveal: true,
               particleConfig: const ParticleConfig(

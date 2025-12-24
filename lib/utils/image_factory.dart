@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -40,19 +41,25 @@ class CircleImageFactory {
   static CircleImage create({
     required double diameter,
     required ui.Color color,
+    ui.Path? shapePath,
   }) {
     // Create a PictureRecorder to record drawing commands
     final recorder = ui.PictureRecorder();
     final canvas = ui.Canvas(recorder);
+    canvas.drawColor(const ui.Color(0x00000000), ui.BlendMode.clear);
 
     // Prepare the paint with the given color
     final paint = ui.Paint()..color = color;
 
     // Calculate the radius
     final radius = diameter / 2;
+    final center = ui.Offset(radius, radius);
 
-    // Draw a circle on the canvas
-    canvas.drawCircle(ui.Offset.zero, radius, paint);
+    if (shapePath != null) {
+      _drawCustomPath(canvas, shapePath, center, diameter, paint);
+    } else {
+      canvas.drawCircle(center, radius, paint);
+    }
 
     // End recording and convert it to an image
     final picture = recorder.endRecording();
@@ -61,5 +68,30 @@ class CircleImageFactory {
       color: color,
       dimension: diameter,
     );
+  }
+
+  static void _drawCustomPath(
+    ui.Canvas canvas,
+    ui.Path path,
+    ui.Offset center,
+    double diameter,
+    ui.Paint paint,
+  ) {
+    final bounds = path.getBounds();
+    if (bounds.isEmpty) return;
+    final maxDim = math.max(bounds.width, bounds.height);
+    if (maxDim <= 0.0) return;
+
+    final targetSize = math.max(diameter - 1.0, 1.0);
+    final scale = targetSize / maxDim;
+    final cx = bounds.left + bounds.width * 0.5;
+    final cy = bounds.top + bounds.height * 0.5;
+
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.scale(scale, scale);
+    canvas.translate(-cx, -cy);
+    canvas.drawPath(path, paint);
+    canvas.restore();
   }
 }

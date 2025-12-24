@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.20
+
+* **Particle Shapes:**
+  * Added `ParticlePathPreset` for built-in/custom shapes.
+  * Atlas sprites draw paths directly; shader samples a sprite when `shapePath` is provided.
+* **Density Semantics:**
+  * `density` now represents coverage percentage in the range 0..1 (0%..100%) and is clamped.
+  * Shader and atlas paths use the same coverage math, including shape area factors for consistent particle counts.
+* **Rendering:**
+  * Atlas particles use modulated color blending to avoid sprite background artifacts.
+  * Removed the hard particle count cap (responsibility is on the developer).
+
 ## 1.0.19
 
 * **New Features:**

@@ -38,12 +38,18 @@ class SpoilerShaderRenderer {
     double time, {
     required double seed,
     required List<double> params,
+    List<ui.Image>? images,
   }) {
     // Write all provided floats to the shader in order.
     // The CALLER (SpoilerConfig callback) is responsible for providing
     // the correct number and order of floats matching the shader.
     for (int i = 0; i < params.length; i++) {
       _shader.setFloat(i, params[i]);
+    }
+    if (images != null) {
+      for (int i = 0; i < images.length; i++) {
+        _shader.setImageSampler(i, images[i]);
+      }
     }
 
     final paint = Paint()..shader = _shader;

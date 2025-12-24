@@ -26,7 +26,7 @@ class _SpoilerTextFieldPageState extends State<SpoilerTextFieldPage> {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: SpoilerTextFieldWrapper(
-            config:  SpoilerConfig(
+            config: SpoilerConfig(
               isEnabled: true,
               enableGestureReveal: true,
             ),

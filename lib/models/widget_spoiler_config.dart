@@ -99,6 +99,7 @@ class WidgetSpoilerConfig extends SpoilerConfig {
                 speed: particleSpeed ?? this.particleConfig.speed,
                 color: particleColor ?? this.particleConfig.color,
                 maxParticleSize: maxParticleSize ?? this.particleConfig.maxParticleSize,
+                shapePreset: this.particleConfig.shapePreset,
               )
             : this.particleConfig);
 
