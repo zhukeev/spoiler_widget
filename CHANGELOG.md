@@ -3,8 +3,8 @@
 ## 1.0.20
 
 * **Particle Shapes:**
-  * Added `ParticleShape` (`circle`, `star`, `snowflake`) and `shape` field in `ParticleConfig`.
-  * Atlas sprites now support star/snowflake shapes; shader renders shapes via SDF.
+  * Added `ParticlePathPreset` for built-in/custom shapes.
+  * Atlas sprites draw paths directly; shader samples a sprite when `shapePath` is provided.
 * **Density Semantics:**
   * `density` now represents coverage percentage in the range 0..1 (0%..100%) and is clamped.
   * Shader and atlas paths use the same coverage math, including shape area factors for consistent particle counts.

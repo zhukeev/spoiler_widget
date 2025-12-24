@@ -9,7 +9,7 @@ uniform float uTime;
 uniform vec4 uRect;      // target rect we're rendering into
 uniform float uSeed;      // randomization seed
 uniform vec3 uColor;     // base particle color
-uniform float uDensity;   // number of particles per area
+uniform float uDensity;   // fraction of area covered (0..1)
 uniform float uSize;      // particle diameter in px
 uniform float uSpeed;     // speed per frame (same semantics as in Dart)
 
@@ -20,7 +20,9 @@ uniform float uEdgeThickness;
 uniform float uEnableWaves;
 uniform float uMaxWaveRadius;
 uniform float uMaxWaveCount;
-uniform float uShape;
+uniform float uShapeArea;
+uniform float uUseSprite;
+uniform sampler2D uParticleTex;
 
 out vec4 fragColor;
 
@@ -29,8 +31,6 @@ const int kMaxWaves = 6;
 const float kWaveInvDuration = 0.33333334; // 1/3 sec^-1 => 3s cycles
 const float kLifeFloor = 0.1;
 const float kLifeSizeMin = 0.6;
-const float kShapeAreaStar = 0.421;
-const float kShapeAreaSnowflake = 0.239;
 
 // ---------- Utils ----------
 
@@ -56,24 +56,6 @@ float sdCircle(vec2 p) {
     return length(p) - 1.0;
 }
 
-float sdStarPolar(vec2 p, float points, float inner, float sharpness) {
-    float a = atan(p.y, p.x);
-    float r = length(p);
-    float k = max(cos(points * a), 0.0);
-    float radius = mix(inner, 1.0, pow(k, sharpness));
-    return r - radius;
-}
-
-float sdShape(vec2 p, int shape) {
-    if(shape == 1) {
-        return sdStarPolar(p, 5.0, 0.45, 2.5);
-    }
-    if(shape == 2) {
-        return sdStarPolar(p, 6.0, 0.25, 5.0);
-    }
-    return sdCircle(p);
-}
-
 void main() {
     // pixel coordinate in screen space
     vec2 fragCoord = FlutterFragCoord().xy;
@@ -91,20 +73,13 @@ void main() {
     // base radius derived from particle size
     float baseRadiusPx = max(uSize * 0.5, 0.5);
     float boundaryFadePx = max(baseRadiusPx * 3.0, 6.0);
-    int shape = int(clamp(floor(uShape + 0.5), 0.0, 2.0));
-
     float density = clamp(uDensity, 0.0, 1.0);
     if(density <= 0.0) {
         fragColor = vec4(0.0);
         return;
     }
 
-    float shapeAreaFactor = 1.0;
-    if(shape == 1) {
-        shapeAreaFactor = kShapeAreaStar;
-    } else if(shape == 2) {
-        shapeAreaFactor = kShapeAreaSnowflake;
-    }
+    float shapeAreaFactor = max(uShapeArea, 0.0001);
 
     // compute grid cell spacing from density
     float particleArea = 3.14159265 * baseRadiusPx * baseRadiusPx * shapeAreaFactor;
@@ -290,12 +265,23 @@ void main() {
                 particleRadiusPx *= mix(1.0, kFrontBoostSize, sparkle);
 
                 // compute shape SDF around this particle
-                vec2 diffPx = particlePosPx - localFragCoord;
-                vec2 p = diffPx / max(particleRadiusPx, 0.0001);
-                float distPx = sdShape(p, shape) * particleRadiusPx;
+                vec2 diffPx = localFragCoord - particlePosPx;
+                float intensity = 0.0;
 
-                float aaPx = max(0.5, particleRadiusPx * 0.5);
-                float intensity = 1.0 - smoothstep(0.0, aaPx, distPx);
+                if(uUseSprite > 0.5) {
+                    float invDiameter = 1.0 / max(particleRadiusPx * 2.0, 0.0001);
+                    vec2 uv = diffPx * invDiameter + 0.5;
+                    if(uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
+                        continue;
+                    }
+                    intensity = texture(uParticleTex, uv).a;
+                } else {
+                    vec2 p = diffPx / max(particleRadiusPx, 0.0001);
+                    float distPx = sdCircle(p) * particleRadiusPx;
+
+                    float aaPx = max(0.5, particleRadiusPx * 0.5);
+                    intensity = 1.0 - smoothstep(0.0, aaPx, distPx);
+                }
 
                 float candidateAlpha = intensity * alphaLife;
                 candidateAlpha *= mix(1.0, kFrontBoostBri, sparkle);

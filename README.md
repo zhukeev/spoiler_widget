@@ -24,7 +24,7 @@ A Flutter package to create spoiler animations similar to the one used in Telegr
 
 - **Wave Effects**: Optional wave/ripple expansions with `SpoilerSpotsController`
 
-- **Particle System**: Configure particle density (0–1 coverage), size, speed, color, and shape.
+- **Particle System**: Configure particle density (0–1 coverage), size, speed, color, and shape paths/presets.
 
 - **Fade Animation**: Smooth circular reveal/cover transitions
 
@@ -181,7 +181,6 @@ SpoilerText(
     enableGestureReveal: true,
     particleConfig: const ParticleConfig(
       density: 0.1,
-      shape: ParticleShape.circle,
     ),
     textStyle: TextStyle(fontSize: 24, color: Colors.white),
     maskConfig: SpoilerMask(
@@ -217,7 +216,7 @@ Table showing common config parameters for both TextSpoilerConfiguration and Wid
 | `particleSpeed`  | double          | Deprecated, use `particleConfig`.                            |
 | `particleColor`  | Color           | Deprecated, use `particleConfig`.                            |
 | `fadeEdgeThickness` | double       | Deprecated, use `fadeConfig`.                                |
-| `particleConfig` | ParticleConfig? | Particle system parameters (density, speed, color, size, shape). |
+| `particleConfig` | ParticleConfig? | Particle system parameters (density, speed, color, size, shape paths). |
 | `fadeConfig`     | FadeConfig?     | Fade animation parameters (radius, edge thickness).          |
 | `shaderConfig`   | ShaderConfig?   | Custom fragment shader configuration for particles.          |
 | `enableGestureReveal` | bool       | Whether tapped toggle should be out of the box.              |
@@ -232,7 +231,8 @@ Table showing common config parameters for both TextSpoilerConfiguration and Wid
 | `speed` | double | Particle speed (px/frame). |
 | `color` | Color | Base particle color. |
 | `maxParticleSize` | double | Particle diameter in pixels. |
-| `shape` | ParticleShape | `circle`, `star`, or `snowflake`. Works in both atlas and shader (SDF). |
+| `shapePreset` | ParticlePathPreset? | Built-in shapes (circle, star, snowflake). Defaults to circle. |
+| `shapePath` | Path? | Optional custom particle path. Use `ParticlePathPreset` for built-ins; atlas draws the path and shader uses a sprite sampler. |
 | `enableWaves` | bool | Enables ripple waves that push particles. |
 | `maxWaveRadius` | double | Wave radius limit in pixels. |
 | `maxWaveCount` | int | Maximum number of simultaneous waves. |
@@ -276,12 +276,34 @@ To enable **Shader Rendering**, simply provide a `ShaderConfig` to your spoiler 
 
 ### Particle Shapes
 
-Pick a shape once in `ParticleConfig`, and it works for both atlas and shader modes:
+Pick a shape once in `ParticleConfig`, and it works for both atlas and shader modes. Leave `shapePath` null for the default circle (fastest path).
 
 ```dart
-particleConfig: const ParticleConfig(
+particleConfig: ParticleConfig(
   density: 0.1,
-  shape: ParticleShape.snowflake,
+  shapePreset: ParticlePathPreset.snowflake,
+),
+```
+
+If you need full control, provide a custom `Path` for particles:
+
+```dart
+final starPath = Path()
+  ..moveTo(0.0, -1.0)
+  ..lineTo(0.2, -0.2)
+  ..lineTo(1.0, -0.2)
+  ..lineTo(0.35, 0.15)
+  ..lineTo(0.6, 0.9)
+  ..lineTo(0.0, 0.4)
+  ..lineTo(-0.6, 0.9)
+  ..lineTo(-0.35, 0.15)
+  ..lineTo(-1.0, -0.2)
+  ..lineTo(-0.2, -0.2)
+  ..close();
+
+particleConfig: ParticleConfig(
+  density: 0.1,
+  shapePath: starPath,
 ),
 ```
 
@@ -294,11 +316,11 @@ SpoilerTextWrapper(
   config: SpoilerConfig(
     isEnabled: true,
     enableGestureReveal: true,
-    particleConfig: const ParticleConfig(
+    particleConfig: ParticleConfig(
       density: 0.15,
       speed: 0.25,
       color: Colors.white,
-      shape: ParticleShape.star,
+      shapePreset: ParticlePathPreset.star,
     ),
     shaderConfig: ShaderConfig.particles(),
   ),

@@ -51,6 +51,22 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
 
   final SpoilerShaderRenderer _renderer;
   double _shaderTime = 0.0;
+  CircleImage? _sprite;
+  ParticleConfig? _spriteConfig;
+
+  static const String _particlesShaderPath = 'packages/spoiler_widget/shaders/particles.frag';
+
+  CircleImage _ensureSprite(ParticleConfig config) {
+    if (_sprite == null || _spriteConfig != config) {
+      _spriteConfig = config;
+      _sprite = CircleImageFactory.create(
+        diameter: config.maxParticleSize,
+        color: Colors.white,
+        shapePath: config.shapePreset?.path,
+      );
+    }
+    return _sprite!;
+  }
 
   static Future<ShaderSpoilerDrawer> create(String assetPath) async {
     final renderer = await SpoilerShaderRenderer.create(assetPath);
@@ -82,6 +98,8 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
     final spoilerBounds = context.spoilerBounds;
     final spoilerRects = context.spoilerRects;
     final config = context.config;
+    final bool isParticleShader = config.shaderConfig?.customShaderPath == _particlesShaderPath;
+    final CircleImage? sprite = isParticleShader ? _ensureSprite(config.particleConfig) : null;
 
     final Rect logicalBounds = spoilerBounds;
 
@@ -110,6 +128,7 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
         _shaderTime,
         seed: 0.0,
         params: params,
+        images: sprite == null ? null : [sprite.image],
       );
       canvas.restore();
       return;
@@ -143,6 +162,7 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
         _shaderTime,
         seed: seed,
         params: params,
+        images: sprite == null ? null : [sprite.image],
       );
 
       canvas.restore();
@@ -213,8 +233,8 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
     // Refresh circle image to match config
     _circleImage = CircleImageFactory.create(
       diameter: _maxParticleSize,
-      color: _particleColor,
-      shape: config.particleConfig.shape,
+      color: Colors.white,
+      shapePath: config.particleConfig.shapePreset?.path,
     );
     final coverage = config.particleConfig.density.clamp(0.0, 1.0);
 
@@ -222,8 +242,7 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
       final rect = path.getBounds();
 
       final screenArea = rect.width * rect.height;
-      final particleArea =
-          pi * pow(config.particleConfig.maxParticleSize * 0.5, 2) * config.particleConfig.shape.areaFactor;
+      final particleArea = pi * pow(config.particleConfig.maxParticleSize * 0.5, 2) * config.particleConfig.areaFactor;
 
       final rawCount = (screenArea * coverage) / particleArea;
       final particleCount = rawCount.round();

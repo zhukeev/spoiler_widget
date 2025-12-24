@@ -2,7 +2,6 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
-import 'package:spoiler_widget/models/spoiler_configs.dart';
 
 @immutable
 class CircleImage {
@@ -42,7 +41,7 @@ class CircleImageFactory {
   static CircleImage create({
     required double diameter,
     required ui.Color color,
-    ParticleShape shape = ParticleShape.circle,
+    ui.Path? shapePath,
   }) {
     // Create a PictureRecorder to record drawing commands
     final recorder = ui.PictureRecorder();
@@ -56,16 +55,10 @@ class CircleImageFactory {
     final radius = diameter / 2;
     final center = ui.Offset(radius, radius);
 
-    switch (shape) {
-      case ParticleShape.circle:
-        canvas.drawCircle(center, radius, paint);
-        break;
-      case ParticleShape.star:
-        canvas.drawPath(_buildStarPath(center, radius, 5, 0.45), paint);
-        break;
-      case ParticleShape.snowflake:
-        canvas.drawPath(_buildStarPath(center, radius, 6, 0.25), paint);
-        break;
+    if (shapePath != null) {
+      _drawCustomPath(canvas, shapePath, center, diameter, paint);
+    } else {
+      canvas.drawCircle(center, radius, paint);
     }
 
     // End recording and convert it to an image
@@ -77,28 +70,28 @@ class CircleImageFactory {
     );
   }
 
-  static ui.Path _buildStarPath(
+  static void _drawCustomPath(
+    ui.Canvas canvas,
+    ui.Path path,
     ui.Offset center,
-    double outerRadius,
-    int points,
-    double innerRatio,
+    double diameter,
+    ui.Paint paint,
   ) {
-    final innerRadius = outerRadius * innerRatio;
-    final angleStep = math.pi / points;
-    final path = ui.Path();
+    final bounds = path.getBounds();
+    if (bounds.isEmpty) return;
+    final maxDim = math.max(bounds.width, bounds.height);
+    if (maxDim <= 0.0) return;
 
-    for (int i = 0; i < points * 2; i++) {
-      final radius = (i % 2 == 0) ? outerRadius : innerRadius;
-      final angle = -math.pi / 2 + angleStep * i;
-      final dx = center.dx + math.cos(angle) * radius;
-      final dy = center.dy + math.sin(angle) * radius;
-      if (i == 0) {
-        path.moveTo(dx, dy);
-      } else {
-        path.lineTo(dx, dy);
-      }
-    }
-    path.close();
-    return path;
+    final targetSize = math.max(diameter - 1.0, 1.0);
+    final scale = targetSize / maxDim;
+    final cx = bounds.left + bounds.width * 0.5;
+    final cy = bounds.top + bounds.height * 0.5;
+
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.scale(scale, scale);
+    canvas.translate(-cx, -cy);
+    canvas.drawPath(path, paint);
+    canvas.restore();
   }
 }

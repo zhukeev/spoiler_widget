@@ -28,7 +28,6 @@ class _SpoilerOverlayPageState extends State<SpoilerOverlayPage> {
           enableWaves: true,
           maxWaveRadius: 100.0,
           maxWaveCount: 5,
-          shape: ParticleShape.star,
         ),
         shaderConfig: shaders ? ShaderConfig.particles() : null,
       );
