@@ -23,7 +23,7 @@ jobs:
         run: flutter pub get
 
       - name: Check formatting
-        run: dart format --line-length=120 --output=none --set-exit-if-changed lib test example
+        run: dart format --output=none --set-exit-if-changed .
 
       - name: Run analysis
         run: flutter analyze

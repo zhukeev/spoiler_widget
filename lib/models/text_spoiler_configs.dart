@@ -116,8 +116,10 @@ class TextSpoilerConfig extends SpoilerConfig {
     int? maxLines,
     bool? isEllipsis,
   }) {
-    final bool legacyParticleOverrides =
-        particleDensity != null || particleSpeed != null || particleColor != null || maxParticleSize != null;
+    final bool legacyParticleOverrides = particleDensity != null ||
+        particleSpeed != null ||
+        particleColor != null ||
+        maxParticleSize != null;
 
     final ParticleConfig nextParticleConfig = particleConfig ??
         (legacyParticleOverrides
@@ -125,19 +127,23 @@ class TextSpoilerConfig extends SpoilerConfig {
                 density: particleDensity ?? this.particleConfig.density,
                 speed: particleSpeed ?? this.particleConfig.speed,
                 color: particleColor ?? this.particleConfig.color,
-                maxParticleSize: maxParticleSize ?? this.particleConfig.maxParticleSize,
+                maxParticleSize:
+                    maxParticleSize ?? this.particleConfig.maxParticleSize,
                 shapePreset: this.particleConfig.shapePreset,
               )
             : this.particleConfig);
 
-    final bool legacyFadeOverrides = enableFadeAnimation != null || fadeRadius != null || fadeEdgeThickness != null;
+    final bool legacyFadeOverrides = enableFadeAnimation != null ||
+        fadeRadius != null ||
+        fadeEdgeThickness != null;
 
     final FadeConfig? nextFadeConfig = fadeConfig ??
         (legacyFadeOverrides
             ? ((enableFadeAnimation ?? (this.fadeConfig != null))
                 ? FadeConfig(
                     padding: fadeRadius ?? (this.fadeConfig?.padding ?? 10.0),
-                    edgeThickness: fadeEdgeThickness ?? (this.fadeConfig?.edgeThickness ?? 20.0),
+                    edgeThickness: fadeEdgeThickness ??
+                        (this.fadeConfig?.edgeThickness ?? 20.0),
                   )
                 : null)
             : this.fadeConfig);
@@ -148,7 +154,8 @@ class TextSpoilerConfig extends SpoilerConfig {
       isEnabled: isEnabled ?? this.isEnabled,
       enableGestureReveal: enableGestureReveal ?? this.enableGestureReveal,
       maskConfig: maskConfig ?? this.maskConfig,
-      onSpoilerVisibilityChanged: onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
+      onSpoilerVisibilityChanged:
+          onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
       textStyle: textStyle ?? this.textStyle,
       textSelection: textSelection ?? this.textSelection,
       textAlign: textAlign ?? this.textAlign,

@@ -20,8 +20,10 @@ class SpoilerText extends StatefulWidget {
   State<SpoilerText> createState() => _SpoilerTextState();
 }
 
-class _SpoilerTextState extends State<SpoilerText> with TickerProviderStateMixin {
-  late final SpoilerController _spoilerController = SpoilerController(vsync: this);
+class _SpoilerTextState extends State<SpoilerText>
+    with TickerProviderStateMixin {
+  late final SpoilerController _spoilerController =
+      SpoilerController(vsync: this);
 
   void _setSpoilerRegions(List<Rect> regions) {
     final Path spoilerMaskPath = Path();

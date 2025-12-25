@@ -89,8 +89,10 @@ class WidgetSpoilerConfig extends SpoilerConfig {
     ImageFilter? imageFilter,
     int? maxActiveWaves,
   }) {
-    final bool legacyParticleOverridesProvided =
-        particleDensity != null || particleSpeed != null || particleColor != null || maxParticleSize != null;
+    final bool legacyParticleOverridesProvided = particleDensity != null ||
+        particleSpeed != null ||
+        particleColor != null ||
+        maxParticleSize != null;
 
     final ParticleConfig nextParticleConfig = particleConfig ??
         (legacyParticleOverridesProvided
@@ -98,20 +100,23 @@ class WidgetSpoilerConfig extends SpoilerConfig {
                 density: particleDensity ?? this.particleConfig.density,
                 speed: particleSpeed ?? this.particleConfig.speed,
                 color: particleColor ?? this.particleConfig.color,
-                maxParticleSize: maxParticleSize ?? this.particleConfig.maxParticleSize,
+                maxParticleSize:
+                    maxParticleSize ?? this.particleConfig.maxParticleSize,
                 shapePreset: this.particleConfig.shapePreset,
               )
             : this.particleConfig);
 
-    final bool legacyFadeOverridesProvided =
-        enableFadeAnimation != null || fadeRadius != null || fadeEdgeThickness != null;
+    final bool legacyFadeOverridesProvided = enableFadeAnimation != null ||
+        fadeRadius != null ||
+        fadeEdgeThickness != null;
 
     final FadeConfig? nextFadeConfig = fadeConfig ??
         (legacyFadeOverridesProvided
             ? ((enableFadeAnimation ?? (this.fadeConfig != null))
                 ? FadeConfig(
                     padding: fadeRadius ?? (this.fadeConfig?.padding ?? 10.0),
-                    edgeThickness: fadeEdgeThickness ?? (this.fadeConfig?.edgeThickness ?? 20.0),
+                    edgeThickness: fadeEdgeThickness ??
+                        (this.fadeConfig?.edgeThickness ?? 20.0),
                   )
                 : null)
             : this.fadeConfig);
@@ -125,7 +130,8 @@ class WidgetSpoilerConfig extends SpoilerConfig {
       isEnabled: isEnabled ?? this.isEnabled,
       enableGestureReveal: enableGestureReveal ?? this.enableGestureReveal,
       maskConfig: maskConfig ?? this.maskConfig,
-      onSpoilerVisibilityChanged: onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
+      onSpoilerVisibilityChanged:
+          onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
     );
   }
 

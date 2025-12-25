@@ -18,7 +18,8 @@ class _SpoilerOverlayPageState extends State<SpoilerOverlayPage> {
       'https://img.freepik.com/premium-photo/drawing-female-superhero-female-character_1308175-151081.jpg?w=1800';
 
   bool divided = false;
-  WidgetSpoilerConfig config(bool shaders) => WidgetSpoilerConfig.defaultConfig().copyWith(
+  WidgetSpoilerConfig config(bool shaders) =>
+      WidgetSpoilerConfig.defaultConfig().copyWith(
         enableGestureReveal: true,
         particleConfig: const ParticleConfig(
           density: .1,

@@ -19,7 +19,8 @@ class RenderEditableLayoutClient implements TextLayoutClient {
   double get preferredLineHeight => render.preferredLineHeight;
 
   @override
-  List<TextBox> getBoxesForSelection(TextSelection selection) => render.getBoxesForSelection(selection);
+  List<TextBox> getBoxesForSelection(TextSelection selection) =>
+      render.getBoxesForSelection(selection);
 }
 
 class RenderParagraphLayoutClient implements TextLayoutClient {
@@ -44,7 +45,8 @@ class RenderParagraphLayoutClient implements TextLayoutClient {
   }
 
   @override
-  List<TextBox> getBoxesForSelection(TextSelection selection) => render.getBoxesForSelection(selection);
+  List<TextBox> getBoxesForSelection(TextSelection selection) =>
+      render.getBoxesForSelection(selection);
 }
 
 class TextPainterLayoutClient implements TextLayoutClient {
@@ -53,7 +55,8 @@ class TextPainterLayoutClient implements TextLayoutClient {
   final TextPainter painter;
 
   @override
-  List<TextBox> getBoxesForSelection(TextSelection selection) => painter.getBoxesForSelection(selection);
+  List<TextBox> getBoxesForSelection(TextSelection selection) =>
+      painter.getBoxesForSelection(selection);
 
   @override
   double get preferredLineHeight => painter.preferredLineHeight;
@@ -69,8 +72,10 @@ class TextPainterLayoutClient implements TextLayoutClient {
   required TextSelection selection,
   bool skipWhitespace = true,
 }) {
-  final int rawStart = selection.start < selection.end ? selection.start : selection.end;
-  final int rawEnd = selection.start > selection.end ? selection.start : selection.end;
+  final int rawStart =
+      selection.start < selection.end ? selection.start : selection.end;
+  final int rawEnd =
+      selection.start > selection.end ? selection.start : selection.end;
   final int start = rawStart.clamp(0, text.length);
   final int end = rawEnd.clamp(0, text.length);
   if (start >= end) return (null, []);

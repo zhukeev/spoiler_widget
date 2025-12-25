@@ -54,7 +54,8 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
   CircleImage? _sprite;
   ParticleConfig? _spriteConfig;
 
-  static const String _particlesShaderPath = 'packages/spoiler_widget/shaders/particles.frag';
+  static const String _particlesShaderPath =
+      'packages/spoiler_widget/shaders/particles.frag';
 
   static bool _isParticleShaderPath(String? path) {
     if (path == null) return false;
@@ -104,8 +105,10 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
     final spoilerBounds = context.spoilerBounds;
     final spoilerRects = context.spoilerRects;
     final config = context.config;
-    final bool isParticleShader = _isParticleShaderPath(config.shaderConfig?.customShaderPath);
-    final CircleImage? sprite = isParticleShader ? _ensureSprite(config.particleConfig) : null;
+    final bool isParticleShader =
+        _isParticleShaderPath(config.shaderConfig?.customShaderPath);
+    final CircleImage? sprite =
+        isParticleShader ? _ensureSprite(config.particleConfig) : null;
 
     final Rect logicalBounds = spoilerBounds;
 
@@ -186,7 +189,8 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
   }
 }
 
-int _channelToInt8(double value) => (value * 255.0).round().clamp(0, 255).toInt();
+int _channelToInt8(double value) =>
+    (value * 255.0).round().clamp(0, 255).toInt();
 
 int _colorToArgb(Color color) {
   return (_channelToInt8(color.a) << 24) |
@@ -205,7 +209,8 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
   final List<Particle> _particles = [];
 
   // Visual assets & config
-  CircleImage _circleImage = CircleImageFactory.create(diameter: 1, color: Colors.white);
+  CircleImage _circleImage =
+      CircleImageFactory.create(diameter: 1, color: Colors.white);
   double _maxParticleSize = 1;
   Color _particleColor = Colors.white;
   double _particleSpeed = 1;
@@ -257,7 +262,9 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
       final rect = path.getBounds();
 
       final screenArea = rect.width * rect.height;
-      final particleArea = pi * pow(config.particleConfig.maxParticleSize * 0.5, 2) * config.particleConfig.areaFactor;
+      final particleArea = pi *
+          pow(config.particleConfig.maxParticleSize * 0.5, 2) *
+          config.particleConfig.areaFactor;
 
       final rawCount = (screenArea * coverage) / particleArea;
       final particleCount = rawCount.round();
@@ -278,7 +285,9 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
 
     for (int i = 0; i < _particles.length; i++) {
       final p = _particles[i];
-      _particles[i] = (p.life <= 0.1) ? _createRandomParticlePath(p.path) : p.moveToRandomAngle();
+      _particles[i] = (p.life <= 0.1)
+          ? _createRandomParticlePath(p.path)
+          : p.moveToRandomAngle();
     }
   }
 
@@ -334,7 +343,8 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
         min(p.dx - bounds.left, bounds.right - p.dx),
         min(p.dy - bounds.top, bounds.bottom - p.dy),
       );
-      final edgeFade = edgeDist <= 0.0 ? 0.0 : smoothstep(0.0, boundaryFadePx, edgeDist);
+      final edgeFade =
+          edgeDist <= 0.0 ? 0.0 : smoothstep(0.0, boundaryFadePx, edgeDist);
       final particleRadius = max(spriteRadius * lifeScale, 0.0001);
       final edgeClamp = (edgeDist / particleRadius).clamp(0.0, 1.0);
       final edgeScale = edgeFade * edgeClamp;
@@ -346,7 +356,8 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
         if (distSq < radiusSq) {
           final dist = sqrt(distSq);
           final scale = (dist > fadeRadius - fadeEdgeThickness) ? 1.5 : 1.0;
-          final color = (dist > fadeRadius - fadeEdgeThickness) ? Colors.white : p.color;
+          final color =
+              (dist > fadeRadius - fadeEdgeThickness) ? Colors.white : p.color;
           final scaled = scale * lifeScale * edgeScale;
           final edgeColor = color.withValues(alpha: color.a * edgeScale);
 
@@ -360,7 +371,9 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
           rects[transformIndex + 2] = _circleImage.dimension.toDouble();
           rects[transformIndex + 3] = _circleImage.dimension.toDouble();
 
-          colors[index] = edgeScale > 0.0 ? _colorToArgb(edgeColor) : _colorToArgb(Colors.transparent);
+          colors[index] = edgeScale > 0.0
+              ? _colorToArgb(edgeColor)
+              : _colorToArgb(Colors.transparent);
           if (edgeScale <= 0.0) {
             transforms[transformIndex + 0] = 0.0;
           }
@@ -385,7 +398,9 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
         rects[transformIndex + 3] = _circleImage.dimension.toDouble();
 
         final edgeColor = p.color.withValues(alpha: p.color.a * edgeScale);
-        colors[index] = edgeScale > 0.0 ? _colorToArgb(edgeColor) : _colorToArgb(Colors.transparent);
+        colors[index] = edgeScale > 0.0
+            ? _colorToArgb(edgeColor)
+            : _colorToArgb(Colors.transparent);
         if (edgeScale <= 0.0) {
           transforms[transformIndex + 0] = 0.0;
         }

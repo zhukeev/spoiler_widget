@@ -116,10 +116,12 @@ class SpoilerConfig {
     this.shaderConfig,
   })  : particleConfig = particleConfig ??
             ParticleConfig(
-              density: particleDensity ?? ParticleConfig.defaultConfig().density,
+              density:
+                  particleDensity ?? ParticleConfig.defaultConfig().density,
               speed: particleSpeed ?? ParticleConfig.defaultConfig().speed,
               color: particleColor ?? ParticleConfig.defaultConfig().color,
-              maxParticleSize: maxParticleSize ?? ParticleConfig.defaultConfig().maxParticleSize,
+              maxParticleSize: maxParticleSize ??
+                  ParticleConfig.defaultConfig().maxParticleSize,
             ),
         fadeConfig = _resolveFadeConfig(
           fadeConfig: fadeConfig,
@@ -129,10 +131,16 @@ class SpoilerConfig {
         ) {
     assert(
       particleConfig == null ||
-          (particleDensity == null && particleSpeed == null && particleColor == null && maxParticleSize == null),
+          (particleDensity == null &&
+              particleSpeed == null &&
+              particleColor == null &&
+              maxParticleSize == null),
     );
     assert(
-      fadeConfig == null || (enableFadeAnimation == null && fadeRadius == null && fadeEdgeThickness == null),
+      fadeConfig == null ||
+          (enableFadeAnimation == null &&
+              fadeRadius == null &&
+              fadeEdgeThickness == null),
     );
   }
 
@@ -179,31 +187,50 @@ class SpoilerConfig {
     ValueChanged<bool>? onSpoilerVisibilityChanged,
     ShaderConfig? shaderConfig,
   }) {
-    final bool legacyParticleOverridesProvided =
-        particleDensity != null || particleSpeed != null || particleColor != null || maxParticleSize != null;
+    final bool legacyParticleOverridesProvided = particleDensity != null ||
+        particleSpeed != null ||
+        particleColor != null ||
+        maxParticleSize != null;
 
-    final bool legacyFadeOverridesProvided =
-        enableFadeAnimation != null || fadeRadius != null || fadeEdgeThickness != null;
+    final bool legacyFadeOverridesProvided = enableFadeAnimation != null ||
+        fadeRadius != null ||
+        fadeEdgeThickness != null;
 
-    final ParticleConfig? nextParticleConfig =
-        legacyParticleOverridesProvided ? null : (particleConfig ?? this.particleConfig);
+    final ParticleConfig? nextParticleConfig = legacyParticleOverridesProvided
+        ? null
+        : (particleConfig ?? this.particleConfig);
 
-    final FadeConfig? nextFadeConfig = legacyFadeOverridesProvided ? null : (fadeConfig ?? this.fadeConfig);
+    final FadeConfig? nextFadeConfig =
+        legacyFadeOverridesProvided ? null : (fadeConfig ?? this.fadeConfig);
 
     return SpoilerConfig(
-      particleDensity: legacyParticleOverridesProvided ? (particleDensity ?? this.particleDensity) : null,
-      particleSpeed: legacyParticleOverridesProvided ? (particleSpeed ?? this.particleSpeed) : null,
-      particleColor: legacyParticleOverridesProvided ? (particleColor ?? this.particleColor) : null,
-      maxParticleSize: legacyParticleOverridesProvided ? (maxParticleSize ?? this.maxParticleSize) : null,
-      enableFadeAnimation: legacyFadeOverridesProvided ? (enableFadeAnimation ?? this.enableFadeAnimation) : null,
-      fadeRadius: legacyFadeOverridesProvided ? (fadeRadius ?? this.fadeRadius) : null,
-      fadeEdgeThickness: legacyFadeOverridesProvided ? (fadeEdgeThickness ?? this.fadeEdgeThickness) : null,
+      particleDensity: legacyParticleOverridesProvided
+          ? (particleDensity ?? this.particleDensity)
+          : null,
+      particleSpeed: legacyParticleOverridesProvided
+          ? (particleSpeed ?? this.particleSpeed)
+          : null,
+      particleColor: legacyParticleOverridesProvided
+          ? (particleColor ?? this.particleColor)
+          : null,
+      maxParticleSize: legacyParticleOverridesProvided
+          ? (maxParticleSize ?? this.maxParticleSize)
+          : null,
+      enableFadeAnimation: legacyFadeOverridesProvided
+          ? (enableFadeAnimation ?? this.enableFadeAnimation)
+          : null,
+      fadeRadius:
+          legacyFadeOverridesProvided ? (fadeRadius ?? this.fadeRadius) : null,
+      fadeEdgeThickness: legacyFadeOverridesProvided
+          ? (fadeEdgeThickness ?? this.fadeEdgeThickness)
+          : null,
       particleConfig: nextParticleConfig,
       fadeConfig: nextFadeConfig,
       isEnabled: isEnabled ?? this.isEnabled,
       enableGestureReveal: enableGestureReveal ?? this.enableGestureReveal,
       maskConfig: maskConfig ?? this.maskConfig,
-      onSpoilerVisibilityChanged: onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
+      onSpoilerVisibilityChanged:
+          onSpoilerVisibilityChanged ?? this.onSpoilerVisibilityChanged,
       shaderConfig: shaderConfig ?? this.shaderConfig,
     );
   }

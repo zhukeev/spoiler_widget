@@ -20,7 +20,8 @@ void main() {
       shapePreset: ParticlePathPreset.star,
     );
 
-    expect(config.areaFactor, closeTo(ParticlePathPreset.star.areaFactor!, 0.0001));
+    expect(config.areaFactor,
+        closeTo(ParticlePathPreset.star.areaFactor!, 0.0001));
   });
 
   test('ParticleConfig areaFactor computes for custom path', () {
