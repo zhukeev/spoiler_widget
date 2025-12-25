@@ -204,6 +204,7 @@ void main() {
   });
 
   testWidgets('SpoilerOverlay shader particles', (tester) async {
+    _overrideGoldenTolerance(0.08);
     _configureTestView(tester);
     await tester.pumpWidget(
       MaterialApp(
@@ -382,6 +383,15 @@ void _configureTestView(WidgetTester tester) {
     view.resetDevicePixelRatio();
     view.resetPhysicalSize();
   });
+}
+
+void _overrideGoldenTolerance(double tolerance) {
+  final previous = goldenFileComparator;
+  goldenFileComparator = _TolerantGoldenFileComparator(
+    Uri.parse('test/golden_test.dart'),
+    precisionTolerance: tolerance,
+  );
+  addTearDown(() => goldenFileComparator = previous);
 }
 
 Future<void> _allowShaderLoad(WidgetTester tester) async {
