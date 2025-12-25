@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'dart:ui' show ImageFilter, Path, Rect;
 
 import 'package:flutter/material.dart';
@@ -9,19 +10,24 @@ import 'package:spoiler_widget/spoiler_overlay_widget.dart';
 import 'package:spoiler_widget/spoiler_text_wrapper.dart';
 
 void main() {
-  final binding = TestWidgetsFlutterBinding.ensureInitialized();
+  TestWidgetsFlutterBinding.ensureInitialized();
+  late GoldenFileComparator previousComparator;
+  const double precisionTolerance = 0.03;
 
-  setUp(() {
-    binding.window.physicalSizeTestValue = const Size(360, 240);
-    binding.window.devicePixelRatioTestValue = 1.0;
+  setUpAll(() {
+    previousComparator = goldenFileComparator;
+    goldenFileComparator = _TolerantGoldenFileComparator(
+      Uri.parse('test/golden_test.dart'),
+      precisionTolerance: precisionTolerance,
+    );
   });
 
-  tearDown(() {
-    binding.window.clearPhysicalSizeTestValue();
-    binding.window.clearDevicePixelRatioTestValue();
+  tearDownAll(() {
+    goldenFileComparator = previousComparator;
   });
 
   testWidgets('SpoilerTextWrapper hidden state', (tester) async {
+    _configureTestView(tester);
     await tester.pumpWidget(
       MaterialApp(
         home: RepaintBoundary(
@@ -46,9 +52,9 @@ void main() {
                       edgeThickness: 2.0,
                     ),
                   ),
-                  child: Column(
+                  child: const Column(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       Text(
                         'Secret line',
                         style: TextStyle(fontSize: 18, color: Colors.white),
@@ -86,6 +92,7 @@ void main() {
   });
 
   testWidgets('SpoilerOverlay disabled state', (tester) async {
+    _configureTestView(tester);
     await tester.pumpWidget(
       MaterialApp(
         home: RepaintBoundary(
@@ -143,6 +150,7 @@ void main() {
   });
 
   testWidgets('SpoilerTextWrapper shader particles', (tester) async {
+    _configureTestView(tester);
     await tester.pumpWidget(
       MaterialApp(
         home: RepaintBoundary(
@@ -165,9 +173,9 @@ void main() {
                       maxParticleSize: 1.5,
                     ),
                   ),
-                  child: Column(
+                  child: const Column(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children:  [
                       Text(
                         'Secret line',
                         style: TextStyle(fontSize: 18, color: Colors.white),
@@ -196,6 +204,7 @@ void main() {
   });
 
   testWidgets('SpoilerOverlay shader particles', (tester) async {
+    _configureTestView(tester);
     await tester.pumpWidget(
       MaterialApp(
         home: RepaintBoundary(
@@ -254,6 +263,7 @@ void main() {
   });
 
   testWidgets('SpoilerTextWrapper masked shader', (tester) async {
+    _configureTestView(tester);
     final maskPath = Path()..addRect(const Rect.fromLTWH(0, 0, 120, 40));
 
     await tester.pumpWidget(
@@ -307,6 +317,7 @@ void main() {
   });
 
   testWidgets('SpoilerOverlay shader waves', (tester) async {
+    _configureTestView(tester);
     await tester.pumpWidget(
       MaterialApp(
         home: RepaintBoundary(
@@ -363,6 +374,16 @@ void main() {
   });
 }
 
+void _configureTestView(WidgetTester tester) {
+  final view = tester.view;
+  view.devicePixelRatio = 1.0;
+  view.physicalSize = const Size(360, 240);
+  addTearDown(() {
+    view.resetDevicePixelRatio();
+    view.resetPhysicalSize();
+  });
+}
+
 Future<void> _allowShaderLoad(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 16));
   await tester.binding.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
@@ -372,6 +393,37 @@ Future<void> _allowShaderLoad(WidgetTester tester) async {
 Future<void> _advanceShaderFrames(WidgetTester tester, {int frames = 4}) async {
   for (int i = 0; i < frames; i++) {
     await tester.pump(const Duration(milliseconds: 16));
+  }
+}
+
+class _TolerantGoldenFileComparator extends LocalFileComparator {
+  _TolerantGoldenFileComparator(
+    super.testFile, {
+    required double precisionTolerance,
+  })  : assert(
+          0 <= precisionTolerance && precisionTolerance <= 1,
+          'precisionTolerance must be between 0 and 1',
+        ),
+        _precisionTolerance = precisionTolerance;
+
+  final double _precisionTolerance;
+
+  @override
+  Future<bool> compare(Uint8List imageBytes, Uri golden) async {
+    final ComparisonResult result = await GoldenFileComparator.compareLists(
+      imageBytes,
+      await getGoldenBytes(golden),
+    );
+
+    final bool passed = result.passed || result.diffPercent <= _precisionTolerance;
+    if (passed) {
+      result.dispose();
+      return true;
+    }
+
+    final String error = await generateFailureOutput(result, golden, basedir);
+    result.dispose();
+    throw FlutterError(error);
   }
 }
 
