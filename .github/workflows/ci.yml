@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      PANA_SCORE_MIN: "120"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.27.0"
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Check formatting
+        run: dart format --line-length=120 --output=none --set-exit-if-changed lib test example
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Run golden tests
+        run: flutter test test/golden_test.dart
+
+      - name: Install pana
+        run: |
+          dart pub global activate pana
+          echo "$HOME/.pub-cache/bin" >> "$GITHUB_PATH"
+
+      - name: Run pana
+        run: |
+          pana --json . > pana.json
+          python - <<'PY'
+          import json
+          import os
+          import sys
+
+          with open("pana.json", "r", encoding="utf-8") as handle:
+              data = json.load(handle)
+
+          scores = data.get("scores") or {}
+          granted = (
+              scores.get("grantedPoints")
+              or scores.get("panaScore")
+              or scores.get("score")
+              or data.get("grantedPoints")
+          )
+          max_points = (
+              scores.get("maxPoints")
+              or scores.get("panaMaxScore")
+              or data.get("maxPoints")
+          )
+
+          if granted is None:
+              print("Unable to read pana score from JSON output.", file=sys.stderr)
+              sys.exit(2)
+
+          min_score = int(os.environ.get("PANA_SCORE_MIN", "120"))
+          print(f"Pana score: {granted}/{max_points} (min {min_score})")
+          if granted < min_score:
+              sys.exit(1)
+          PY
