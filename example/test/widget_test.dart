@@ -7,14 +7,14 @@
 
 import 'package:example/main.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:spoiler_widget/spoiler_text_widget.dart';
 
 void main() {
-  testWidgets('SpoilerWidget has a SpoilerTextWidget', (WidgetTester tester) async {
+  testWidgets('MainApp shows demo list', (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const MainApp());
 
-    // Verify that SpoilerTextWidget is present
-    expect(find.byType(SpoilerText), findsOneWidget);
+    // Verify that the demo list is shown.
+    expect(find.text('Spoiler Widget Demos'), findsOneWidget);
+    expect(find.text('SpoilerTextWrapper'), findsOneWidget);
   });
 }

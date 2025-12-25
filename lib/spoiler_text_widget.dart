@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use_from_same_package
+
 import 'package:flutter/material.dart';
 import 'package:spoiler_widget/models/spoiler_controller.dart';
 import 'package:spoiler_widget/models/text_spoiler_configs.dart';

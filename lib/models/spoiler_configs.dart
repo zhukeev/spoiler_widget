@@ -1,3 +1,4 @@
+/// Configuration models for spoiler effects (particles, shaders, masks, fades).
 library spoiler_configs;
 
 import 'dart:math' as math;

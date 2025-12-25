@@ -381,7 +381,7 @@ class SpoilerController extends ChangeNotifier {
   /// Draws the current set of particles.
   ///
   /// Uses shader rendering if enabled and available, otherwise falls back
-  /// to [canvas.drawRawAtlas] for optimal batched rendering.
+  /// to [Canvas.drawRawAtlas] for optimal batched rendering.
   void drawParticles(Canvas canvas) {
     // If particle updates aren't running, skip drawing
     if (_particleCtrl.status.isDismissed) return;

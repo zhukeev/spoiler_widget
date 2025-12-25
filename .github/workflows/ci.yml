@@ -25,6 +25,13 @@ jobs:
       - name: Check formatting
         run: dart format --line-length=120 --output=none --set-exit-if-changed lib test example
 
+      - name: Run analysis
+        run: flutter analyze
+
+      - name: Run example analysis
+        run: flutter analyze
+        working-directory: example
+
       - name: Run tests
         run: flutter test
 
