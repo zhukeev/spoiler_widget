@@ -13,7 +13,7 @@ class SpoilerTextPage extends StatelessWidget {
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: SpoilerText(
+          child: SpoilerTextWrapper(
             config: TextSpoilerConfig(
               isEnabled: true,
               enableGestureReveal: true,
@@ -28,7 +28,10 @@ class SpoilerTextPage extends StatelessWidget {
                 edgeThickness: 20,
               ),
             ),
-            text: text,
+            child: const Text(
+              text,
+              style: TextStyle(fontSize: 32, color: Colors.white),
+            ),
           ),
         ),
       ),

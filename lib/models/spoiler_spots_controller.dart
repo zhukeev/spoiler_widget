@@ -37,7 +37,7 @@ class SpoilerSpotsController extends SpoilerController {
   /// One [AnimationController] per active wave, disposed upon wave completion.
   final List<AnimationController> _activeWaveControllers = [];
 
-  /// Count of waves currently animating. Used to avoid exceeding [maxActiveWaves].
+  /// Count of waves currently animating. Used to avoid exceeding [WidgetSpoilerConfig.maxActiveWaves].
   int _runningWavesCount = 0;
 
   /// [TickerProvider] for creating wave animation controllers.
@@ -65,8 +65,9 @@ class SpoilerSpotsController extends SpoilerController {
   /// Sets up the spoiler’s particles via [initializeParticles] in the parent,
   /// then starts a periodic timer that spawns wave animations every second.
   ///
-  /// [rect] is the bounding area.
-  /// [configuration] includes fields like [maxActiveWaves], which limit concurrency.
+  /// [path] defines the spoiler area.
+  /// [configuration] includes fields like [WidgetSpoilerConfig.maxActiveWaves], which limit concurrency.
+  /// [rects] optionally provide per-line bounds.
   @override
   void initializeParticles(Path path, SpoilerConfig configuration, {List<Rect>? rects}) {
     if (configuration is WidgetSpoilerConfig) {
@@ -109,7 +110,7 @@ class SpoilerSpotsController extends SpoilerController {
     _delayedWaveTimers.add(waveTimer);
   }
 
-  /// Spawns one wave animation if we're under [maxActiveWaves].
+  /// Spawns one wave animation if we're under [WidgetSpoilerConfig.maxActiveWaves].
   ///
   /// **Wave steps**:
   ///  1. Pick a random origin, radius.

@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use_from_same_package
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spoiler_widget/models/spoiler_configs.dart';
@@ -7,7 +9,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('toggle respects path containment and notifies listeners', () {
-    final controller = SpoilerController(vsync: TestVSync());
+    final controller = SpoilerController(vsync: const TestVSync());
     addTearDown(controller.dispose);
 
     final calls = <bool>[];
@@ -41,7 +43,7 @@ void main() {
   });
 
   test('disable stops immediately when fade is disabled', () {
-    final controller = SpoilerController(vsync: TestVSync());
+    final controller = SpoilerController(vsync: const TestVSync());
     addTearDown(controller.dispose);
 
     final config = SpoilerConfig(

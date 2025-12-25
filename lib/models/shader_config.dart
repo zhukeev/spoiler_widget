@@ -50,9 +50,9 @@ class ShaderConfig {
       // 4. uSeed
       seed,
       // 5. uColor
-      config.particleConfig.color.red / 255.0,
-      config.particleConfig.color.green / 255.0,
-      config.particleConfig.color.blue / 255.0,
+      config.particleConfig.color.r,
+      config.particleConfig.color.g,
+      config.particleConfig.color.b,
       // 6. uDensity
       config.particleConfig.density.clamp(0.0, 1.0),
       // 7. uSize
@@ -104,9 +104,9 @@ class ShaderConfig {
       // 4. uSeed
       seed,
       // 5. uColor
-      config.particleConfig.color.red / 255.0,
-      config.particleConfig.color.green / 255.0,
-      config.particleConfig.color.blue / 255.0,
+      config.particleConfig.color.r,
+      config.particleConfig.color.g,
+      config.particleConfig.color.b,
       // 6. uDensity
       config.particleConfig.density,
       // 7. uSize
@@ -154,9 +154,9 @@ class ShaderConfig {
             rect.width,
             rect.height,
             seed,
-            config.particleConfig.color.red / 255.0,
-            config.particleConfig.color.green / 255.0,
-            config.particleConfig.color.blue / 255.0,
+            config.particleConfig.color.r,
+            config.particleConfig.color.g,
+            config.particleConfig.color.b,
             config.particleConfig.density,
             config.particleConfig.maxParticleSize,
             config.particleConfig.speed,

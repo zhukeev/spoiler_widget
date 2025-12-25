@@ -186,6 +186,15 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
   }
 }
 
+int _channelToInt8(double value) => (value * 255.0).round().clamp(0, 255).toInt();
+
+int _colorToArgb(Color color) {
+  return (_channelToInt8(color.a) << 24) |
+      (_channelToInt8(color.r) << 16) |
+      (_channelToInt8(color.g) << 8) |
+      _channelToInt8(color.b);
+}
+
 /// Strategy for drawing particles using Flutter's drawRawAtlas (CPU/hybrid).
 class AtlasSpoilerDrawer implements SpoilerDrawer {
   static const double _lifeSizeMin = 0.6;
@@ -339,8 +348,7 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
           final scale = (dist > fadeRadius - fadeEdgeThickness) ? 1.5 : 1.0;
           final color = (dist > fadeRadius - fadeEdgeThickness) ? Colors.white : p.color;
           final scaled = scale * lifeScale * edgeScale;
-          // ignore: deprecated_member_use
-          final edgeColor = color.withValues(alpha: color.opacity * edgeScale);
+          final edgeColor = color.withValues(alpha: color.a * edgeScale);
 
           transforms[transformIndex + 0] = scaled;
           transforms[transformIndex + 1] = 0.0;
@@ -352,16 +360,14 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
           rects[transformIndex + 2] = _circleImage.dimension.toDouble();
           rects[transformIndex + 3] = _circleImage.dimension.toDouble();
 
-          // ignore: deprecated_member_use
-          colors[index] = edgeScale > 0.0 ? edgeColor.value : Colors.transparent.value;
+          colors[index] = edgeScale > 0.0 ? _colorToArgb(edgeColor) : _colorToArgb(Colors.transparent);
           if (edgeScale <= 0.0) {
             transforms[transformIndex + 0] = 0.0;
           }
           index++;
         } else {
           // outside fade circle
-          // ignore: deprecated_member_use
-          colors[index] = Colors.transparent.value;
+          colors[index] = _colorToArgb(Colors.transparent);
           transforms[transformIndex + 0] = 0;
           index++;
         }
@@ -378,9 +384,8 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
         rects[transformIndex + 2] = _circleImage.dimension.toDouble();
         rects[transformIndex + 3] = _circleImage.dimension.toDouble();
 
-        // ignore: deprecated_member_use
-        final edgeColor = p.color.withValues(alpha: p.color.opacity * edgeScale);
-        colors[index] = edgeScale > 0.0 ? edgeColor.value : Colors.transparent.value;
+        final edgeColor = p.color.withValues(alpha: p.color.a * edgeScale);
+        colors[index] = edgeScale > 0.0 ? _colorToArgb(edgeColor) : _colorToArgb(Colors.transparent);
         if (edgeScale <= 0.0) {
           transforms[transformIndex + 0] = 0.0;
         }

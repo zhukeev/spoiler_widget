@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use_from_same_package
+
 part of 'spoiler_configs.dart';
 
 /// Configuration for the spoiler effect.
@@ -47,11 +49,11 @@ class SpoilerConfig {
   @Deprecated('Use fadeConfig instead')
   final bool? enableFadeAnimation;
 
-  /// The radius over which the fade effect is applied.
+  /// The padding over which the fade effect is applied.
   ///
   /// Kept for backward compatibility. When [fadeConfig] is not provided,
-  /// this value is used as the source for [FadeConfig.radius].
-  @Deprecated('Use fadeConfig.radius instead')
+  /// this value is used as the source for [FadeConfig.padding].
+  @Deprecated('Use fadeConfig.padding instead')
   final double? fadeRadius;
 
   /// Padding near the fade radius where particles get brighter/larger in shader.
@@ -103,7 +105,7 @@ class SpoilerConfig {
     @Deprecated('Use particleConfig.color instead') this.particleColor,
     @Deprecated('Use particleConfig.maxSize instead') this.maxParticleSize,
     @Deprecated('Use fadeConfig instead') this.enableFadeAnimation,
-    @Deprecated('Use fadeConfig.radius instead') this.fadeRadius,
+    @Deprecated('Use fadeConfig.padding instead') this.fadeRadius,
     @Deprecated('Use fadeConfig.edgeThickness instead') this.fadeEdgeThickness,
     required this.isEnabled,
     required this.enableGestureReveal,

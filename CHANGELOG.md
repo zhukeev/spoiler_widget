@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.23
+
+* **Static analysis:**
+  * Switched shader uniform color components to `.r/.g/.b` and replaced deprecated color value usage.
+  * Updated the example app/test to avoid deprecated `SpoilerText`.
+  * Added file-level ignores where legacy config fields are intentionally exercised.
+* **CI:**
+  * Added `flutter analyze` for the package and example app.
+
 ## 1.0.22
 
 * **Testing & CI:**
