@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.22
+
+* **Testing & CI:**
+  * Added unit/widget tests and golden coverage.
+  * Added GitHub Actions CI to run formatting, tests, goldens, and pana.
+* **Shader & Controller Stability:**
+  * Avoid calling animation controllers after disposal during fade completion.
+  * Treat local particle shader paths as particle shaders for sprite binding.
+
 ## 1.0.21
 
 * **Selection & Rects:**

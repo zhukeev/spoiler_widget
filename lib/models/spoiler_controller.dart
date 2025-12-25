@@ -53,6 +53,7 @@ class SpoilerController extends ChangeNotifier {
   // Caching
   // ---------------------------
   Path? _cachedClipPath;
+  bool _isDisposed = false;
 
   // ---------------------------
   // Visual Assets & Bounds
@@ -284,7 +285,12 @@ class SpoilerController extends ChangeNotifier {
       // If fade is disabled, just stop everything now.
       _stopAll();
     } else {
-      _fadeCtrl?.reverse().whenCompleteOrCancel(() => _stopAll());
+      final future = _fadeCtrl?.reverse();
+      if (future == null) {
+        _stopAll();
+      } else {
+        future.whenCompleteOrCancel(() => _stopAll());
+      }
     }
   }
 
@@ -360,6 +366,7 @@ class SpoilerController extends ChangeNotifier {
   /// Fully stops the spoiler effect: sets isEnabled=false, resets fade radius,
   /// and stops the particle animation.
   void _stopAll() {
+    if (_isDisposed) return;
     _isEnabled = false;
     _fadeRadius = 0;
     _cachedClipPath = null; // Invalidate cache
@@ -406,6 +413,7 @@ class SpoilerController extends ChangeNotifier {
 
     try {
       final shaderDrawer = await ShaderSpoilerDrawer.create(path);
+      if (_isDisposed) return;
       _drawer = shaderDrawer;
       // Force a repaint now that we have the shader ready
       notifyListeners();
@@ -422,6 +430,7 @@ class SpoilerController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _isDisposed = true;
     // Dispose the main particle animation & fade controller if it exists.
     _particleCtrl.dispose();
     _fadeCtrl?.dispose();

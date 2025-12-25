@@ -56,6 +56,12 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
 
   static const String _particlesShaderPath = 'packages/spoiler_widget/shaders/particles.frag';
 
+  static bool _isParticleShaderPath(String? path) {
+    if (path == null) return false;
+    if (path == _particlesShaderPath) return true;
+    return path.endsWith('particles.frag');
+  }
+
   CircleImage _ensureSprite(ParticleConfig config) {
     if (_sprite == null || _spriteConfig != config) {
       _spriteConfig = config;
@@ -98,7 +104,7 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
     final spoilerBounds = context.spoilerBounds;
     final spoilerRects = context.spoilerRects;
     final config = context.config;
-    final bool isParticleShader = config.shaderConfig?.customShaderPath == _particlesShaderPath;
+    final bool isParticleShader = _isParticleShaderPath(config.shaderConfig?.customShaderPath);
     final CircleImage? sprite = isParticleShader ? _ensureSprite(config.particleConfig) : null;
 
     final Rect logicalBounds = spoilerBounds;
