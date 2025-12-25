@@ -175,7 +175,7 @@ void main() {
                   ),
                   child: const Column(
                     mainAxisSize: MainAxisSize.min,
-                    children:  [
+                    children: [
                       Text(
                         'Secret line',
                         style: TextStyle(fontSize: 18, color: Colors.white),
