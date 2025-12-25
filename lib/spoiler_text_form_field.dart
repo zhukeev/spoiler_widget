@@ -28,7 +28,7 @@ class SpoilerTextFieldWrapper extends StatefulWidget {
 class _SpoilerTextFieldWrapperState extends State<SpoilerTextFieldWrapper> with TickerProviderStateMixin {
   late final SpoilerController _spoilerController = SpoilerController(vsync: this);
 
-  TextSelection? _spoilerSelection;
+  TextSelection _spoilerSelection = const TextSelection.collapsed(offset: 0);
 
   @override
   void didUpdateWidget(covariant SpoilerTextFieldWrapper oldWidget) {

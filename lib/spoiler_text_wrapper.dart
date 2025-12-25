@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:spoiler_widget/models/spoiler_configs.dart';
 
 import 'package:spoiler_widget/models/spoiler_controller.dart';
+import 'package:spoiler_widget/models/text_spoiler_configs.dart';
 import 'package:spoiler_widget/widgets/spoiler_render_object.dart';
 
 /// High-level wrapper that:
@@ -19,7 +19,7 @@ class SpoilerTextWrapper extends StatefulWidget {
   });
 
   final Widget child;
-  final SpoilerConfig config;
+  final TextSpoilerConfig config;
 
   @override
   State<SpoilerTextWrapper> createState() => _SpoilerTextWrapperState();
@@ -59,6 +59,7 @@ class _SpoilerTextWrapperState extends State<SpoilerTextWrapper> with TickerProv
           }
         },
         child: SpoilerRenderObjectWidget(
+          textSelection: widget.config.textSelection,
           onPaint: (canvas, size) {
             if (_spoilerController.isEnabled) {
               _spoilerController.drawParticles(canvas);

@@ -71,12 +71,13 @@ class TextSpoilerConfig extends SpoilerConfig {
     ValueChanged<bool>? onSpoilerVisibilityChanged,
     ParticleConfig? particleConfig,
     FadeConfig? fadeConfig,
+    ShaderConfig? shaderConfig,
   }) : super(
           isEnabled: isEnabled,
           enableGestureReveal: enableGestureReveal,
           maskConfig: maskConfig,
           onSpoilerVisibilityChanged: onSpoilerVisibilityChanged,
-          shaderConfig: null,
+          shaderConfig: shaderConfig,
           particleConfig: particleConfig ??
               ParticleConfig(
                 density: particleDensity,
@@ -153,6 +154,7 @@ class TextSpoilerConfig extends SpoilerConfig {
       textAlign: textAlign ?? this.textAlign,
       maxLines: maxLines ?? this.maxLines,
       isEllipsis: isEllipsis ?? this.isEllipsis,
+      shaderConfig: shaderConfig ?? this.shaderConfig,
     );
   }
 
@@ -163,6 +165,7 @@ class TextSpoilerConfig extends SpoilerConfig {
         isEnabled,
         enableGestureReveal,
         maskConfig,
+        shaderConfig,
         onSpoilerVisibilityChanged,
         textStyle,
         textSelection,
@@ -180,6 +183,7 @@ class TextSpoilerConfig extends SpoilerConfig {
           isEnabled == other.isEnabled &&
           enableGestureReveal == other.enableGestureReveal &&
           maskConfig == other.maskConfig &&
+          shaderConfig == other.shaderConfig &&
           onSpoilerVisibilityChanged == other.onSpoilerVisibilityChanged &&
           textStyle == other.textStyle &&
           textSelection == other.textSelection &&

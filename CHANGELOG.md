@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.21
+
+* **Selection & Rects:**
+  * Selection now spans multiple text widgets as a single range.
+  * Line-based selection boxes replace per-character boxes.
+  * Whitespace skipping uses word runs to avoid full-line fill on spaces.
+  * Clearing `textSelection` recomputes full spoiler rects.
+
 ## 1.0.20
 
 * **Particle Shapes:**

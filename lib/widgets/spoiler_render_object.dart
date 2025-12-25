@@ -102,6 +102,20 @@ class RenderSpoiler extends RenderProxyBox {
     return out;
   }
 
+  List<RenderParagraph> _findRenderParagraphs(RenderObject root) {
+    final out = <RenderParagraph>[];
+
+    void visit(RenderObject node) {
+      if (node is RenderParagraph) {
+        out.add(node);
+      }
+      node.visitChildren(visit);
+    }
+
+    visit(root);
+    return out;
+  }
+
   PaintCallback? _onPaint;
   set onPaint(PaintCallback? value) {
     if (_onPaint != value) {
@@ -147,11 +161,6 @@ class RenderSpoiler extends RenderProxyBox {
     if (_textSelection != value) {
       _textSelection = value;
       _rectsDirty = true;
-      if (value == null) {
-        _lastSelection = null;
-        _cachedSelectionRects = const [];
-        _lastInitRectsHash = 0;
-      }
       markNeedsPaint();
     }
   }
@@ -168,7 +177,6 @@ class RenderSpoiler extends RenderProxyBox {
   void performLayout() {
     super.performLayout();
     _rectsDirty = true;
-    _cachedSelectionRects = const [];
   }
 
   bool _rectsDirty = true;
@@ -182,39 +190,18 @@ class RenderSpoiler extends RenderProxyBox {
     final childRo = child;
     final editables =
         childRo != null ? _findRenderEditables(childRo, offsets: visitedOffsets) : const <RenderEditable>[];
+    final paragraphs = childRo != null ? _findRenderParagraphs(childRo) : const <RenderParagraph>[];
     final selection = _textSelection;
 
-    if (selection != null) {
-      final shouldRecalculate = _rectsDirty || _lastSelection != selection || _cachedSelectionRects.isEmpty;
-      if (shouldRecalculate) {
-        if (editables.isNotEmpty) {
-          final collected = <Rect>[];
-
-          for (final re in editables) {
-            final geom = _buildEditableGeometry(re, selection);
-            if (geom == null) continue;
-
-            final Matrix4 m = re.getTransformTo(this);
-            final Offset paintOffset = _editablePaintOffset(re);
-            collected.addAll(
-              geom.rects
-                  .map((r) => _normalizeEditableRect(r.shift(paintOffset), re))
-                  .map((r) => MatrixUtils.transformRect(m, r)),
-            );
-          }
-
-          if (collected.isNotEmpty) {
-            _cachedSelectionRects = collected;
-            final h = _hashRects(collected);
-            if (h != _lastInitRectsHash) {
-              _lastInitRectsHash = h;
-              _onInit?.call(collected);
-            }
-          }
-        }
-        _lastSelection = selection;
-      }
-
+    final shouldRecalculate = _rectsDirty || _lastSelection != selection || _cachedSelectionRects.isEmpty;
+    if (shouldRecalculate) {
+      final collected = _collectSpoilerRects(
+        editables: editables,
+        paragraphs: paragraphs,
+        selection: selection,
+      );
+      _updateCachedRects(collected);
+      _lastSelection = selection;
       _rectsDirty = false;
     }
 
@@ -299,10 +286,6 @@ class RenderSpoiler extends RenderProxyBox {
     // ignore: invalid_use_of_protected_member
     rootSpoilerContext.stopRecordingIfNeeded();
 
-    if (_rectsDirty && _textSelection == null) {
-      _onInit?.call(rootSpoilerContext.spoilerRects);
-      _rectsDirty = false;
-    }
     _syncEditableOffsets(visitedOffsets);
   }
 
@@ -368,7 +351,6 @@ class RenderSpoiler extends RenderProxyBox {
 
   void _onEditableOffsetChanged() {
     _rectsDirty = true;
-    _cachedSelectionRects = const [];
     markNeedsPaint();
   }
 
@@ -391,6 +373,110 @@ class RenderSpoiler extends RenderProxyBox {
       skipWhitespace: true,
     );
   }
+
+  List<Rect> _buildParagraphSelectionRects(RenderParagraph paragraph, int start, int end) {
+    final text = paragraph.text.toPlainText();
+    if (text.isEmpty) return const [];
+
+    final int clampedStart = start.clamp(0, text.length);
+    final int clampedEnd = end.clamp(0, text.length);
+    if (clampedStart >= clampedEnd) return const [];
+
+    final geom = buildSpoilerGeometry(
+      layout: RenderParagraphLayoutClient(paragraph),
+      text: text,
+      selection: TextSelection(baseOffset: clampedStart, extentOffset: clampedEnd),
+      skipWhitespace: true,
+    );
+    return geom?.rects ?? const [];
+  }
+
+  List<Rect> _collectSpoilerRects({
+    required List<RenderEditable> editables,
+    required List<RenderParagraph> paragraphs,
+    required TextSelection? selection,
+  }) {
+    final collected = <Rect>[];
+
+    void appendEditable(RenderEditable editable, TextSelection selection) {
+      final geom = _buildEditableGeometry(editable, selection);
+      if (geom == null) return;
+
+      final Matrix4 m = editable.getTransformTo(this);
+      final Offset paintOffset = _editablePaintOffset(editable);
+      collected.addAll(
+        geom.rects
+            .map((r) => _normalizeEditableRect(r.shift(paintOffset), editable))
+            .map((r) => MatrixUtils.transformRect(m, r)),
+      );
+    }
+
+    void appendParagraph(RenderParagraph paragraph, int start, int end) {
+      final rects = _buildParagraphSelectionRects(paragraph, start, end);
+      if (rects.isEmpty) return;
+
+      final Matrix4 m = paragraph.getTransformTo(this);
+      collected.addAll(rects.map((r) => MatrixUtils.transformRect(m, r)));
+    }
+
+    if (selection != null) {
+      for (final editable in editables) {
+        appendEditable(editable, selection);
+      }
+
+      final int rawStart = selection.start < selection.end ? selection.start : selection.end;
+      final int rawEnd = selection.start > selection.end ? selection.start : selection.end;
+      int paragraphOffset = 0;
+
+      for (final paragraph in paragraphs) {
+        final text = paragraph.text.toPlainText();
+        final length = text.length;
+        if (length == 0) continue;
+
+        final int localStart = (rawStart - paragraphOffset).clamp(0, length);
+        final int localEnd = (rawEnd - paragraphOffset).clamp(0, length);
+        if (localStart >= localEnd) {
+          paragraphOffset += length;
+          if (paragraphOffset >= rawEnd) break;
+          continue;
+        }
+
+        appendParagraph(paragraph, localStart, localEnd);
+        paragraphOffset += length;
+        if (paragraphOffset >= rawEnd) break;
+      }
+    } else {
+      for (final editable in editables) {
+        final text = editable.plainText;
+        if (text.isEmpty) continue;
+        appendEditable(
+          editable,
+          TextSelection(baseOffset: 0, extentOffset: text.length),
+        );
+      }
+
+      for (final paragraph in paragraphs) {
+        final text = paragraph.text.toPlainText();
+        if (text.isEmpty) continue;
+        appendParagraph(paragraph, 0, text.length);
+      }
+    }
+
+    return collected;
+  }
+
+  void _updateCachedRects(List<Rect> rects) {
+    final previousRects = _cachedSelectionRects;
+    final previousHash = _lastInitRectsHash;
+    final nextHash = _hashRects(rects);
+
+    _cachedSelectionRects = rects;
+
+    if (nextHash != previousHash || previousRects.length != rects.length) {
+      _lastInitRectsHash = nextHash;
+      _onInit?.call(rects);
+    }
+  }
 }
 
 /// Painting context that captures text bounding rects while delegating
@@ -411,17 +497,19 @@ class SpoilerPaintingContext extends PaintingContext {
 
   @override
   void paintChild(RenderObject child, Offset offset) {
-    if (child is RenderParagraph && calculateRects) {
-      currentText = child.text.toPlainText();
-    } else if (child is RenderEditable) {
-      currentText = child.plainText;
-      if (currentText != null && currentText!.isNotEmpty) {
-        final boxes = child.getBoxesForSelection(
-          TextSelection(baseOffset: 0, extentOffset: currentText!.length),
-        );
-        final paintOffset = _editablePaintOffset(child);
-        for (final b in boxes) {
-          spoilerRects.add(_normalizeEditableRect(b.toRect().shift(offset + paintOffset), child));
+    if (calculateRects) {
+      if (child is RenderParagraph) {
+        currentText = child.text.toPlainText();
+      } else if (child is RenderEditable) {
+        currentText = child.plainText;
+        if (currentText != null && currentText!.isNotEmpty) {
+          final boxes = child.getBoxesForSelection(
+            TextSelection(baseOffset: 0, extentOffset: currentText!.length),
+          );
+          final paintOffset = _editablePaintOffset(child);
+          for (final b in boxes) {
+            spoilerRects.add(_normalizeEditableRect(b.toRect().shift(offset + paintOffset), child));
+          }
         }
       }
     }
