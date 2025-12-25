@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.24
+
+* **Packaging:**
+  * Removed a gitignored tracked file warning for `dart pub publish --dry-run`.
+
 ## 1.0.23
 
 * **Static analysis:**
