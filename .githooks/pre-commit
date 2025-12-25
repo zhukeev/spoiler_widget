@@ -1,17 +1,30 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+repo_root=$(git rev-parse --show-toplevel)
+local_home="$repo_root/.dart_tool_home"
+mkdir -p "$local_home"
+
 staged_files=()
 while IFS= read -r -d '' file; do
   staged_files+=("$file")
 done < <(git diff --cached --name-only -z --diff-filter=ACMR)
 
-if command -v fvm >/dev/null 2>&1; then
+"$repo_root/scripts/sync_readme_version.sh"
+
+local_dart="$repo_root/.fvm/flutter_sdk/bin/dart"
+if [[ -x "$local_dart" ]]; then
+  HOME="$local_home" DART_DISABLE_TELEMETRY=1 "$local_dart" format .
+elif command -v fvm >/dev/null 2>&1; then
   DART_DISABLE_TELEMETRY=1 fvm dart format .
 else
-  DART_DISABLE_TELEMETRY=1 dart format .
+  HOME="$local_home" DART_DISABLE_TELEMETRY=1 dart format .
 fi
 
 if ((${#staged_files[@]})); then
   git add -- "${staged_files[@]}"
+fi
+
+if ! git diff --quiet -- README.md; then
+  git add README.md
 fi

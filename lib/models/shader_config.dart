@@ -1,5 +1,6 @@
 part of 'spoiler_configs.dart';
 
+/// Generates the list of float uniforms passed to a fragment shader.
 typedef ShaderCallback = List<double> Function(
   Rect rect,
   double time,
@@ -10,6 +11,7 @@ typedef ShaderCallback = List<double> Function(
   SpoilerConfig config,
 );
 
+/// Describes a fragment shader and how to build its uniform values.
 class ShaderConfig {
   /// Path to a custom fragment shader asset (e.g. 'shaders/particles.frag').
   /// If provided, this shader replaces the default particle effect.
@@ -125,11 +127,13 @@ class ShaderConfig {
     ];
   }
 
+  /// Default particle shader with sprite support.
   factory ShaderConfig.particles() => const ShaderConfig(
         customShaderPath: 'packages/spoiler_widget/shaders/particles.frag',
         onGetShaderUniforms: _particleUniforms,
       );
 
+  /// Soft bokeh-style blur cover shader.
   factory ShaderConfig.bokehCover() => const ShaderConfig(
         customShaderPath: 'packages/spoiler_widget/shaders/bokeh_cover.frag',
         onGetShaderUniforms: _baseUniforms,

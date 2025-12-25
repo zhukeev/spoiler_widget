@@ -1,8 +1,12 @@
 part of 'spoiler_configs.dart';
 
+/// Configuration for spoiler fade behavior.
 @immutable
 class FadeConfig {
+  /// Padding used to expand the reveal/cover area.
   final double padding;
+
+  /// Thickness of the fade edge band.
   final double edgeThickness;
 
   const FadeConfig({

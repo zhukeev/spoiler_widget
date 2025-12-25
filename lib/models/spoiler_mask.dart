@@ -26,6 +26,7 @@ class SpoilerMask {
     this.offset = Offset.zero,
   });
 
+  /// Builds a star-shaped [Path] helper for mask creation.
   static Path buildStarPath(
     Offset center,
     double outerRadius,
@@ -33,6 +34,10 @@ class SpoilerMask {
     double innerRatio,
   ) {
     return ParticlePathPreset.buildStarPath(
-        center, outerRadius, points, innerRatio);
+      center,
+      outerRadius,
+      points,
+      innerRatio,
+    );
   }
 }

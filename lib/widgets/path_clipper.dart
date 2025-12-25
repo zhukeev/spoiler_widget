@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+/// Builds a clipping path for the given size.
 typedef PathBuilder = Path Function(Size size);
 
 /// Generic path clipper.

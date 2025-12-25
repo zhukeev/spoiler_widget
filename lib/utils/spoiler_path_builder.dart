@@ -2,6 +2,7 @@ import 'package:flutter/rendering.dart';
 import 'package:spoiler_widget/utils/path_signature.dart';
 import 'package:spoiler_widget/utils/text_layout_client.dart';
 
+/// Bundles the path and rects that describe a spoiler selection.
 class SpoilerGeometry {
   SpoilerGeometry({
     required this.path,
@@ -9,8 +10,13 @@ class SpoilerGeometry {
     required this.rects,
   });
 
+  /// Path representing the spoiler area.
   final Path path;
+
+  /// Signature hash used for caching and diffing.
   final String signature;
+
+  /// Rectangles used to build the path.
   final List<Rect> rects;
 }
 

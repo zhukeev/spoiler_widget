@@ -6,8 +6,12 @@
   * Switched shader uniform color components to `.r/.g/.b` and replaced deprecated color value usage.
   * Updated the example app/test to avoid deprecated `SpoilerText`.
   * Added file-level ignores where legacy config fields are intentionally exercised.
+* **Docs:**
+  * Refreshed README examples and configuration tables for current APIs.
+  * Added missing dartdoc comments across the public API.
 * **CI:**
   * Added `flutter analyze` for the package and example app.
+  * Added `dart pub publish --dry-run` for publish validation.
 
 ## 1.0.22
 

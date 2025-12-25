@@ -1,5 +1,6 @@
 import 'package:flutter/rendering.dart';
 
+/// Callback invoked during paint with the current canvas and size.
 typedef PaintCallback = void Function(Canvas canvas, Size size);
 
 /// Custom painter that calls [onPaint] callback on paint.

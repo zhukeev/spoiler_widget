@@ -4,6 +4,7 @@ import 'package:spoiler_widget/utils/spoiler_text_layout.dart.dart';
 
 import 'canvas_callback_painter.dart';
 
+/// Paints text with a spoiler overlay and reports text rects for masking.
 @immutable
 class SpoilerTextPainter extends StatefulWidget {
   const SpoilerTextPainter({
@@ -18,13 +19,28 @@ class SpoilerTextPainter extends StatefulWidget {
     Key? key,
   }) : super(key: key);
 
+  /// Full text content to render.
   final String text;
+
+  /// Optional style used to measure and paint the text.
   final TextStyle? style;
+
+  /// Optional selection range to mask.
   final TextSelection? textSelection;
+
+  /// Alignment used when laying out the text.
   final TextAlign textAlign;
+
+  /// Called with merged text rects after layout.
   final ValueChanged<List<Rect>> onInit;
+
+  /// Called before text paint to draw particles/clip.
   final PaintCallback onPaint;
+
+  /// Optional maximum number of lines for layout.
   final int? maxLines;
+
+  /// Whether overflowing text should use an ellipsis.
   final bool? isEllipsis;
 
   @override

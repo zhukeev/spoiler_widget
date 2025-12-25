@@ -7,6 +7,7 @@ abstract class TextLayoutClient {
   List<TextBox> getBoxesForSelection(TextSelection selection);
 }
 
+/// [TextLayoutClient] adapter for [RenderEditable].
 class RenderEditableLayoutClient implements TextLayoutClient {
   RenderEditableLayoutClient(this.render);
 
@@ -23,6 +24,7 @@ class RenderEditableLayoutClient implements TextLayoutClient {
       render.getBoxesForSelection(selection);
 }
 
+/// [TextLayoutClient] adapter for [RenderParagraph].
 class RenderParagraphLayoutClient implements TextLayoutClient {
   RenderParagraphLayoutClient(this.render);
 
@@ -49,6 +51,7 @@ class RenderParagraphLayoutClient implements TextLayoutClient {
       render.getBoxesForSelection(selection);
 }
 
+/// [TextLayoutClient] adapter for [TextPainter].
 class TextPainterLayoutClient implements TextLayoutClient {
   TextPainterLayoutClient(this.painter);
 

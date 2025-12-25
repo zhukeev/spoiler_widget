@@ -40,6 +40,9 @@ jobs:
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed .
 
+      - name: Check README version
+        run: bash scripts/sync_readme_version.sh --check
+
       - name: Run analysis
         run: flutter analyze
 
@@ -54,6 +57,9 @@ jobs:
       - name: Run golden tests
         if: steps.changes.outputs.code == 'true'
         run: flutter test test/golden_test.dart
+
+      - name: Pub publish dry run
+        run: dart pub publish --dry-run
 
       - name: Install pana
         run: |
