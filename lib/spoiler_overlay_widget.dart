@@ -4,13 +4,18 @@ import 'package:spoiler_widget/models/spoiler_controller.dart';
 import 'package:spoiler_widget/models/widget_spoiler_config.dart';
 import 'package:spoiler_widget/widgets/spoiler_render_object.dart';
 
+/// Applies a spoiler overlay to any child widget using blur and particles.
 class SpoilerOverlay extends StatefulWidget {
   const SpoilerOverlay({
     super.key,
     required this.child,
     required this.config,
   });
+
+  /// The widget to obscure while the spoiler is enabled.
   final Widget child;
+
+  /// Configuration for blur, particles, and gesture behavior.
   final WidgetSpoilerConfig config;
 
   @override

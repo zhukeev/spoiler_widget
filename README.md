@@ -1,5 +1,7 @@
 # Spoiler Animation for Flutter
 
+![Spoiler Widget](https://github.com/zhukeev/spoiler_widget/blob/main/assets/spoiler_widget.jpg)
+
 ![Pub Likes](https://img.shields.io/pub/likes/spoiler_widget)
 ![Pub Points](https://img.shields.io/pub/points/spoiler_widget)
 [![Pub Version](https://img.shields.io/pub/v/spoiler_widget.svg)](https://pub.dev/packages/spoiler_widget)
@@ -42,7 +44,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  spoiler_widget: latest
+  spoiler_widget: ^1.0.24
 ```
 
 Then run:
@@ -63,37 +65,39 @@ Import the package:
 import 'package:spoiler_widget/spoiler_widget.dart';
 ```
 
-Wrap **text** or **widgets** you want to hide in a spoiler:
+Wrap any widget you want to hide in a spoiler:
 
 ```dart
 SpoilerOverlay(
   config: WidgetSpoilerConfig(
     isEnabled: true,
-    fadeConfig: FadeConfig(radius: 3.0),
+    fadeConfig: const FadeConfig(padding: 3.0, edgeThickness: 20.0),
     enableGestureReveal: true,
-    imageFilter: ImageFilter.blur(sigmaX:30, sigmaY:30),
+    imageFilter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
     onSpoilerVisibilityChanged: (isVisible) {
       debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
     },
   ),
-  child: Text('Hidden Content'),
+  child: const Text('Hidden content'),
 );
 
 ```
 
-Or use the text-specific widget:
+For text-only content, use `SpoilerTextWrapper` (preferred over deprecated `SpoilerText`):
 
 ```dart
-SpoilerText(
-  text: 'Tap me to reveal secret text!',
+SpoilerTextWrapper(
   config: TextSpoilerConfig(
     isEnabled: true,
-    fadeConfig: FadeConfig(radius: 3.0),
+    fadeConfig: const FadeConfig(padding: 3.0, edgeThickness: 20.0),
     enableGestureReveal: true,
-    textStyle: TextStyle(fontSize: 16, color: Colors.black),
     onSpoilerVisibilityChanged: (isVisible) {
       debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
     },
+  ),
+  child: const Text(
+    'Tap me to reveal secret text!',
+    style: TextStyle(fontSize: 16, color: Colors.black),
   ),
 );
 
@@ -105,9 +109,9 @@ If you already have a text subtree and just need to hide it with particles, use 
 
 ```dart
 SpoilerTextWrapper(
-  config: SpoilerConfig(
+  config: TextSpoilerConfig(
     isEnabled: true,
-    fadeConfig: const FadeConfig(),
+    fadeConfig: const FadeConfig(padding: 10.0, edgeThickness: 20.0),
     enableGestureReveal: true,
   ),
   child: Column(
@@ -122,17 +126,17 @@ SpoilerTextWrapper(
 
 ### 1.2 Form field integration
 
-Use `SpoilerTextFormField` to keep the native context menu/cursor while hiding parts of the input:
+Use `SpoilerTextFieldWrapper` to keep the native context menu/cursor while hiding parts of the input:
 
 ```dart
 final controller = TextEditingController(text: 'Type here...');
 
-SpoilerTextFormField(
+SpoilerTextFieldWrapper(
   controller: controller,
   focusNode: FocusNode(),
   config: const TextSpoilerConfig(
     isEnabled: true,
-    fadeConfig: FadeConfig(),
+    fadeConfig: FadeConfig(padding: 10.0, edgeThickness: 20.0),
     enableGestureReveal: true,
     textSelection: TextSelection(baseOffset: 0, extentOffset: 5),
     textStyle: TextStyle(fontSize: 18, color: Colors.white),
@@ -154,9 +158,9 @@ class WaveDemo extends StatelessWidget {
       config: WidgetSpoilerConfig( 
         isEnabled: true,
         maxActiveWaves: 3,
-        fadeConfig: const FadeConfig(),
+        fadeConfig: const FadeConfig(padding: 10.0, edgeThickness: 20.0),
         enableGestureReveal: true,
-        imageFilter: ImageFilter.blur(sigmaX:30, sigmaY:20),
+        imageFilter: ImageFilter.blur(sigmaX: 30, sigmaY: 20),
         onSpoilerVisibilityChanged: (isVisible) {
           debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
         },
@@ -174,15 +178,16 @@ You can apply a custom-shaped mask using `maskConfig` in both `TextSpoilerConfig
 This allows the spoiler effect to only appear inside specific areas defined by a `Path`.
 
 ```dart
-SpoilerText(
-  text: 'Masked spoiler!',
+SpoilerTextWrapper(
   config: TextSpoilerConfig(
     isEnabled: true,
     enableGestureReveal: true,
     particleConfig: const ParticleConfig(
       density: 0.1,
+      speed: 0.2,
+      color: Colors.white,
+      maxParticleSize: 1.0,
     ),
-    textStyle: TextStyle(fontSize: 24, color: Colors.white),
     maskConfig: SpoilerMask(
       maskPath: myCustomPath,
       maskOperation: PathOperation.intersect,
@@ -191,6 +196,10 @@ SpoilerText(
     onSpoilerVisibilityChanged: (isVisible) {
       debugPrint('Spoiler is now: ${isVisible ? 'Visible' : 'Hidden'}');
     },
+  ),
+  child: const Text(
+    'Masked spoiler!',
+    style: TextStyle(fontSize: 24, color: Colors.white),
   ),
 );
 
@@ -204,24 +213,29 @@ You can find a complete, runnable example in the [example/lib/main.dart](https:/
 
 ##### Common Fields
 
-Table showing common config parameters for both TextSpoilerConfiguration and WidgetSpoilerConfiguration.
+Table showing common config parameters for both TextSpoilerConfig and WidgetSpoilerConfig.
 
-| Field            | Type            | Description                                                  |
-|------------------|-----------------|--------------------------------------------------------------|
-| `isEnabled`      | bool            | Whether the spoiler starts covered `true`.                   |
-| `enableFadeAnimation` | bool       | Enables smooth fade-in/out.<br/>Deprecated, use `fadeConfig`.|
-| `fadeRadius`     | double          | Deprecated, use `fadeConfig`.                                |
-| `particleDensity`| double          | Deprecated, use `particleConfig`.                            |
-| `maxParticleSize`| double          | Deprecated, use `particleConfig`.                            |
-| `particleSpeed`  | double          | Deprecated, use `particleConfig`.                            |
-| `particleColor`  | Color           | Deprecated, use `particleConfig`.                            |
-| `fadeEdgeThickness` | double       | Deprecated, use `fadeConfig`.                                |
-| `particleConfig` | ParticleConfig? | Particle system parameters (density, speed, color, size, shape paths). |
-| `fadeConfig`     | FadeConfig?     | Fade animation parameters (radius, edge thickness).          |
-| `shaderConfig`   | ShaderConfig?   | Custom fragment shader configuration for particles.          |
-| `enableGestureReveal` | bool       | Whether tapped toggle should be out of the box.              |
-| `maskConfig`     | SpoilerMask?    | Optional mask to apply using a `Path`.                       |
-| `onSpoilerVisibilityChanged` | ValueChanged? | Optional callback fired when spoiler becomes visible/hidden. |
+| Field            | Type                 | Description                                                  |
+|------------------|----------------------|--------------------------------------------------------------|
+| `isEnabled`      | bool                 | Whether the spoiler starts enabled (hidden).                 |
+| `enableGestureReveal` | bool            | Whether tap should toggle visibility.                        |
+| `particleConfig` | ParticleConfig        | Particle system parameters (density, speed, color, size, shape). |
+| `fadeConfig`     | FadeConfig?           | Fade parameters (`padding`, `edgeThickness`).                |
+| `shaderConfig`   | ShaderConfig?         | Custom fragment shader configuration for particles.          |
+| `maskConfig`     | SpoilerMask?          | Optional mask to apply using a `Path`.                       |
+| `onSpoilerVisibilityChanged` | ValueChanged<bool>? | Callback fired when spoiler becomes visible/hidden. |
+
+##### Legacy fields (deprecated)
+
+These fields are kept for backward compatibility; prefer `particleConfig` and `fadeConfig`.
+
+- `enableFadeAnimation`
+- `fadeRadius` (maps to `FadeConfig.padding`)
+- `fadeEdgeThickness`
+- `particleDensity`
+- `particleSpeed`
+- `particleColor`
+- `maxParticleSize`
 
 #### ParticleConfig
 
@@ -231,13 +245,12 @@ Table showing common config parameters for both TextSpoilerConfiguration and Wid
 | `speed` | double | Particle speed (px/frame). |
 | `color` | Color | Base particle color. |
 | `maxParticleSize` | double | Particle diameter in pixels. |
-| `shapePreset` | ParticlePathPreset? | Built-in shapes (circle, star, snowflake). Defaults to circle. |
-| `shapePath` | Path? | Optional custom particle path. Use `ParticlePathPreset` for built-ins; atlas draws the path and shader uses a sprite sampler. |
+| `shapePreset` | ParticlePathPreset? | Built-in shapes or `ParticlePathPreset.custom(...)` for your own path. |
 | `enableWaves` | bool | Enables ripple waves that push particles. |
 | `maxWaveRadius` | double | Wave radius limit in pixels. |
 | `maxWaveCount` | int | Maximum number of simultaneous waves. |
 
-#### TextSpoilerConfiguration
+#### TextSpoilerConfig
 
 | Field       | Type           | Description                                 |
 |------------|---------------|---------------------------------------------|
@@ -247,7 +260,7 @@ Table showing common config parameters for both TextSpoilerConfiguration and Wid
 | `maxLines` | int? |  An optional maximum number of lines for the text to span, wrapping if necessary.        |
 | `isEllipsis` | bool? |  Determines whether overflowing text should display an ellipsis ("…") at the end.        |
 
-#### WidgetSpoilerConfiguration
+#### WidgetSpoilerConfig
 
 | Field            | Type         | Description                                  |
 |-----------------|-------------|----------------------------------------------|
@@ -276,7 +289,7 @@ To enable **Shader Rendering**, simply provide a `ShaderConfig` to your spoiler 
 
 ### Particle Shapes
 
-Pick a shape once in `ParticleConfig`, and it works for both atlas and shader modes. Leave `shapePath` null for the default circle (fastest path).
+Pick a shape once in `ParticleConfig`, and it works for both atlas and shader modes. Leave `shapePreset` null for the default circle (fastest path).
 
 ```dart
 particleConfig: ParticleConfig(
@@ -303,7 +316,7 @@ final starPath = Path()
 
 particleConfig: ParticleConfig(
   density: 0.1,
-  shapePath: starPath,
+  shapePreset: ParticlePathPreset.custom(starPath),
 ),
 ```
 
@@ -313,13 +326,14 @@ You can use the default high-performance shader for particle rendering:
 
 ```dart
 SpoilerTextWrapper(
-  config: SpoilerConfig(
+  config: TextSpoilerConfig(
     isEnabled: true,
     enableGestureReveal: true,
-    particleConfig: ParticleConfig(
+    particleConfig: const ParticleConfig(
       density: 0.15,
       speed: 0.25,
       color: Colors.white,
+      maxParticleSize: 1.0,
       shapePreset: ParticlePathPreset.star,
     ),
     shaderConfig: ShaderConfig.particles(),

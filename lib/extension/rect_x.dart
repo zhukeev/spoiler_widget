@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/rendering.dart';
 
+/// Geometry helpers for [Rect].
 extension RectX on Rect {
   /// Check if {offset} is inside the rectangle
   ///
@@ -20,6 +21,7 @@ extension RectX on Rect {
         right >= offset.dx;
   }
 
+  /// Splits the rect into four equal quadrants.
   (Rect, Rect, Rect, Rect) divideRect() {
     final halfWidth = width / 2;
     final halfHeight = height / 2;
@@ -85,7 +87,9 @@ extension RectX on Rect {
   }
 }
 
+/// Collection helpers for lists of [Rect].
 extension ListRectX on List<Rect> {
+  /// Returns a bounding rect covering all items.
   Rect getBounds() {
     if (isEmpty) {
       return Rect.zero;
@@ -117,6 +121,7 @@ extension ListRectX on List<Rect> {
     return Rect.fromLTRB(left, top, right, bottom);
   }
 
+  /// Merges adjacent rects that touch horizontally.
   List<Rect> mergeRects() {
     final merged = <Rect>[];
 

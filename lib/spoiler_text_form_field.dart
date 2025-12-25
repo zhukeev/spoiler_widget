@@ -4,6 +4,8 @@ import 'package:spoiler_widget/models/spoiler_configs.dart';
 import 'package:spoiler_widget/models/spoiler_controller.dart';
 import 'package:spoiler_widget/widgets/spoiler_render_object.dart';
 
+/// Wraps a text field to apply spoiler masking to the selected text while
+/// preserving the native context menu and cursor behavior.
 class SpoilerTextFieldWrapper extends StatefulWidget {
   const SpoilerTextFieldWrapper({
     super.key,
@@ -13,12 +15,19 @@ class SpoilerTextFieldWrapper extends StatefulWidget {
     this.onSelectionChanged,
   });
 
+  /// Configuration controlling particles, fade, and gesture behavior.
   final SpoilerConfig config;
+
+  /// Optional label builder for the "Spoiler" context menu item.
   final String Function()? spoilerLabelBuilder;
+
+  /// Builder that receives a context menu builder for integration with text fields.
   final Widget Function(
     BuildContext context,
     EditableTextContextMenuBuilder? contextMenuBuilder,
   ) builder;
+
+  /// Called with the text selection used to create the spoiler mask.
   final ValueChanged<TextSelection?>? onSelectionChanged;
 
   @override
