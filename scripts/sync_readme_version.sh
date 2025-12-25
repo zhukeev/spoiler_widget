@@ -11,7 +11,9 @@ if [[ -z "$version" ]]; then
   exit 1
 fi
 
-readme_version=$(grep -E "spoiler_widget:\\s*\\^" "$readme" | head -n 1 | sed -E 's/.*\\^([0-9.]+).*/\\1/')
+readme_version=$(
+  awk '/spoiler_widget:[[:space:]]*\^/ {gsub(/[^0-9.]/, "", $2); print $2; exit}' "$readme"
+)
 if [[ -z "$readme_version" ]]; then
   echo "Unable to read dependency version from $readme" >&2
   exit 1
