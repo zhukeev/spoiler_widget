@@ -3,6 +3,7 @@ import 'package:spoiler_widget/models/spoiler_controller.dart';
 import 'package:spoiler_widget/models/text_spoiler_configs.dart';
 import 'package:spoiler_widget/widgets/spoiler_text_painter.dart';
 
+@Deprecated('Use SpoilerTextWrapper instead')
 class SpoilerText extends StatefulWidget {
   const SpoilerText({
     super.key,

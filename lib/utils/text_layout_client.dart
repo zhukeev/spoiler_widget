@@ -22,6 +22,31 @@ class RenderEditableLayoutClient implements TextLayoutClient {
   List<TextBox> getBoxesForSelection(TextSelection selection) => render.getBoxesForSelection(selection);
 }
 
+class RenderParagraphLayoutClient implements TextLayoutClient {
+  RenderParagraphLayoutClient(this.render);
+
+  final RenderParagraph render;
+
+  @override
+  Size get size => render.size;
+
+  @override
+  double get preferredLineHeight {
+    final text = render.text.toPlainText();
+    if (text.isEmpty) return 0;
+    final boxes = render.getBoxesForSelection(
+      const TextSelection(baseOffset: 0, extentOffset: 1),
+    );
+    if (boxes.isNotEmpty) {
+      return boxes.first.toRect().height;
+    }
+    return render.size.height;
+  }
+
+  @override
+  List<TextBox> getBoxesForSelection(TextSelection selection) => render.getBoxesForSelection(selection);
+}
+
 class TextPainterLayoutClient implements TextLayoutClient {
   TextPainterLayoutClient(this.painter);
 
@@ -50,21 +75,41 @@ class TextPainterLayoutClient implements TextLayoutClient {
   final int end = rawEnd.clamp(0, text.length);
   if (start >= end) return (null, []);
 
-  final path = Path();
-  final boxList = <Rect>[];
-  bool hasContent = false;
+  if (skipWhitespace) {
+    final selectedText = text.substring(start, end);
+    final matches = RegExp(r'\S+').allMatches(selectedText);
+    if (matches.isEmpty) return (null, const <Rect>[]);
 
-  for (int i = start; i < end; i++) {
-    final ch = text[i];
-    if (skipWhitespace && ch.trim().isEmpty) continue;
-
-    final boxes = layout.getBoxesForSelection(TextSelection(baseOffset: i, extentOffset: i + 1));
-    for (final box in boxes) {
-      boxList.add(box.toRect());
-      path.addRect(box.toRect());
-      hasContent = true;
+    final path = Path();
+    final boxList = <Rect>[];
+    for (final match in matches) {
+      final runStart = start + match.start;
+      final runEnd = start + match.end;
+      final boxes = layout.getBoxesForSelection(
+        TextSelection(baseOffset: runStart, extentOffset: runEnd),
+      );
+      for (final box in boxes) {
+        final rect = box.toRect();
+        boxList.add(rect);
+        path.addRect(rect);
+      }
     }
+
+    return boxList.isEmpty ? (null, const <Rect>[]) : (path, boxList);
   }
 
-  return hasContent ? (path, boxList) : (null, const <Rect>[]);
+  final boxes = layout.getBoxesForSelection(
+    TextSelection(baseOffset: start, extentOffset: end),
+  );
+  if (boxes.isEmpty) return (null, const <Rect>[]);
+
+  final path = Path();
+  final boxList = <Rect>[];
+  for (final box in boxes) {
+    final rect = box.toRect();
+    boxList.add(rect);
+    path.addRect(rect);
+  }
+
+  return (path, boxList);
 }

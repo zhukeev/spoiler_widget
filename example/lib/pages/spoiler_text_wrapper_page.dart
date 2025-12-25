@@ -14,13 +14,14 @@ class SpoilerTextWrapperPage extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: SpoilerTextWrapper(
-            config: SpoilerConfig(
+            config: TextSpoilerConfig(
               isEnabled: true,
               enableGestureReveal: true,
+              // textSelection: const TextSelection(baseOffset: 0, extentOffset: 6),
               particleConfig: const ParticleConfig(
                 maxParticleSize: 1,
                 color: Colors.white,
-                density: .2,
+                density: .5,
                 speed: .2,
               ),
               fadeConfig: const FadeConfig(
