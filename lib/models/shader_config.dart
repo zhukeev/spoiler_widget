@@ -144,7 +144,8 @@ class ShaderConfig {
   /// Glitch stripes with RGB splits.
   factory ShaderConfig.glitchStripes() => ShaderConfig(
         customShaderPath: 'packages/spoiler_widget/shaders/glitch_stripes.frag',
-        onGetShaderUniforms: (rect, time, seed, fadeOffset, isFading, fadeRadius, config) {
+        onGetShaderUniforms:
+            (rect, time, seed, fadeOffset, isFading, fadeRadius, config) {
           return [
             rect.width,
             rect.height,
@@ -177,7 +178,8 @@ class ShaderConfig {
 
   /// Liquid Spectrum (HSV FBM) shader.
   factory ShaderConfig.liquidSpectrum() => const ShaderConfig(
-        customShaderPath: 'packages/spoiler_widget/shaders/liquid_spectrum.frag',
+        customShaderPath:
+            'packages/spoiler_widget/shaders/liquid_spectrum.frag',
         onGetShaderUniforms: _baseUniforms,
       );
 }

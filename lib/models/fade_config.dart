@@ -15,5 +15,8 @@ class FadeConfig {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) || other is FadeConfig && padding == other.padding && edgeThickness == other.edgeThickness;
+      identical(this, other) ||
+      other is FadeConfig &&
+          padding == other.padding &&
+          edgeThickness == other.edgeThickness;
 }

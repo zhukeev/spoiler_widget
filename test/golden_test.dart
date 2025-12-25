@@ -63,9 +63,18 @@ void main() {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          SizedBox(width: 40, height: 40, child: ColoredBox(color: Colors.blue)),
-                          SizedBox(width: 40, height: 40, child: ColoredBox(color: Colors.green)),
-                          SizedBox(width: 40, height: 40, child: ColoredBox(color: Colors.orange)),
+                          SizedBox(
+                              width: 40,
+                              height: 40,
+                              child: ColoredBox(color: Colors.blue)),
+                          SizedBox(
+                              width: 40,
+                              height: 40,
+                              child: ColoredBox(color: Colors.green)),
+                          SizedBox(
+                              width: 40,
+                              height: 40,
+                              child: ColoredBox(color: Colors.orange)),
                         ],
                       ),
                       SizedBox(height: 12),
@@ -396,7 +405,8 @@ void _overrideGoldenTolerance(double tolerance) {
 
 Future<void> _allowShaderLoad(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 16));
-  await tester.binding.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+  await tester.binding
+      .runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
   await tester.pump(const Duration(milliseconds: 16));
 }
 
@@ -425,7 +435,8 @@ class _TolerantGoldenFileComparator extends LocalFileComparator {
       await getGoldenBytes(golden),
     );
 
-    final bool passed = result.passed || result.diffPercent <= _precisionTolerance;
+    final bool passed =
+        result.passed || result.diffPercent <= _precisionTolerance;
     if (passed) {
       result.dispose();
       return true;

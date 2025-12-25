@@ -6,7 +6,8 @@ import 'package:spoiler_widget/models/spoiler_configs.dart';
 import 'package:spoiler_widget/spoiler_text_form_field.dart';
 
 void main() {
-  testWidgets('SpoilerTextFieldWrapper adds menu item and reports selection', (tester) async {
+  testWidgets('SpoilerTextFieldWrapper adds menu item and reports selection',
+      (tester) async {
     final controller = TextEditingController(text: 'Secret text');
     final focusNode = FocusNode();
     addTearDown(controller.dispose);

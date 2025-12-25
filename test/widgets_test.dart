@@ -5,7 +5,8 @@ import 'package:spoiler_widget/models/text_spoiler_configs.dart';
 import 'package:spoiler_widget/spoiler_text_wrapper.dart';
 
 void main() {
-  testWidgets('SpoilerTextWrapper toggles via tap when gestures enabled', (tester) async {
+  testWidgets('SpoilerTextWrapper toggles via tap when gestures enabled',
+      (tester) async {
     bool? lastVisibility;
     final config = TextSpoilerConfig(
       isEnabled: true,
@@ -39,7 +40,8 @@ void main() {
     expect(lastVisibility, isFalse);
   });
 
-  testWidgets('SpoilerTextWrapper ignores tap when gestures disabled', (tester) async {
+  testWidgets('SpoilerTextWrapper ignores tap when gestures disabled',
+      (tester) async {
     bool? lastVisibility;
     final config = TextSpoilerConfig(
       isEnabled: true,

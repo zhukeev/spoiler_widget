@@ -48,7 +48,8 @@ void main() {
     expect(states.last, isFalse);
   });
 
-  testWidgets('SpoilerOverlay ignores taps when gestures are disabled', (tester) async {
+  testWidgets('SpoilerOverlay ignores taps when gestures are disabled',
+      (tester) async {
     final states = <bool>[];
     final config = WidgetSpoilerConfig(
       imageFilter: ImageFilter.blur(sigmaX: 1.0, sigmaY: 1.0),

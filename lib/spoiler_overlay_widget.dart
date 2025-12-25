@@ -17,7 +17,8 @@ class SpoilerOverlay extends StatefulWidget {
   State<SpoilerOverlay> createState() => _SpoilerOverlayState();
 }
 
-class _SpoilerOverlayState extends State<SpoilerOverlay> with TickerProviderStateMixin {
+class _SpoilerOverlayState extends State<SpoilerOverlay>
+    with TickerProviderStateMixin {
   late SpoilerController _spoilerController;
   Rect _spoilerBounds = Rect.zero;
 
@@ -33,7 +34,8 @@ class _SpoilerOverlayState extends State<SpoilerOverlay> with TickerProviderStat
 
   void _initializeSpoilerBounds(Size size) {
     _spoilerBounds = Rect.fromLTWH(0, 0, size.width, size.height);
-    _spoilerController.initializeParticles(Path()..addRect(_spoilerBounds), widget.config);
+    _spoilerController.initializeParticles(
+        Path()..addRect(_spoilerBounds), widget.config);
   }
 
   @override
@@ -75,14 +77,16 @@ class _SpoilerOverlayState extends State<SpoilerOverlay> with TickerProviderStat
           return SpoilerRenderObjectWidget(
             onAfterPaint: (canvas, size) => _onPaint(canvas, size),
             onClipPath: (size) {
-              if (_spoilerController.isEnabled && !_spoilerController.isFading) {
+              if (_spoilerController.isEnabled &&
+                  !_spoilerController.isFading) {
                 return Path()..addRect(Offset.zero & size);
               }
 
               return _spoilerController.createClipPath(size);
             },
             enableOverlay: true,
-            imageFilter: _spoilerController.isEnabled ? widget.config.imageFilter : null,
+            imageFilter:
+                _spoilerController.isEnabled ? widget.config.imageFilter : null,
             child: child!,
           );
         },

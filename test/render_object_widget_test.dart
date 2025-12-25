@@ -23,7 +23,8 @@ void main() {
     expect(rects, isNotEmpty);
   });
 
-  testWidgets('SpoilerRenderObjectWidget reports selection rects for TextField', (tester) async {
+  testWidgets('SpoilerRenderObjectWidget reports selection rects for TextField',
+      (tester) async {
     final controller = TextEditingController(text: 'Hello world');
     final focusNode = FocusNode();
     addTearDown(controller.dispose);

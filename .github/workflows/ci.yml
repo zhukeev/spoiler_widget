@@ -13,6 +13,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Detect code changes
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            code:
+              - "lib/**"
+              - "test/**"
+              - "example/**"
+              - "shaders/**"
+              - "assets/**"
+              - "pubspec.yaml"
+              - "analysis_options.yaml"
+              - "analysis_options.yml"
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -23,7 +38,7 @@ jobs:
         run: flutter pub get
 
       - name: Check formatting
-        run: dart format --line-length=120 --output=none --set-exit-if-changed lib test example
+        run: dart format --output=none --set-exit-if-changed .
 
       - name: Run analysis
         run: flutter analyze
@@ -33,9 +48,11 @@ jobs:
         working-directory: example
 
       - name: Run tests
+        if: steps.changes.outputs.code == 'true'
         run: flutter test
 
       - name: Run golden tests
+        if: steps.changes.outputs.code == 'true'
         run: flutter test test/golden_test.dart
 
       - name: Install pana

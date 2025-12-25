@@ -22,11 +22,14 @@ class SpoilerTextFieldWrapper extends StatefulWidget {
   final ValueChanged<TextSelection?>? onSelectionChanged;
 
   @override
-  State<SpoilerTextFieldWrapper> createState() => _SpoilerTextFieldWrapperState();
+  State<SpoilerTextFieldWrapper> createState() =>
+      _SpoilerTextFieldWrapperState();
 }
 
-class _SpoilerTextFieldWrapperState extends State<SpoilerTextFieldWrapper> with TickerProviderStateMixin {
-  late final SpoilerController _spoilerController = SpoilerController(vsync: this);
+class _SpoilerTextFieldWrapperState extends State<SpoilerTextFieldWrapper>
+    with TickerProviderStateMixin {
+  late final SpoilerController _spoilerController =
+      SpoilerController(vsync: this);
 
   TextSelection _spoilerSelection = const TextSelection.collapsed(offset: 0);
 
@@ -46,7 +49,7 @@ class _SpoilerTextFieldWrapperState extends State<SpoilerTextFieldWrapper> with 
     return (context, editableTextState) {
       final selection = editableTextState.textEditingValue.selection;
 
-      final items = editableTextState.contextMenuButtonItems.map((e) => e).toList();
+      final items = editableTextState.contextMenuButtonItems.toList();
 
       if (selection.isValid && !selection.isCollapsed) {
         items.add(
@@ -107,7 +110,8 @@ class _SpoilerTextFieldWrapperState extends State<SpoilerTextFieldWrapper> with 
             }
           },
           textSelection: _spoilerSelection,
-          onClipPath: (size) => _spoilerController.createSplashPathMaskClipper(size),
+          onClipPath: (size) =>
+              _spoilerController.createSplashPathMaskClipper(size),
           onInit: (rects) {
             final path = Path();
             for (final rect in rects) {

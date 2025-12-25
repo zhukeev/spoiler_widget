@@ -9,7 +9,8 @@ class SpoilerTextFieldPage extends StatefulWidget {
 }
 
 class _SpoilerTextFieldPageState extends State<SpoilerTextFieldPage> {
-  final _controller = TextEditingController(text: 'This is a spoiler! Tap to reveal');
+  final _controller =
+      TextEditingController(text: 'This is a spoiler! Tap to reveal');
 
   @override
   void dispose() {

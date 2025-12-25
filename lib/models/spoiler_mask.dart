@@ -32,6 +32,7 @@ class SpoilerMask {
     int points,
     double innerRatio,
   ) {
-    return ParticlePathPreset.buildStarPath(center, outerRadius, points, innerRatio);
+    return ParticlePathPreset.buildStarPath(
+        center, outerRadius, points, innerRatio);
   }
 }
