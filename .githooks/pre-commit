@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+staged_files=()
+while IFS= read -r -d '' file; do
+  staged_files+=("$file")
+done < <(git diff --cached --name-only -z --diff-filter=ACMR)
+
+if command -v fvm >/dev/null 2>&1; then
+  DART_DISABLE_TELEMETRY=1 fvm dart format .
+else
+  DART_DISABLE_TELEMETRY=1 dart format .
+fi
+
+if ((${#staged_files[@]})); then
+  git add -- "${staged_files[@]}"
+fi

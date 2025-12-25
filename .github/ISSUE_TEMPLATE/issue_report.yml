@@ -1,0 +1,56 @@
+name: Issue
+description: Report a bug or request a feature
+title: "[Issue]: "
+labels:
+  - triage
+body:
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type
+      options:
+        - Bug
+        - "Feature request"
+        - Question
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened or what you want to add.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: For bugs, include minimal steps.
+      placeholder: "1. ...\n2. ...\n3. ..."
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+  - type: input
+    id: package_version
+    attributes:
+      label: Package version
+      placeholder: "1.0.23"
+  - type: input
+    id: flutter_version
+    attributes:
+      label: Flutter version
+      placeholder: "3.27.0"
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      placeholder: "iOS / Android / Web / macOS / Windows / Linux"
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context

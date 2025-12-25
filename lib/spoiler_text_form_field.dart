@@ -49,8 +49,7 @@ class _SpoilerTextFieldWrapperState extends State<SpoilerTextFieldWrapper>
     return (context, editableTextState) {
       final selection = editableTextState.textEditingValue.selection;
 
-      final items =
-          editableTextState.contextMenuButtonItems.map((e) => e).toList();
+      final items = editableTextState.contextMenuButtonItems.toList();
 
       if (selection.isValid && !selection.isCollapsed) {
         items.add(
