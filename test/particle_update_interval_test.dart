@@ -32,7 +32,6 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
 
     final controller = TestSpoilerController(vsync: const TestVSync());
-    addTearDown(controller.dispose);
 
     controller.initializeParticles(
       Path()..addRect(const Rect.fromLTWH(0, 0, 100, 100)),
@@ -52,6 +51,9 @@ void main() {
 
     final afterThreshold = controller.debugParticles.first;
     expect(identical(afterThreshold, initial), isFalse);
+
+    controller.dispose();
+    await tester.pump();
   });
 
   testWidgets('particle updates run every frame when interval is zero',
@@ -59,7 +61,6 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
 
     final controller = TestSpoilerController(vsync: const TestVSync());
-    addTearDown(controller.dispose);
 
     controller.initializeParticles(
       Path()..addRect(const Rect.fromLTWH(0, 0, 100, 100)),
@@ -74,5 +75,8 @@ void main() {
 
     final afterTick = controller.debugParticles.first;
     expect(identical(afterTick, initial), isFalse);
+
+    controller.dispose();
+    await tester.pump();
   });
 }

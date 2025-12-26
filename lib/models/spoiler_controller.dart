@@ -66,11 +66,6 @@ class SpoilerController extends ChangeNotifier {
   /// A Path describing the spoiler region (may be multiple rectangles).
   final Path _spoilerPath = Path();
 
-  /// Cached list of sub-paths (individual text blocks) for per-rect shader rendering.
-  // TODO: Deprecate/remove if _spoilerRects replaces this completely.
-  // Keeping for fallback or if Path based logic is needed elsewhere.
-  List<Path> _encapsulatedPaths = [];
-
   /// Explicit list of rectangles for per-rect shader rendering.
   List<Rect> _spoilerRects = [];
 
@@ -212,12 +207,11 @@ class SpoilerController extends ChangeNotifier {
       _spoilerBounds = _spoilerPath.getBounds();
     }
 
-    // If rects weren't provided, try to approximate them from path bounds
+    final subPaths = _spoilerPath.subPaths.toList();
+
+    // If rects weren't provided, try to approximate them from path bounds.
     if (_spoilerRects.isEmpty) {
-      // Fallback: use subPaths derived rects
-      final subPaths = _spoilerPath.subPaths;
-      _encapsulatedPaths = subPaths.toList();
-      _spoilerRects = _encapsulatedPaths.map((p) => p.getBounds()).toList();
+      _spoilerRects = subPaths.map((p) => p.getBounds()).toList();
     }
 
     _initFadeIfNeeded();
@@ -230,10 +224,7 @@ class SpoilerController extends ChangeNotifier {
       }
     }
 
-    // Ensure we are using Atlas drawer initially or if config changes
-    final subPaths = _spoilerPath.subPaths;
-    _encapsulatedPaths = subPaths.toList();
-
+    // Ensure we are using Atlas drawer initially or if config changes.
     if (_drawer is! ShaderSpoilerDrawer) {
       if (_drawer is! AtlasSpoilerDrawer) {
         _drawer = AtlasSpoilerDrawer();
@@ -357,13 +348,10 @@ class SpoilerController extends ChangeNotifier {
     if (elapsed == null) return;
 
     final last = _lastParticleElapsed;
-    if (last == null) {
-      _lastParticleElapsed = elapsed;
-      return;
-    }
-
     Duration delta;
-    if (elapsed < last) {
+    if (last == null) {
+      delta = elapsed;
+    } else if (elapsed < last) {
       final duration = _particleCtrl.duration;
       if (duration == null || duration == Duration.zero) {
         _lastParticleElapsed = elapsed;
@@ -375,7 +363,9 @@ class SpoilerController extends ChangeNotifier {
     }
 
     _lastParticleElapsed = elapsed;
-    if (delta <= Duration.zero) return;
+    if (delta <= Duration.zero) {
+      delta = const Duration(microseconds: 16667);
+    }
 
     var dt = delta.inMicroseconds / 1e6;
     final minStep = _config.particleConfig.updateInterval;
