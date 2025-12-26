@@ -202,6 +202,7 @@ int _colorToArgb(Color color) {
 /// Strategy for drawing particles using Flutter's drawRawAtlas (CPU/hybrid).
 class AtlasSpoilerDrawer implements SpoilerDrawer {
   static const double _lifeSizeMin = 0.6;
+  static const double _baseFrameSeconds = 1 / 60;
   AtlasSpoilerDrawer();
 
   // Particle state
@@ -282,12 +283,13 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
   @override
   void update(double dt) {
     if (_particles.isEmpty) return;
+    final timeScale = dt <= 0 ? 0.0 : dt / _baseFrameSeconds;
 
     for (int i = 0; i < _particles.length; i++) {
       final p = _particles[i];
       _particles[i] = (p.life <= 0.1)
           ? _createRandomParticlePath(p.path)
-          : p.moveToRandomAngle();
+          : p.moveToRandomAngle(timeScale);
     }
   }
 

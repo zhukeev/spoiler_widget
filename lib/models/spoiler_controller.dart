@@ -54,6 +54,8 @@ class SpoilerController extends ChangeNotifier {
   // ---------------------------
   Path? _cachedClipPath;
   bool _isDisposed = false;
+  Duration? _lastParticleElapsed;
+  double _particleAccumulator = 0.0;
 
   // ---------------------------
   // Visual Assets & Bounds
@@ -343,13 +345,50 @@ class SpoilerController extends ChangeNotifier {
   /// If _isEnabled is true, start or repeat the particle animation loop.
   void _startParticleAnimationIfNeeded() {
     if (_isEnabled) {
+      _lastParticleElapsed = null;
+      _particleAccumulator = 0.0;
       _particleCtrl.repeat();
     }
   }
 
   /// Called each frame (via [_particleCtrl]) to move or re-spawn particles.
   void _onParticleFrameTick() {
-    _drawer.update(0.016); // ~60fps increment
+    final elapsed = _particleCtrl.lastElapsedDuration;
+    if (elapsed == null) return;
+
+    final last = _lastParticleElapsed;
+    if (last == null) {
+      _lastParticleElapsed = elapsed;
+      return;
+    }
+
+    Duration delta;
+    if (elapsed < last) {
+      final duration = _particleCtrl.duration;
+      if (duration == null || duration == Duration.zero) {
+        _lastParticleElapsed = elapsed;
+        return;
+      }
+      delta = (duration - last) + elapsed;
+    } else {
+      delta = elapsed - last;
+    }
+
+    _lastParticleElapsed = elapsed;
+    if (delta <= Duration.zero) return;
+
+    var dt = delta.inMicroseconds / 1e6;
+    final minStep = _config.particleConfig.updateInterval;
+    if (minStep > 0) {
+      _particleAccumulator += dt;
+      if (_particleAccumulator < minStep) {
+        return;
+      }
+      dt = _particleAccumulator;
+      _particleAccumulator = 0.0;
+    }
+
+    _drawer.update(dt);
     notifyListeners();
   }
 
@@ -378,6 +417,8 @@ class SpoilerController extends ChangeNotifier {
     _isEnabled = false;
     _fadeRadius = 0;
     _cachedClipPath = null; // Invalidate cache
+    _lastParticleElapsed = null;
+    _particleAccumulator = 0.0;
     _particleCtrl.reset();
     notifyListeners();
   }

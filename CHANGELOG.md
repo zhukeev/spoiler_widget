@@ -1,6 +1,14 @@
 # Changelog
 
 ## 1.0.24
+* **Performance:**
+  * Added `ParticleConfig.updateInterval` to throttle particle updates.
+* **DevX:**
+  * Added `CONTRIBUTING.md` and release check scripts.
+* **Docs:**
+  * Expanded configuration model documentation.
+
+## 1.0.24
 
 * **Packaging:**
   * Removed a gitignored tracked file warning for `dart pub publish --dry-run`.

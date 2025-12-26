@@ -62,8 +62,10 @@ class Particle extends Offset {
   ///
   /// This method is used to move the particle.
   /// It calculates the next position of the particle based on the current position, speed, and angle.
-  Particle moveToRandomAngle() {
-    return moveWithAngle(angle).copyWith(
+  ///
+  /// [timeScale] is a multiplier where 1.0 represents a single 60fps frame.
+  Particle moveToRandomAngle([double timeScale = 1.0]) {
+    return moveWithAngle(angle, timeScale).copyWith(
       // Random angle
       angle: angle + (Random().nextDouble() - 0.5),
     );
@@ -72,10 +74,13 @@ class Particle extends Offset {
   /// Move the particle
   ///
   /// This method is used to move the particle to given angle.
-  Particle moveWithAngle(double angle) {
-    final next = this + Offset.fromDirection(angle, speed);
+  ///
+  /// [timeScale] is a multiplier where 1.0 represents a single 60fps frame.
+  Particle moveWithAngle(double angle, [double timeScale = 1.0]) {
+    final clampedScale = timeScale <= 0 ? 0.0 : timeScale;
+    final next = this + Offset.fromDirection(angle, speed * clampedScale);
 
-    final lifetime = life - 0.01;
+    final lifetime = life - (0.01 * clampedScale);
 
     final color = this.color.withValues(alpha: lifetime.clamp(0, 1));
 
