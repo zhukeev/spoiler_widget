@@ -20,7 +20,7 @@ class _MainAppState extends State<MainApp> {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      showPerformanceOverlay: true,
+      showPerformanceOverlay: false,
       home: _DemoListPage(),
     );
   }

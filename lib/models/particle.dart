@@ -80,6 +80,7 @@ class Particle extends Offset {
     final clampedScale = timeScale <= 0 ? 0.0 : timeScale;
     final next = this + Offset.fromDirection(angle, speed * clampedScale);
 
+    // Lifetime decreases by 0.01 per 60fps frame, resulting in a ~1.67s lifespan.
     final lifetime = life - (0.01 * clampedScale);
 
     final color = this.color.withValues(alpha: lifetime.clamp(0, 1));

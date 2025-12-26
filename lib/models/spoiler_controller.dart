@@ -364,6 +364,7 @@ class SpoilerController extends ChangeNotifier {
 
     _lastParticleElapsed = elapsed;
     if (delta <= Duration.zero) {
+      // Fallback to a 60fps frame duration if delta is not positive.
       delta = const Duration(microseconds: 16667);
     }
 

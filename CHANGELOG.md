@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.24
+## 1.0.25
 * **Performance:**
   * Added `ParticleConfig.updateInterval` to throttle particle updates.
 * **DevX:**
