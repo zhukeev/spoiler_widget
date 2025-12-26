@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.25
+* **Performance:**
+  * Added `ParticleConfig.updateInterval` to throttle particle updates.
+* **DevX:**
+  * Added `CONTRIBUTING.md` and release check scripts.
+* **Docs:**
+  * Expanded configuration model documentation.
+
 ## 1.0.24
 
 * **Packaging:**

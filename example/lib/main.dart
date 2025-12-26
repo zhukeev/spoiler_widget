@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'pages/spoiler_overlay_page.dart';
+import 'pages/spoiler_performance_page.dart';
 import 'pages/spoiler_text_field_page.dart';
 import 'pages/spoiler_text_page.dart';
 import 'pages/spoiler_text_wrapper_page.dart';
@@ -37,6 +38,7 @@ class _DemoListPage extends StatelessWidget {
       _DemoEntry('SpoilerOverlay', () => const SpoilerOverlayPage()),
       _DemoEntry('SpoilerOverlay Full',
           () => const SpoilerOverlayPage(fullPage: true)),
+      _DemoEntry('Performance', () => const SpoilerPerformancePage()),
     ];
 
     return Scaffold(

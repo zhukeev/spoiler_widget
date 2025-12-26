@@ -44,7 +44,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  spoiler_widget: ^1.0.24
+  spoiler_widget: ^1.0.25
 ```
 
 Then run:
@@ -249,6 +249,7 @@ These fields are kept for backward compatibility; prefer `particleConfig` and `f
 | `enableWaves` | bool | Enables ripple waves that push particles. |
 | `maxWaveRadius` | double | Wave radius limit in pixels. |
 | `maxWaveCount` | int | Maximum number of simultaneous waves. |
+| `updateInterval` | double | Minimum seconds between particle updates (0 = every frame). |
 
 #### TextSpoilerConfig
 
@@ -345,6 +346,7 @@ SpoilerTextWrapper(
 ### Contributing
 
 Contributions are welcome! Whether it’s bug fixes, new features, or documentation improvements, open a [Pull Request](https://github.com/zhukeev/spoiler_widget/pulls) or [Issue](https://github.com/zhukeev/spoiler_widget/issues).
+See [CONTRIBUTING.md](https://github.com/zhukeev/spoiler_widget/blob/main/CONTRIBUTING.md) for setup and release checks.
 
 ---
 
