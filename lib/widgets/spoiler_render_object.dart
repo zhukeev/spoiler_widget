@@ -209,10 +209,13 @@ class RenderSpoiler extends RenderProxyBox {
       );
       _updateCachedRects(collected);
       _lastSelection = selection;
-      _rectsDirty = false;
+      // Note: _rectsDirty is reset at the end of paint() to ensure
+      // SpoilerPaintingContext created this frame still sees it as dirty.
     }
 
     final clipPath = _normalizeClipPath(_onClipPath?.call(size));
+
+    final internalOffset = isRepaintBoundary ? Offset.zero : offset;
 
     if (_enableOverlay) {
       super.paint(context, offset);
@@ -222,6 +225,7 @@ class RenderSpoiler extends RenderProxyBox {
           _onAfterPaint == null &&
           _imageFilter == null) {
         _syncEditableOffsets(visitedOffsets);
+        _rectsDirty = false;
         return;
       }
 
@@ -242,7 +246,9 @@ class RenderSpoiler extends RenderProxyBox {
       final spoilerContext = layerContext is SpoilerPaintingContext
           ? layerContext
           : SpoilerPaintingContext(
-              layer: layer!,
+              layer: layerContext is SpoilerPaintingContext
+                  ? layerContext.storageLayer
+                  : layer!,
               estimatedBounds: paintBounds.shift(layerOffset),
               calculateRects: _rectsDirty,
             );
@@ -294,11 +300,13 @@ class RenderSpoiler extends RenderProxyBox {
       calculateRects: _rectsDirty,
     );
 
-    paintSpoilerLayer(rootSpoilerContext, offset);
+    paintSpoilerLayer(rootSpoilerContext, internalOffset);
 
+    // Ensure we finalize our custom context's recording
     // ignore: invalid_use_of_protected_member
     rootSpoilerContext.stopRecordingIfNeeded();
 
+    _rectsDirty = false;
     _syncEditableOffsets(visitedOffsets);
   }
 
@@ -506,7 +514,10 @@ class SpoilerPaintingContext extends PaintingContext {
     required ContainerLayer layer,
     required Rect estimatedBounds,
     required this.calculateRects,
-  }) : super(layer, estimatedBounds);
+  })  : storageLayer = layer,
+        super(layer, estimatedBounds);
+
+  final ContainerLayer storageLayer;
 
   final bool calculateRects;
   final List<Rect> spoilerRects = [];
