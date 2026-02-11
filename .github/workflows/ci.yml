@@ -19,14 +19,13 @@ jobs:
         with:
           filters: |
             code:
-              - "lib/**"
-              - "test/**"
-              - "example/**"
+              - "lib/spoiler_*.dart"
+              - "lib/widgets/**"
+              - "lib/models/**"
+              - "lib/utils/**"
+              - "lib/extension/**"
               - "shaders/**"
-              - "assets/**"
               - "pubspec.yaml"
-              - "analysis_options.yaml"
-              - "analysis_options.yml"
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2

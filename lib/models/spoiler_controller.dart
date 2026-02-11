@@ -54,6 +54,8 @@ class SpoilerController extends ChangeNotifier {
   // ---------------------------
   Path? _cachedClipPath;
   bool _isDisposed = false;
+  Duration? _lastParticleElapsed;
+  double _particleAccumulator = 0.0;
 
   // ---------------------------
   // Visual Assets & Bounds
@@ -63,11 +65,6 @@ class SpoilerController extends ChangeNotifier {
 
   /// A Path describing the spoiler region (may be multiple rectangles).
   final Path _spoilerPath = Path();
-
-  /// Cached list of sub-paths (individual text blocks) for per-rect shader rendering.
-  // TODO: Deprecate/remove if _spoilerRects replaces this completely.
-  // Keeping for fallback or if Path based logic is needed elsewhere.
-  List<Path> _encapsulatedPaths = [];
 
   /// Explicit list of rectangles for per-rect shader rendering.
   List<Rect> _spoilerRects = [];
@@ -210,12 +207,11 @@ class SpoilerController extends ChangeNotifier {
       _spoilerBounds = _spoilerPath.getBounds();
     }
 
-    // If rects weren't provided, try to approximate them from path bounds
+    final subPaths = _spoilerPath.subPaths.toList();
+
+    // If rects weren't provided, try to approximate them from path bounds.
     if (_spoilerRects.isEmpty) {
-      // Fallback: use subPaths derived rects
-      final subPaths = _spoilerPath.subPaths;
-      _encapsulatedPaths = subPaths.toList();
-      _spoilerRects = _encapsulatedPaths.map((p) => p.getBounds()).toList();
+      _spoilerRects = subPaths.map((p) => p.getBounds()).toList();
     }
 
     _initFadeIfNeeded();
@@ -228,10 +224,7 @@ class SpoilerController extends ChangeNotifier {
       }
     }
 
-    // Ensure we are using Atlas drawer initially or if config changes
-    final subPaths = _spoilerPath.subPaths;
-    _encapsulatedPaths = subPaths.toList();
-
+    // Ensure we are using Atlas drawer initially or if config changes.
     if (_drawer is! ShaderSpoilerDrawer) {
       if (_drawer is! AtlasSpoilerDrawer) {
         _drawer = AtlasSpoilerDrawer();
@@ -343,13 +336,50 @@ class SpoilerController extends ChangeNotifier {
   /// If _isEnabled is true, start or repeat the particle animation loop.
   void _startParticleAnimationIfNeeded() {
     if (_isEnabled) {
+      _lastParticleElapsed = null;
+      _particleAccumulator = 0.0;
       _particleCtrl.repeat();
     }
   }
 
   /// Called each frame (via [_particleCtrl]) to move or re-spawn particles.
   void _onParticleFrameTick() {
-    _drawer.update(0.016); // ~60fps increment
+    final elapsed = _particleCtrl.lastElapsedDuration;
+    if (elapsed == null) return;
+
+    final last = _lastParticleElapsed;
+    Duration delta;
+    if (last == null) {
+      delta = elapsed;
+    } else if (elapsed < last) {
+      final duration = _particleCtrl.duration;
+      if (duration == null || duration == Duration.zero) {
+        _lastParticleElapsed = elapsed;
+        return;
+      }
+      delta = (duration - last) + elapsed;
+    } else {
+      delta = elapsed - last;
+    }
+
+    _lastParticleElapsed = elapsed;
+    if (delta <= Duration.zero) {
+      // Fallback to a 60fps frame duration if delta is not positive.
+      delta = const Duration(microseconds: 16667);
+    }
+
+    var dt = delta.inMicroseconds / 1e6;
+    final minStep = _config.particleConfig.updateInterval;
+    if (minStep > 0) {
+      _particleAccumulator += dt;
+      if (_particleAccumulator < minStep) {
+        return;
+      }
+      dt = _particleAccumulator;
+      _particleAccumulator = 0.0;
+    }
+
+    _drawer.update(dt);
     notifyListeners();
   }
 
@@ -378,6 +408,8 @@ class SpoilerController extends ChangeNotifier {
     _isEnabled = false;
     _fadeRadius = 0;
     _cachedClipPath = null; // Invalidate cache
+    _lastParticleElapsed = null;
+    _particleAccumulator = 0.0;
     _particleCtrl.reset();
     notifyListeners();
   }

@@ -40,17 +40,35 @@ double _estimatePathAreaFactor(Path path, {int samples = 48}) {
   return areaFactor;
 }
 
+/// Configuration for particle appearance, motion, and update cadence.
 @immutable
 class ParticleConfig {
   /// Fraction of area covered by particles (0..1 => 0%..100%).
   final double density;
+
+  /// Particle speed in logical pixels per frame.
   final double speed;
+
+  /// Base color used for particle rendering.
   final Color color;
+
+  /// Particle diameter in logical pixels.
   final double maxParticleSize;
+
+  /// Optional preset shape used by both atlas and shader rendering.
   final ParticlePathPreset? shapePreset;
+
+  /// Enables ripple waves that push particles.
   final bool enableWaves;
+
+  /// Maximum radius for a single wave animation.
   final double maxWaveRadius;
+
+  /// Maximum number of simultaneous wave animations.
   final int maxWaveCount;
+
+  /// Minimum seconds between particle updates. Use 0 for every frame.
+  final double updateInterval;
 
   const ParticleConfig({
     required this.density,
@@ -61,6 +79,7 @@ class ParticleConfig {
     this.enableWaves = false,
     this.maxWaveRadius = 0.0,
     this.maxWaveCount = 3,
+    this.updateInterval = 0.0,
   });
 
   factory ParticleConfig.defaultConfig() => ParticleConfig(
@@ -69,8 +88,10 @@ class ParticleConfig {
         color: Colors.white,
         maxParticleSize: 1.0,
         shapePreset: ParticlePathPreset.circle,
+        updateInterval: 0.0,
       );
 
+  /// Area normalization factor derived from [shapePreset].
   double get areaFactor {
     if (shapePreset == null) return 1.0;
     final presetArea = shapePreset!.areaFactor;
@@ -87,6 +108,7 @@ class ParticleConfig {
         enableWaves,
         maxWaveRadius,
         maxWaveCount,
+        updateInterval,
       );
 
   @override
@@ -100,5 +122,6 @@ class ParticleConfig {
           shapePreset == other.shapePreset &&
           enableWaves == other.enableWaves &&
           maxWaveRadius == other.maxWaveRadius &&
-          maxWaveCount == other.maxWaveCount;
+          maxWaveCount == other.maxWaveCount &&
+          updateInterval == other.updateInterval;
 }
