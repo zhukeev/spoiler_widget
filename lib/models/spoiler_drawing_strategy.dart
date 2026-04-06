@@ -35,10 +35,34 @@ enum ParticleRenderBackend {
   vector,
 }
 
+class AtlasSupportPolicy {
+  const AtlasSupportPolicy({
+    required this.isEligible,
+    required this.rasterDiameter,
+  });
+
+  final bool isEligible;
+  final double rasterDiameter;
+}
+
+const double _minAtlasRasterDiameter = 2.0;
+
+AtlasSupportPolicy atlasSupportPolicyFor(ParticleConfig config) {
+  final rasterDiameter = max(
+    config.maxParticleSize.ceilToDouble(),
+    _minAtlasRasterDiameter,
+  );
+  return AtlasSupportPolicy(
+    isEligible: config.maxParticleSize > 1.0,
+    rasterDiameter: rasterDiameter,
+  );
+}
+
 typedef CircleImageBuilder = CircleImage Function({
   required double diameter,
   required ui.Color color,
   ui.Path? shapePath,
+  double? rasterDiameter,
 });
 
 typedef RawAtlasPainter = void Function({
@@ -56,11 +80,13 @@ CircleImage _defaultCircleImageBuilder({
   required double diameter,
   required ui.Color color,
   ui.Path? shapePath,
+  double? rasterDiameter,
 }) {
   return CircleImageFactory.create(
     diameter: diameter,
     color: color,
     shapePath: shapePath,
+    rasterDiameter: rasterDiameter,
   );
 }
 
@@ -134,6 +160,7 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
         diameter: config.maxParticleSize,
         color: Colors.white,
         shapePath: config.shapePreset?.path,
+        rasterDiameter: atlasSupportPolicyFor(config).rasterDiameter,
       );
     }
     return _sprite!;
@@ -434,6 +461,7 @@ class AtlasSpoilerDrawer extends ParticleSpoilerDrawer {
   int _lastParticleCount = 0;
 
   final Paint _particlePaint = Paint();
+  double _rasterDiameter = _minAtlasRasterDiameter;
 
   @override
   ParticleRenderBackend get backend => ParticleRenderBackend.atlas;
@@ -441,6 +469,8 @@ class AtlasSpoilerDrawer extends ParticleSpoilerDrawer {
   @override
   void onParticlesInitialized() {
     _circleImage = null;
+    _rasterDiameter =
+        max(maxParticleSize.ceilToDouble(), _minAtlasRasterDiameter);
     _reallocBuffers(particles.length);
   }
 
@@ -457,6 +487,7 @@ class AtlasSpoilerDrawer extends ParticleSpoilerDrawer {
       diameter: maxParticleSize,
       color: Colors.white,
       shapePath: shapePath,
+      rasterDiameter: _rasterDiameter,
     );
   }
 
@@ -473,7 +504,7 @@ class AtlasSpoilerDrawer extends ParticleSpoilerDrawer {
     final transforms = _valTransforms!;
     final rects = _valRects!;
     final colors = _valColors!;
-    final spriteRadius = sprite.dimension * 0.5;
+    final spriteRadius = sprite.rasterDimension * 0.5;
 
     for (int index = 0; index < count; index++) {
       final particle = particles[index];
@@ -486,8 +517,8 @@ class AtlasSpoilerDrawer extends ParticleSpoilerDrawer {
 
       rects[transformIndex + 0] = 0.0;
       rects[transformIndex + 1] = 0.0;
-      rects[transformIndex + 2] = sprite.dimension;
-      rects[transformIndex + 3] = sprite.dimension;
+      rects[transformIndex + 2] = sprite.rasterDimension;
+      rects[transformIndex + 3] = sprite.rasterDimension;
 
       if (visual == null) {
         transforms[transformIndex + 0] = 0.0;
@@ -500,8 +531,10 @@ class AtlasSpoilerDrawer extends ParticleSpoilerDrawer {
 
       transforms[transformIndex + 0] = visual.scale;
       transforms[transformIndex + 1] = 0.0;
-      transforms[transformIndex + 2] = particle.dx - spriteRadius * visual.scale;
-      transforms[transformIndex + 3] = particle.dy - spriteRadius * visual.scale;
+      transforms[transformIndex + 2] =
+          particle.dx - spriteRadius * visual.scale;
+      transforms[transformIndex + 3] =
+          particle.dy - spriteRadius * visual.scale;
       colors[index] = _colorToArgb(visual.color);
     }
 

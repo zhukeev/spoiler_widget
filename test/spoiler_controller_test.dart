@@ -76,11 +76,14 @@ void main() {
 
   test('falls back to vector when atlas sprite creation fails', () {
     final previousBuilder = debugCircleImageBuilder;
+    var buildAttempts = 0;
     debugCircleImageBuilder = ({
       required double diameter,
       required Color color,
       Path? shapePath,
+      double? rasterDiameter,
     }) {
+      buildAttempts++;
       throw StateError('sprite creation failed');
     };
     addTearDown(() => debugCircleImageBuilder = previousBuilder);
@@ -96,7 +99,7 @@ void main() {
         density: 0.2,
         speed: 0.0,
         color: Colors.white,
-        maxParticleSize: 1.0,
+        maxParticleSize: 2.0,
       ),
     );
 
@@ -108,7 +111,9 @@ void main() {
       ParticleRenderBackend.vector,
     );
     expect(controller.debugAtlasUnavailable, isTrue);
+    expect(controller.debugAtlasDisabledByPolicy, isFalse);
     expect(controller.isInitialized, isTrue);
+    expect(buildAttempts, 1);
   });
 
   test('falls back to vector when atlas draw fails during paint', () {
@@ -138,7 +143,7 @@ void main() {
         density: 0.2,
         speed: 0.0,
         color: Colors.white,
-        maxParticleSize: 1.0,
+        maxParticleSize: 2.0,
       ),
     );
 
@@ -166,11 +171,14 @@ void main() {
 
   test('vector fallback keeps custom particle shapes drawable', () {
     final previousBuilder = debugCircleImageBuilder;
+    var buildAttempts = 0;
     debugCircleImageBuilder = ({
       required double diameter,
       required Color color,
       Path? shapePath,
+      double? rasterDiameter,
     }) {
+      buildAttempts++;
       throw StateError('sprite creation failed');
     };
     addTearDown(() => debugCircleImageBuilder = previousBuilder);
@@ -206,6 +214,7 @@ void main() {
       controller.debugParticleRenderBackend,
       ParticleRenderBackend.vector,
     );
+    expect(buildAttempts, 0);
   });
 
   test('does not retry atlas after atlas is disabled for the controller', () {
@@ -218,7 +227,7 @@ void main() {
     }) {
       buildAttempts++;
       throw StateError('sprite creation failed');
-    };
+    } as CircleImageBuilder;
     addTearDown(() => debugCircleImageBuilder = previousBuilder);
 
     final controller = SpoilerController(vsync: const TestVSync());
@@ -232,7 +241,7 @@ void main() {
         density: 0.2,
         speed: 0.0,
         color: Colors.white,
-        maxParticleSize: 1.0,
+        maxParticleSize: 2.0,
       ),
     );
 
@@ -256,6 +265,84 @@ void main() {
     }) {
       buildAttempts++;
       throw StateError('sprite creation failed');
+    } as CircleImageBuilder;
+    addTearDown(() => debugCircleImageBuilder = previousBuilder);
+
+    final controller = SpoilerController(vsync: const TestVSync());
+    addTearDown(controller.dispose);
+
+    final config = SpoilerConfig(
+      isEnabled: true,
+      enableGestureReveal: false,
+      enableFadeAnimation: false,
+      particleConfig: const ParticleConfig(
+        density: 0.2,
+        speed: 0.0,
+        color: Colors.white,
+        maxParticleSize: 2.0,
+      ),
+    );
+
+    final path = Path()..addRect(const Rect.fromLTWH(0, 0, 120, 40));
+    controller.initializeParticles(path, config);
+    controller.initializeParticles(path, config);
+
+    expect(buildAttempts, 1);
+    expect(logs, hasLength(1));
+    expect(logs.single, contains('Atlas rendering disabled at runtime'));
+  });
+
+  test('default tiny particles go directly to vector without atlas probe', () {
+    final previousBuilder = debugCircleImageBuilder;
+    var buildAttempts = 0;
+    debugCircleImageBuilder = ({
+      required double diameter,
+      required Color color,
+      Path? shapePath,
+      double? rasterDiameter,
+    }) {
+      buildAttempts++;
+      throw StateError('atlas probe should not happen');
+    };
+    addTearDown(() => debugCircleImageBuilder = previousBuilder);
+
+    final controller = SpoilerController(vsync: const TestVSync());
+    addTearDown(controller.dispose);
+
+    final config = SpoilerConfig(
+      isEnabled: true,
+      enableGestureReveal: false,
+      enableFadeAnimation: false,
+      particleConfig: const ParticleConfig(
+        density: 0.2,
+        speed: 0.0,
+        color: Colors.white,
+        maxParticleSize: 1.0,
+      ),
+    );
+
+    controller.initializeParticles(
+      Path()..addRect(const Rect.fromLTWH(0, 0, 120, 40)),
+      config,
+    );
+
+    expect(buildAttempts, 0);
+    expect(controller.debugParticleRenderBackend, ParticleRenderBackend.vector);
+    expect(controller.debugAtlasDisabledByPolicy, isTrue);
+    expect(controller.debugAtlasUnavailable, isFalse);
+  });
+
+  test('repeated tiny-particle reinitialization never probes atlas', () {
+    final previousBuilder = debugCircleImageBuilder;
+    var buildAttempts = 0;
+    debugCircleImageBuilder = ({
+      required double diameter,
+      required Color color,
+      Path? shapePath,
+      double? rasterDiameter,
+    }) {
+      buildAttempts++;
+      throw StateError('atlas probe should not happen');
     };
     addTearDown(() => debugCircleImageBuilder = previousBuilder);
 
@@ -278,8 +365,52 @@ void main() {
     controller.initializeParticles(path, config);
     controller.initializeParticles(path, config);
 
-    expect(buildAttempts, 1);
-    expect(logs, hasLength(1));
-    expect(logs.single, contains('Atlas rendering disabled at runtime'));
+    expect(buildAttempts, 0);
+    expect(controller.debugParticleRenderBackend, ParticleRenderBackend.vector);
+  });
+
+  test('larger particles remain atlas-eligible', () {
+    final previousBuilder = debugCircleImageBuilder;
+    final seenRasterSizes = <double>[];
+    debugCircleImageBuilder = ({
+      required double diameter,
+      required Color color,
+      Path? shapePath,
+      double? rasterDiameter,
+    }) {
+      seenRasterSizes.add(rasterDiameter ?? diameter);
+      return previousBuilder(
+        diameter: diameter,
+        color: color,
+        shapePath: shapePath,
+        rasterDiameter: rasterDiameter,
+      );
+    };
+    addTearDown(() => debugCircleImageBuilder = previousBuilder);
+
+    final controller = SpoilerController(vsync: const TestVSync());
+    addTearDown(controller.dispose);
+
+    final config = SpoilerConfig(
+      isEnabled: true,
+      enableGestureReveal: false,
+      enableFadeAnimation: false,
+      particleConfig: const ParticleConfig(
+        density: 0.2,
+        speed: 0.0,
+        color: Colors.white,
+        maxParticleSize: 2.0,
+      ),
+    );
+
+    controller.initializeParticles(
+      Path()..addRect(const Rect.fromLTWH(0, 0, 120, 40)),
+      config,
+    );
+
+    expect(controller.debugParticleRenderBackend, ParticleRenderBackend.atlas);
+    expect(controller.debugAtlasDisabledByPolicy, isFalse);
+    expect(seenRasterSizes, isNotEmpty);
+    expect(seenRasterSizes.single, greaterThanOrEqualTo(2.0));
   });
 }

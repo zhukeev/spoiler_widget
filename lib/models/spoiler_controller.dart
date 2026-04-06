@@ -54,6 +54,7 @@ class SpoilerController extends ChangeNotifier {
   ParticleRenderBackend _particleRenderBackend = ParticleRenderBackend.atlas;
   bool _atlasUnavailable = false;
   bool _loggedAtlasFallback = false;
+  bool _atlasDisabledByPolicy = false;
 
   /// Tracks if we've already tried to load the shader to avoid repeated attempts.
   bool _shaderInitAttempted = false;
@@ -117,6 +118,9 @@ class SpoilerController extends ChangeNotifier {
 
   @visibleForTesting
   bool get debugAtlasUnavailable => _atlasUnavailable;
+
+  @visibleForTesting
+  bool get debugAtlasDisabledByPolicy => _atlasDisabledByPolicy;
 
   /// Particle list exposed for consumers like [SpoilerSpotsController].
   @protected
@@ -205,9 +209,11 @@ class SpoilerController extends ChangeNotifier {
     // Ensure maxParticleSize is valid
     assert(config.particleConfig.maxParticleSize >= 1,
         'maxParticleSize must be >= 1');
+    final atlasPolicy = atlasSupportPolicyFor(config.particleConfig);
     _config = config;
     _spoilerRects = rects ?? [];
     _cachedClipPath = null; // Invalidate cache
+    _atlasDisabledByPolicy = !atlasPolicy.isEligible;
 
     if (_spoilerPath != path) {
       _spoilerPath.reset();
@@ -473,7 +479,7 @@ class SpoilerController extends ChangeNotifier {
   }
 
   ParticleSpoilerDrawer _createDefaultParticleDrawer() {
-    final drawer = _atlasUnavailable
+    final drawer = (_atlasUnavailable || _atlasDisabledByPolicy)
         ? VectorSpoilerDrawer()
         : AtlasSpoilerDrawer();
     _particleRenderBackend = drawer.backend;

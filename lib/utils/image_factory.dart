@@ -8,11 +8,13 @@ class CircleImage {
   final ui.Image image;
   final ui.Color color;
   final double dimension;
+  final double rasterDimension;
 
   const CircleImage({
     required this.image,
     required this.color,
     required this.dimension,
+    required this.rasterDimension,
   });
 }
 
@@ -42,7 +44,11 @@ class CircleImageFactory {
     required double diameter,
     required ui.Color color,
     ui.Path? shapePath,
+    double? rasterDiameter,
   }) {
+    final safeRasterDiameter = rasterDiameter ?? diameter;
+    final rasterSize = math.max(safeRasterDiameter.ceil(), 1);
+
     // Create a PictureRecorder to record drawing commands
     final recorder = ui.PictureRecorder();
     final canvas = ui.Canvas(recorder);
@@ -64,9 +70,10 @@ class CircleImageFactory {
     // End recording and convert it to an image
     final picture = recorder.endRecording();
     return CircleImage(
-      image: picture.toImageSync(diameter.toInt(), diameter.toInt()),
+      image: picture.toImageSync(rasterSize, rasterSize),
       color: color,
       dimension: diameter,
+      rasterDimension: rasterSize.toDouble(),
     );
   }
 
