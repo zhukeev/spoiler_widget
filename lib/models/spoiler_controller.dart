@@ -7,6 +7,11 @@ import 'package:spoiler_widget/models/spoiler_drawing_strategy.dart';
 import '../extension/rect_x.dart';
 import '../models/particle.dart';
 
+typedef SpoilerLogCallback = void Function(String message);
+
+@visibleForTesting
+SpoilerLogCallback debugSpoilerLogger = debugPrint;
+
 /// A base controller that manages a "spoiler" effect, which involves:
 /// 1. A set of "particles" (positions, movement, lifespan).
 /// 2. An optional fade animation (a radial reveal or cover based on [_fadeCenter]).
@@ -48,6 +53,7 @@ class SpoilerController extends ChangeNotifier {
   late SpoilerDrawer _drawer;
   ParticleRenderBackend _particleRenderBackend = ParticleRenderBackend.atlas;
   bool _atlasUnavailable = false;
+  bool _loggedAtlasFallback = false;
 
   /// Tracks if we've already tried to load the shader to avoid repeated attempts.
   bool _shaderInitAttempted = false;
@@ -422,7 +428,6 @@ class SpoilerController extends ChangeNotifier {
       final fallbackDrawer = _downgradeAtlasDrawer(
         error,
         stackTrace,
-        notify: true,
       );
       fallbackDrawer.draw(canvas, context);
     }
@@ -517,28 +522,30 @@ class SpoilerController extends ChangeNotifier {
         error,
         stackTrace,
         failedDrawer: drawer,
-        notify: false,
       );
     }
   }
 
   VectorSpoilerDrawer _downgradeAtlasDrawer(
     Object error,
-    StackTrace stackTrace, {
+    StackTrace _, {
     AtlasSpoilerDrawer? failedDrawer,
-    required bool notify,
   }) {
+    if (_drawer is VectorSpoilerDrawer && _atlasUnavailable) {
+      return _drawer as VectorSpoilerDrawer;
+    }
+
     _atlasUnavailable = true;
     final atlasDrawer = failedDrawer ?? _drawer as AtlasSpoilerDrawer;
     final vectorDrawer = VectorSpoilerDrawer()..adoptStateFrom(atlasDrawer);
     _replaceDrawer(vectorDrawer, disposeCurrent: false);
     atlasDrawer.dispose();
-    debugPrint(
-      'SpoilerController: Atlas rendering disabled at runtime; using vector '
-      'fallback instead. Error: $error',
-    );
-    if (notify && !_isDisposed) {
-      notifyListeners();
+    if (!_loggedAtlasFallback) {
+      _loggedAtlasFallback = true;
+      debugSpoilerLogger(
+        'SpoilerController: Atlas rendering disabled at runtime; using '
+        'vector fallback instead. Error: $error',
+      );
     }
     return vectorDrawer;
   }

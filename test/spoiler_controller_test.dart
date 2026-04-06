@@ -12,6 +12,10 @@ import 'package:spoiler_widget/models/spoiler_drawing_strategy.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  tearDown(() {
+    debugSpoilerLogger = debugPrint;
+  });
+
   test('toggle respects path containment and notifies listeners', () {
     final controller = SpoilerController(vsync: const TestVSync());
     addTearDown(controller.dispose);
@@ -143,6 +147,9 @@ void main() {
       config,
     );
 
+    var notifications = 0;
+    controller.addListener(() => notifications++);
+
     final recorder = PictureRecorder();
     final canvas = Canvas(recorder);
 
@@ -154,6 +161,7 @@ void main() {
       ParticleRenderBackend.vector,
     );
     expect(controller.debugAtlasUnavailable, isTrue);
+    expect(notifications, 0);
   });
 
   test('vector fallback keeps custom particle shapes drawable', () {
@@ -198,5 +206,80 @@ void main() {
       controller.debugParticleRenderBackend,
       ParticleRenderBackend.vector,
     );
+  });
+
+  test('does not retry atlas after atlas is disabled for the controller', () {
+    final previousBuilder = debugCircleImageBuilder;
+    var buildAttempts = 0;
+    debugCircleImageBuilder = ({
+      required double diameter,
+      required Color color,
+      Path? shapePath,
+    }) {
+      buildAttempts++;
+      throw StateError('sprite creation failed');
+    };
+    addTearDown(() => debugCircleImageBuilder = previousBuilder);
+
+    final controller = SpoilerController(vsync: const TestVSync());
+    addTearDown(controller.dispose);
+
+    final config = SpoilerConfig(
+      isEnabled: true,
+      enableGestureReveal: false,
+      enableFadeAnimation: false,
+      particleConfig: const ParticleConfig(
+        density: 0.2,
+        speed: 0.0,
+        color: Colors.white,
+        maxParticleSize: 1.0,
+      ),
+    );
+
+    final path = Path()..addRect(const Rect.fromLTWH(0, 0, 120, 40));
+    controller.initializeParticles(path, config);
+    controller.initializeParticles(path, config);
+
+    expect(buildAttempts, 1);
+    expect(controller.debugParticleRenderBackend, ParticleRenderBackend.vector);
+  });
+
+  test('logs atlas fallback only once per controller transition', () {
+    final previousBuilder = debugCircleImageBuilder;
+    final logs = <String>[];
+    var buildAttempts = 0;
+    debugSpoilerLogger = logs.add;
+    debugCircleImageBuilder = ({
+      required double diameter,
+      required Color color,
+      Path? shapePath,
+    }) {
+      buildAttempts++;
+      throw StateError('sprite creation failed');
+    };
+    addTearDown(() => debugCircleImageBuilder = previousBuilder);
+
+    final controller = SpoilerController(vsync: const TestVSync());
+    addTearDown(controller.dispose);
+
+    final config = SpoilerConfig(
+      isEnabled: true,
+      enableGestureReveal: false,
+      enableFadeAnimation: false,
+      particleConfig: const ParticleConfig(
+        density: 0.2,
+        speed: 0.0,
+        color: Colors.white,
+        maxParticleSize: 1.0,
+      ),
+    );
+
+    final path = Path()..addRect(const Rect.fromLTWH(0, 0, 120, 40));
+    controller.initializeParticles(path, config);
+    controller.initializeParticles(path, config);
+
+    expect(buildAttempts, 1);
+    expect(logs, hasLength(1));
+    expect(logs.single, contains('Atlas rendering disabled at runtime'));
   });
 }
