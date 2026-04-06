@@ -1,9 +1,13 @@
 // ignore_for_file: deprecated_member_use_from_same_package
 
+import 'dart:typed_data';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spoiler_widget/models/spoiler_configs.dart';
 import 'package:spoiler_widget/models/spoiler_controller.dart';
+import 'package:spoiler_widget/models/spoiler_drawing_strategy.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -64,5 +68,135 @@ void main() {
     expect(controller.isEnabled, isTrue);
     controller.disable();
     expect(controller.isEnabled, isFalse);
+  });
+
+  test('falls back to vector when atlas sprite creation fails', () {
+    final previousBuilder = debugCircleImageBuilder;
+    debugCircleImageBuilder = ({
+      required double diameter,
+      required Color color,
+      Path? shapePath,
+    }) {
+      throw StateError('sprite creation failed');
+    };
+    addTearDown(() => debugCircleImageBuilder = previousBuilder);
+
+    final controller = SpoilerController(vsync: const TestVSync());
+    addTearDown(controller.dispose);
+
+    final config = SpoilerConfig(
+      isEnabled: true,
+      enableGestureReveal: false,
+      enableFadeAnimation: false,
+      particleConfig: const ParticleConfig(
+        density: 0.2,
+        speed: 0.0,
+        color: Colors.white,
+        maxParticleSize: 1.0,
+      ),
+    );
+
+    final path = Path()..addRect(const Rect.fromLTWH(0, 0, 120, 40));
+    expect(() => controller.initializeParticles(path, config), returnsNormally);
+
+    expect(
+      controller.debugParticleRenderBackend,
+      ParticleRenderBackend.vector,
+    );
+    expect(controller.debugAtlasUnavailable, isTrue);
+    expect(controller.isInitialized, isTrue);
+  });
+
+  test('falls back to vector when atlas draw fails during paint', () {
+    final previousAtlasPainter = debugRawAtlasPainter;
+    debugRawAtlasPainter = ({
+      required Canvas canvas,
+      required Image atlas,
+      required Float32List transforms,
+      required Float32List rects,
+      Int32List? colors,
+      BlendMode? blendMode,
+      Rect? cullRect,
+      required Paint paint,
+    }) {
+      throw StateError('atlas draw failed');
+    } as RawAtlasPainter;
+    addTearDown(() => debugRawAtlasPainter = previousAtlasPainter);
+
+    final controller = SpoilerController(vsync: const TestVSync());
+    addTearDown(controller.dispose);
+
+    final config = SpoilerConfig(
+      isEnabled: true,
+      enableGestureReveal: false,
+      enableFadeAnimation: false,
+      particleConfig: const ParticleConfig(
+        density: 0.2,
+        speed: 0.0,
+        color: Colors.white,
+        maxParticleSize: 1.0,
+      ),
+    );
+
+    controller.initializeParticles(
+      Path()..addRect(const Rect.fromLTWH(0, 0, 160, 40)),
+      config,
+    );
+
+    final recorder = PictureRecorder();
+    final canvas = Canvas(recorder);
+
+    expect(() => controller.drawParticles(canvas), returnsNormally);
+    recorder.endRecording();
+
+    expect(
+      controller.debugParticleRenderBackend,
+      ParticleRenderBackend.vector,
+    );
+    expect(controller.debugAtlasUnavailable, isTrue);
+  });
+
+  test('vector fallback keeps custom particle shapes drawable', () {
+    final previousBuilder = debugCircleImageBuilder;
+    debugCircleImageBuilder = ({
+      required double diameter,
+      required Color color,
+      Path? shapePath,
+    }) {
+      throw StateError('sprite creation failed');
+    };
+    addTearDown(() => debugCircleImageBuilder = previousBuilder);
+
+    final controller = SpoilerController(vsync: const TestVSync());
+    addTearDown(controller.dispose);
+
+    final config = SpoilerConfig(
+      isEnabled: true,
+      enableGestureReveal: false,
+      enableFadeAnimation: false,
+      particleConfig: ParticleConfig(
+        density: 0.2,
+        speed: 0.0,
+        color: Colors.white,
+        maxParticleSize: 1.5,
+        shapePreset: ParticlePathPreset.star,
+      ),
+    );
+
+    controller.initializeParticles(
+      Path()..addRect(const Rect.fromLTWH(0, 0, 160, 40)),
+      config,
+    );
+
+    final recorder = PictureRecorder();
+    final canvas = Canvas(recorder);
+
+    expect(() => controller.drawParticles(canvas), returnsNormally);
+    recorder.endRecording();
+
+    expect(
+      controller.debugParticleRenderBackend,
+      ParticleRenderBackend.vector,
+    );
   });
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:spoiler_widget/extension/path_x.dart';
 import 'package:spoiler_widget/models/spoiler_configs.dart';
@@ -45,6 +46,8 @@ class SpoilerController extends ChangeNotifier {
   // Drawing Strategy
   // ---------------------------------------------------------------------------
   late SpoilerDrawer _drawer;
+  ParticleRenderBackend _particleRenderBackend = ParticleRenderBackend.atlas;
+  bool _atlasUnavailable = false;
 
   /// Tracks if we've already tried to load the shader to avoid repeated attempts.
   bool _shaderInitAttempted = false;
@@ -93,7 +96,7 @@ class SpoilerController extends ChangeNotifier {
     required TickerProvider vsync,
   }) : _tickerProvider = vsync {
     _initAnimationControllers();
-    _drawer = AtlasSpoilerDrawer();
+    _drawer = _createDefaultParticleDrawer();
   }
 
   // ---------------------------------------------------------------------------
@@ -101,6 +104,13 @@ class SpoilerController extends ChangeNotifier {
   // ---------------------------------------------------------------------------
   /// True if the active drawer has content to render.
   bool get isInitialized => _drawer.hasContent;
+
+  @visibleForTesting
+  ParticleRenderBackend get debugParticleRenderBackend =>
+      _particleRenderBackend;
+
+  @visibleForTesting
+  bool get debugAtlasUnavailable => _atlasUnavailable;
 
   /// Particle list exposed for consumers like [SpoilerSpotsController].
   @protected
@@ -224,7 +234,7 @@ class SpoilerController extends ChangeNotifier {
     if (previousShaderPath != nextShaderPath) {
       _shaderInitAttempted = false;
       if (_drawer is ShaderSpoilerDrawer || nextShaderPath == null) {
-        _drawer = AtlasSpoilerDrawer();
+        _replaceDrawer(_createDefaultParticleDrawer(), disposeCurrent: true);
       }
     }
 
@@ -233,13 +243,12 @@ class SpoilerController extends ChangeNotifier {
     _encapsulatedPaths = subPaths.toList();
 
     if (_drawer is! ShaderSpoilerDrawer) {
-      if (_drawer is! AtlasSpoilerDrawer) {
-        _drawer = AtlasSpoilerDrawer();
-      }
-      (_drawer as AtlasSpoilerDrawer).initializeParticles(
+      final particleDrawer = _ensureParticleDrawer();
+      particleDrawer.initializeParticles(
         paths: subPaths,
         config: _config,
       );
+      _validateAtlasAvailability(particleDrawer);
     }
 
     _isEnabled = config.isEnabled;
@@ -403,8 +412,20 @@ class SpoilerController extends ChangeNotifier {
       spoilerRects: _spoilerRects,
       config: _config,
     );
+    try {
+      _drawer.draw(canvas, context);
+    } catch (error, stackTrace) {
+      if (_drawer is! AtlasSpoilerDrawer) {
+        rethrow;
+      }
 
-    _drawer.draw(canvas, context);
+      final fallbackDrawer = _downgradeAtlasDrawer(
+        error,
+        stackTrace,
+        notify: true,
+      );
+      fallbackDrawer.draw(canvas, context);
+    }
   }
 
   /// Lazily initializes the shader renderer.
@@ -422,7 +443,7 @@ class SpoilerController extends ChangeNotifier {
     try {
       final shaderDrawer = await ShaderSpoilerDrawer.create(path);
       if (_isDisposed) return;
-      _drawer = shaderDrawer;
+      _replaceDrawer(shaderDrawer, disposeCurrent: true);
       // Force a repaint now that we have the shader ready
       notifyListeners();
       debugPrint('SpoilerController: Switched to ShaderSpoilerDrawer');
@@ -444,5 +465,81 @@ class SpoilerController extends ChangeNotifier {
     _fadeCtrl?.dispose();
     _drawer.dispose();
     super.dispose();
+  }
+
+  ParticleSpoilerDrawer _createDefaultParticleDrawer() {
+    final drawer = _atlasUnavailable
+        ? VectorSpoilerDrawer()
+        : AtlasSpoilerDrawer();
+    _particleRenderBackend = drawer.backend;
+    return drawer;
+  }
+
+  ParticleSpoilerDrawer _ensureParticleDrawer() {
+    if (_drawer is ParticleSpoilerDrawer) {
+      final drawer = _drawer as ParticleSpoilerDrawer;
+      _particleRenderBackend = drawer.backend;
+      return drawer;
+    }
+
+    final drawer = _createDefaultParticleDrawer();
+    _replaceDrawer(drawer, disposeCurrent: true);
+    return drawer;
+  }
+
+  void _replaceDrawer(
+    SpoilerDrawer drawer, {
+    required bool disposeCurrent,
+  }) {
+    final previous = _drawer;
+    _drawer = drawer;
+
+    if (drawer is ShaderSpoilerDrawer) {
+      _particleRenderBackend = ParticleRenderBackend.shader;
+    } else if (drawer is ParticleSpoilerDrawer) {
+      _particleRenderBackend = drawer.backend;
+    }
+
+    if (disposeCurrent && !identical(previous, drawer)) {
+      previous.dispose();
+    }
+  }
+
+  void _validateAtlasAvailability(ParticleSpoilerDrawer drawer) {
+    if (drawer is! AtlasSpoilerDrawer) {
+      return;
+    }
+
+    try {
+      drawer.ensureSprite();
+    } catch (error, stackTrace) {
+      _downgradeAtlasDrawer(
+        error,
+        stackTrace,
+        failedDrawer: drawer,
+        notify: false,
+      );
+    }
+  }
+
+  VectorSpoilerDrawer _downgradeAtlasDrawer(
+    Object error,
+    StackTrace stackTrace, {
+    AtlasSpoilerDrawer? failedDrawer,
+    required bool notify,
+  }) {
+    _atlasUnavailable = true;
+    final atlasDrawer = failedDrawer ?? _drawer as AtlasSpoilerDrawer;
+    final vectorDrawer = VectorSpoilerDrawer()..adoptStateFrom(atlasDrawer);
+    _replaceDrawer(vectorDrawer, disposeCurrent: false);
+    atlasDrawer.dispose();
+    debugPrint(
+      'SpoilerController: Atlas rendering disabled at runtime; using vector '
+      'fallback instead. Error: $error',
+    );
+    if (notify && !_isDisposed) {
+      notifyListeners();
+    }
+    return vectorDrawer;
   }
 }
