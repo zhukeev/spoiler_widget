@@ -562,9 +562,17 @@ class AtlasSpoilerDrawer extends ParticleSpoilerDrawer {
 
 class VectorSpoilerDrawer extends ParticleSpoilerDrawer {
   final Paint _particlePaint = Paint()..style = PaintingStyle.fill;
+  FittedPathMetrics? _shapeMetrics;
 
   @override
   ParticleRenderBackend get backend => ParticleRenderBackend.vector;
+
+  @override
+  void onParticlesInitialized() {
+    final currentShape = shapePath;
+    _shapeMetrics =
+        currentShape == null ? null : fittedPathMetricsFor(currentShape);
+  }
 
   @override
   void draw(
@@ -574,6 +582,7 @@ class VectorSpoilerDrawer extends ParticleSpoilerDrawer {
     if (particles.isEmpty) return;
 
     final shape = shapePath;
+    final shapeMetrics = _shapeMetrics;
 
     for (final particle in particles) {
       final visual = buildParticleVisual(
@@ -592,12 +601,18 @@ class VectorSpoilerDrawer extends ParticleSpoilerDrawer {
         canvas.drawCircle(particle, radius, _particlePaint);
         continue;
       }
+      if (shapeMetrics == null || !shapeMetrics.isDrawable) {
+        continue;
+      }
 
-      canvas.save();
-      canvas.translate(particle.dx, particle.dy);
-      canvas.scale(radius, radius);
-      canvas.drawPath(shape, _particlePaint);
-      canvas.restore();
+      drawFittedPath(
+        canvas,
+        shape,
+        center: particle,
+        targetDiameter: radius * 2.0,
+        paint: _particlePaint,
+        metrics: shapeMetrics,
+      );
     }
   }
 }
