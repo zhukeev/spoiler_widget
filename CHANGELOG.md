@@ -2,6 +2,8 @@
 
 ## 1.0.25
 
+* **Platform Support:**
+  * Added support for Tizen, thanks to [MohammadAsefPoya](https://github.com/MohammadAsefPoya).
 * **Rendering Backends:**
   * Improved `AtlasSpoilerDrawer` and `VectorSpoilerDrawer` support policy.
   * Particles with custom shape presets (e.g. stars, triangles) now use high-precision vector rendering instead of atlas sprites for better visual fidelity.
