@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:spoiler_widget/extension/path_x.dart';
 import 'package:spoiler_widget/models/spoiler_configs.dart';
