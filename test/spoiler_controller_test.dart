@@ -3,7 +3,7 @@
 import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Image;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spoiler_widget/models/spoiler_configs.dart';
 import 'package:spoiler_widget/models/spoiler_controller.dart';
@@ -129,7 +129,7 @@ void main() {
       required Paint paint,
     }) {
       throw StateError('atlas draw failed');
-    } as RawAtlasPainter;
+    };
     addTearDown(() => debugRawAtlasPainter = previousAtlasPainter);
 
     final controller = SpoilerController(vsync: const TestVSync());
@@ -224,10 +224,11 @@ void main() {
       required double diameter,
       required Color color,
       Path? shapePath,
+      double? rasterDiameter,
     }) {
       buildAttempts++;
       throw StateError('sprite creation failed');
-    } as CircleImageBuilder;
+    };
     addTearDown(() => debugCircleImageBuilder = previousBuilder);
 
     final controller = SpoilerController(vsync: const TestVSync());
@@ -262,10 +263,11 @@ void main() {
       required double diameter,
       required Color color,
       Path? shapePath,
+      double? rasterDiameter,
     }) {
       buildAttempts++;
       throw StateError('sprite creation failed');
-    } as CircleImageBuilder;
+    };
     addTearDown(() => debugCircleImageBuilder = previousBuilder);
 
     final controller = SpoilerController(vsync: const TestVSync());

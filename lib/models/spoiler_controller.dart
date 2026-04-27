@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:spoiler_widget/extension/path_x.dart';
 import 'package:spoiler_widget/models/spoiler_configs.dart';
@@ -487,10 +486,17 @@ class SpoilerController extends ChangeNotifier {
   }
 
   ParticleSpoilerDrawer _ensureParticleDrawer() {
+    final bool needsVector = _atlasUnavailable || _atlasDisabledByPolicy;
+
     if (_drawer is ParticleSpoilerDrawer) {
-      final drawer = _drawer as ParticleSpoilerDrawer;
-      _particleRenderBackend = drawer.backend;
-      return drawer;
+      final currentDrawer = _drawer as ParticleSpoilerDrawer;
+      final isAtlas = currentDrawer is AtlasSpoilerDrawer;
+
+      // If policy and current drawer backend match, reuse it.
+      if (isAtlas != needsVector) {
+        _particleRenderBackend = currentDrawer.backend;
+        return currentDrawer;
+      }
     }
 
     final drawer = _createDefaultParticleDrawer();

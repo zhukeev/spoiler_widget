@@ -172,7 +172,8 @@ void main() {
     expect(fitted.height, closeTo(3.0, 0.0001));
   });
 
-  test('fittedPathMetrics preserves aspect ratio for non-square custom path', () {
+  test('fittedPathMetrics preserves aspect ratio for non-square custom path',
+      () {
     final path = Path()..addRect(const Rect.fromLTWH(0, 0, 24, 12));
     final metrics = fittedPathMetricsFor(path);
 

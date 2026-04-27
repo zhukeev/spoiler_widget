@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.25
+
+* **Platform Support:**
+  * Added support for Tizen, thanks to [MohammadAsefPoya](https://github.com/MohammadAsefPoya).
+* **Rendering Backends:**
+  * Improved `AtlasSpoilerDrawer` and `VectorSpoilerDrawer` support policy.
+  * Particles with custom shape presets (e.g. stars, triangles) now use high-precision vector rendering instead of atlas sprites for better visual fidelity.
+  * Resolved "atlas probe" issues where tiny particles would attempt to initialize a sprite sheet even when drawing via vectors.
+
 ## 1.0.24
 
 * **Packaging:**

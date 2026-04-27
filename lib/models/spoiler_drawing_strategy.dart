@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -52,8 +51,11 @@ AtlasSupportPolicy atlasSupportPolicyFor(ParticleConfig config) {
     config.maxParticleSize.ceilToDouble(),
     _minAtlasRasterDiameter,
   );
+  // Custom shape presets are rendered via vector path drawing, not atlas
+  // rasterization, so mark them ineligible for the atlas backend.
+  final isEligible = config.maxParticleSize > 1.0 && config.shapePreset == null;
   return AtlasSupportPolicy(
-    isEligible: config.maxParticleSize > 1.0,
+    isEligible: isEligible,
     rasterDiameter: rasterDiameter,
   );
 }
@@ -278,8 +280,8 @@ int _colorToArgb(Color color) {
       _channelToInt8(color.b);
 }
 
-class _ParticleVisual {
-  const _ParticleVisual({
+class ParticleVisual {
+  const ParticleVisual({
     required this.scale,
     required this.color,
   });
@@ -385,7 +387,7 @@ abstract class ParticleSpoilerDrawer implements SpoilerDrawer {
   }
 
   @protected
-  _ParticleVisual? buildParticleVisual(
+  ParticleVisual? buildParticleVisual(
     Particle particle,
     SpoilerContext context, {
     required double baseRadius,
@@ -429,7 +431,7 @@ abstract class ParticleSpoilerDrawer implements SpoilerDrawer {
         return null;
       }
 
-      return _ParticleVisual(
+      return ParticleVisual(
         scale: scaled,
         color: tint.withValues(alpha: tint.a * edgeScale),
       );
@@ -440,7 +442,7 @@ abstract class ParticleSpoilerDrawer implements SpoilerDrawer {
       return null;
     }
 
-    return _ParticleVisual(
+    return ParticleVisual(
       scale: scaled,
       color: particle.color.withValues(alpha: particle.color.a * edgeScale),
     );

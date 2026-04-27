@@ -34,7 +34,7 @@ A Flutter package to create spoiler animations similar to the one used in Telegr
 
 - **Masking Support**: Use custom `Path` + `PathOperation` via `maskConfig`.
 
-- **Platform Agnostic**: Works on iOS, Android, Web and more
+- **Platform Agnostic**: Works on iOS, Android, Web, Tizen and more
 
 ---
 
@@ -44,7 +44,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  spoiler_widget: ^1.0.24
+  spoiler_widget: ^1.0.25
 ```
 
 Then run:
