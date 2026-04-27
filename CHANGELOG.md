@@ -8,10 +8,6 @@
   * Improved `AtlasSpoilerDrawer` and `VectorSpoilerDrawer` support policy.
   * Particles with custom shape presets (e.g. stars, triangles) now use high-precision vector rendering instead of atlas sprites for better visual fidelity.
   * Resolved "atlas probe" issues where tiny particles would attempt to initialize a sprite sheet even when drawing via vectors.
-* **SpoilerController:**
-  * Proactive re-evaluation of rendering strategies when switching between different particle configurations.
-* **Bug Fixes:**
-  * Fixed several unit test failures related to type signatures and import ambiguities.
 
 ## 1.0.24
 
