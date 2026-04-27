@@ -1,12 +1,14 @@
 import 'dart:math';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:spoiler_widget/extension/path_x.dart';
 import 'package:spoiler_widget/models/particle.dart';
 import 'package:spoiler_widget/models/spoiler_configs.dart';
 import 'package:spoiler_widget/utils/image_factory.dart';
 import 'package:spoiler_widget/utils/spoiler_shader_renderer.dart';
-import 'package:spoiler_widget/extension/path_x.dart';
 
 /// Context object containing all state required for drawing the spoiler.
 class SpoilerContext {
@@ -27,12 +29,100 @@ class SpoilerContext {
   final SpoilerConfig config;
 }
 
+enum ParticleRenderBackend {
+  shader,
+  atlas,
+  vector,
+}
+
+class AtlasSupportPolicy {
+  const AtlasSupportPolicy({
+    required this.isEligible,
+    required this.rasterDiameter,
+  });
+
+  final bool isEligible;
+  final double rasterDiameter;
+}
+
+const double _minAtlasRasterDiameter = 2.0;
+
+AtlasSupportPolicy atlasSupportPolicyFor(ParticleConfig config) {
+  final rasterDiameter = max(
+    config.maxParticleSize.ceilToDouble(),
+    _minAtlasRasterDiameter,
+  );
+  return AtlasSupportPolicy(
+    isEligible: config.maxParticleSize > 1.0,
+    rasterDiameter: rasterDiameter,
+  );
+}
+
+typedef CircleImageBuilder = CircleImage Function({
+  required double diameter,
+  required ui.Color color,
+  ui.Path? shapePath,
+  double? rasterDiameter,
+});
+
+typedef RawAtlasPainter = void Function({
+  required Canvas canvas,
+  required ui.Image atlas,
+  required Float32List transforms,
+  required Float32List rects,
+  Int32List? colors,
+  BlendMode? blendMode,
+  Rect? cullRect,
+  required Paint paint,
+});
+
+CircleImage _defaultCircleImageBuilder({
+  required double diameter,
+  required ui.Color color,
+  ui.Path? shapePath,
+  double? rasterDiameter,
+}) {
+  return CircleImageFactory.create(
+    diameter: diameter,
+    color: color,
+    shapePath: shapePath,
+    rasterDiameter: rasterDiameter,
+  );
+}
+
+void _defaultRawAtlasPainter({
+  required Canvas canvas,
+  required ui.Image atlas,
+  required Float32List transforms,
+  required Float32List rects,
+  Int32List? colors,
+  BlendMode? blendMode,
+  Rect? cullRect,
+  required Paint paint,
+}) {
+  canvas.drawRawAtlas(
+    atlas,
+    transforms,
+    rects,
+    colors,
+    blendMode,
+    cullRect,
+    paint,
+  );
+}
+
+@visibleForTesting
+CircleImageBuilder debugCircleImageBuilder = _defaultCircleImageBuilder;
+
+@visibleForTesting
+RawAtlasPainter debugRawAtlasPainter = _defaultRawAtlasPainter;
+
 /// Abstract strategy for drawing particles.
 abstract class SpoilerDrawer {
   /// Returns true if the drawer has drawable content (e.g., particles).
   bool get hasContent;
 
-  /// Exposes particle list if applicable (Atlas), otherwise empty.
+  /// Exposes particle list if applicable (Atlas/Vector), otherwise empty.
   List<Particle> get particles;
 
   void update(double dt);
@@ -66,10 +156,11 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
   CircleImage _ensureSprite(ParticleConfig config) {
     if (_sprite == null || _spriteConfig != config) {
       _spriteConfig = config;
-      _sprite = CircleImageFactory.create(
+      _sprite = debugCircleImageBuilder(
         diameter: config.maxParticleSize,
         color: Colors.white,
         shapePath: config.shapePreset?.path,
+        rasterDiameter: atlasSupportPolicyFor(config).rasterDiameter,
       );
     }
     return _sprite!;
@@ -113,12 +204,9 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
     final Rect logicalBounds = spoilerBounds;
 
     if (spoilerRects.isEmpty) {
-      // Fallback if no rects
       canvas.save();
-
       canvas.clipRect(spoilerBounds);
 
-      // Keep callback in logical space for backward compatibility.
       final params = (config.shaderConfig?.onGetShaderUniforms?.call(
                 logicalBounds,
                 _shaderTime,
@@ -148,11 +236,8 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
       final seed = i * 123.45 + rect.left + rect.top;
 
       canvas.save();
-
-      // Draw the full rect; shader handles fade via uniforms.
       canvas.clipRect(rect);
 
-      // Keep callback in logical space for backward compatibility.
       final params = (config.shaderConfig?.onGetShaderUniforms?.call(
                 rect,
                 _shaderTime,
@@ -180,13 +265,7 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
   }
 
   @override
-  void dispose() {
-    // Renderer is likely shared or managed elsewhere, but here
-    // we assume the controller manages its lifecycle or we can dispose it.
-    // Actually SpoilerShaderRenderer.create returns a new instance usually.
-    // But Controller caches it. Let's leave it no-op
-    // or let the controller dispose the actual renderer instance if it owns it.
-  }
+  void dispose() {}
 }
 
 int _channelToInt8(double value) =>
@@ -199,29 +278,26 @@ int _colorToArgb(Color color) {
       _channelToInt8(color.b);
 }
 
-/// Strategy for drawing particles using Flutter's drawRawAtlas (CPU/hybrid).
-class AtlasSpoilerDrawer implements SpoilerDrawer {
-  static const double _lifeSizeMin = 0.6;
-  AtlasSpoilerDrawer();
+class _ParticleVisual {
+  const _ParticleVisual({
+    required this.scale,
+    required this.color,
+  });
 
-  // Particle state
+  final double scale;
+  final Color color;
+}
+
+abstract class ParticleSpoilerDrawer implements SpoilerDrawer {
+  static const double lifeSizeMin = 0.6;
+
   final Random _random = Random();
   final List<Particle> _particles = [];
 
-  // Visual assets & config
-  CircleImage _circleImage =
-      CircleImageFactory.create(diameter: 1, color: Colors.white);
-  double _maxParticleSize = 1;
+  double _maxParticleSize = 1.0;
   Color _particleColor = Colors.white;
-  double _particleSpeed = 1;
-
-  // buffers
-  Float32List? _valTransforms;
-  Float32List? _valRects;
-  Int32List? _valColors;
-  int _lastParticleCount = 0;
-
-  final Paint _particlePaint = Paint();
+  double _particleSpeed = 1.0;
+  Path? _shapePath;
 
   @override
   bool get hasContent => _particles.isNotEmpty;
@@ -229,17 +305,12 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
   @override
   List<Particle> get particles => _particles;
 
-  void _reallocBuffers(int count) {
-    if (count == _lastParticleCount && _valTransforms != null) return;
-    _valTransforms = Float32List(count * 4);
-    _valRects = Float32List(count * 4);
-    _valColors = Int32List(count);
-    _lastParticleCount = count;
-  }
+  ParticleRenderBackend get backend;
 
-  void updateCircleImage(CircleImage newImage) {
-    _circleImage = newImage;
-  }
+  double get maxParticleSize => _maxParticleSize;
+  Color get particleColor => _particleColor;
+  double get particleSpeed => _particleSpeed;
+  Path? get shapePath => _shapePath;
 
   void initializeParticles({
     required Iterable<Path> paths,
@@ -249,18 +320,12 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
     _maxParticleSize = config.particleConfig.maxParticleSize;
     _particleColor = config.particleConfig.color;
     _particleSpeed = config.particleConfig.speed;
+    _shapePath = config.particleConfig.shapePreset?.path;
 
-    // Refresh circle image to match config
-    _circleImage = CircleImageFactory.create(
-      diameter: _maxParticleSize,
-      color: Colors.white,
-      shapePath: config.particleConfig.shapePreset?.path,
-    );
     final coverage = config.particleConfig.density.clamp(0.0, 1.0);
 
     for (final path in paths) {
       final rect = path.getBounds();
-
       final screenArea = rect.width * rect.height;
       final particleArea = pi *
           pow(config.particleConfig.maxParticleSize * 0.5, 2) *
@@ -276,7 +341,21 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
         _particles.add(_createRandomParticlePath(path));
       }
     }
-    _reallocBuffers(_particles.length);
+    onParticlesInitialized();
+  }
+
+  @protected
+  void onParticlesInitialized() {}
+
+  void adoptStateFrom(ParticleSpoilerDrawer other) {
+    _particles
+      ..clear()
+      ..addAll(other._particles);
+    _maxParticleSize = other._maxParticleSize;
+    _particleColor = other._particleColor;
+    _particleSpeed = other._particleSpeed;
+    _shapePath = other._shapePath;
+    onParticlesInitialized();
   }
 
   @override
@@ -298,10 +377,117 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
       offset.dy,
       _maxParticleSize,
       _particleColor,
-      _random.nextDouble(), // life
-      _particleSpeed, // velocity
-      _random.nextDouble() * 2 * pi, // angle
+      _random.nextDouble(),
+      _particleSpeed,
+      _random.nextDouble() * 2 * pi,
       path,
+    );
+  }
+
+  @protected
+  _ParticleVisual? buildParticleVisual(
+    Particle particle,
+    SpoilerContext context, {
+    required double baseRadius,
+  }) {
+    final fadeEdgeThickness = context.config.fadeConfig?.edgeThickness ?? 1.0;
+    final bounds = context.spoilerBounds;
+    final boundaryFadePx = max(baseRadius * 3.0, 6.0);
+
+    double smoothstep(double edge0, double edge1, double x) {
+      final t = ((x - edge0) / (edge1 - edge0)).clamp(0.0, 1.0);
+      return t * t * (3.0 - 2.0 * t);
+    }
+
+    final lifeScale = lifeSizeMin + (1.0 - lifeSizeMin) * particle.life;
+    final edgeDist = min(
+      min(particle.dx - bounds.left, bounds.right - particle.dx),
+      min(particle.dy - bounds.top, bounds.bottom - particle.dy),
+    );
+    final edgeFade =
+        edgeDist <= 0.0 ? 0.0 : smoothstep(0.0, boundaryFadePx, edgeDist);
+    final particleRadius = max(baseRadius * lifeScale, 0.0001);
+    final edgeClamp = (edgeDist / particleRadius).clamp(0.0, 1.0);
+    final edgeScale = edgeFade * edgeClamp;
+
+    if (edgeScale <= 0.0) {
+      return null;
+    }
+
+    if (context.isFading) {
+      final distSq = (context.fadeCenter - particle).distanceSquared;
+      final radiusSq = context.fadeRadius * context.fadeRadius;
+      if (distSq >= radiusSq) {
+        return null;
+      }
+
+      final dist = sqrt(distSq);
+      final highlight = dist > context.fadeRadius - fadeEdgeThickness;
+      final tint = highlight ? Colors.white : particle.color;
+      final scaled = (highlight ? 1.5 : 1.0) * lifeScale * edgeScale;
+      if (scaled <= 0.0) {
+        return null;
+      }
+
+      return _ParticleVisual(
+        scale: scaled,
+        color: tint.withValues(alpha: tint.a * edgeScale),
+      );
+    }
+
+    final scaled = lifeScale * edgeScale;
+    if (scaled <= 0.0) {
+      return null;
+    }
+
+    return _ParticleVisual(
+      scale: scaled,
+      color: particle.color.withValues(alpha: particle.color.a * edgeScale),
+    );
+  }
+
+  @override
+  void dispose() {
+    _particles.clear();
+  }
+}
+
+/// Strategy for drawing particles using Flutter's drawRawAtlas (CPU/hybrid).
+class AtlasSpoilerDrawer extends ParticleSpoilerDrawer {
+  CircleImage? _circleImage;
+  Float32List? _valTransforms;
+  Float32List? _valRects;
+  Int32List? _valColors;
+  int _lastParticleCount = 0;
+
+  final Paint _particlePaint = Paint();
+  double _rasterDiameter = _minAtlasRasterDiameter;
+
+  @override
+  ParticleRenderBackend get backend => ParticleRenderBackend.atlas;
+
+  @override
+  void onParticlesInitialized() {
+    _circleImage = null;
+    _rasterDiameter =
+        max(maxParticleSize.ceilToDouble(), _minAtlasRasterDiameter);
+    _reallocBuffers(particles.length);
+  }
+
+  void _reallocBuffers(int count) {
+    if (count == _lastParticleCount && _valTransforms != null) return;
+    _valTransforms = Float32List(count * 4);
+    _valRects = Float32List(count * 4);
+    _valColors = Int32List(count);
+    _lastParticleCount = count;
+  }
+
+  CircleImage ensureSprite() {
+    return _circleImage ??= debugCircleImageBuilder(
+      diameter: maxParticleSize,
+      color: Colors.white,
+      shapePath: shapePath,
+      rasterDiameter: _rasterDiameter,
     );
   }
 
@@ -310,115 +496,58 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
     Canvas canvas,
     SpoilerContext context,
   ) {
-    final isFading = context.isFading;
-    final fadeRadius = context.fadeRadius;
-    final fadeCenter = context.fadeCenter;
-    final fadeEdgeThickness = context.config.fadeConfig?.edgeThickness ?? 1;
-    _maxParticleSize = context.config.particleConfig.maxParticleSize;
-    _particleColor = context.config.particleConfig.color;
-    _particleSpeed = context.config.particleConfig.speed;
-
-    final count = _particles.length;
+    final count = particles.length;
     if (count == 0) return;
 
     _reallocBuffers(count);
-
+    final sprite = ensureSprite();
     final transforms = _valTransforms!;
     final rects = _valRects!;
     final colors = _valColors!;
-    final spriteRadius = _circleImage.dimension * 0.5;
-    final bounds = context.spoilerBounds;
-    final boundaryFadePx = max(spriteRadius * 3.0, 6.0);
+    final spriteRadius = sprite.rasterDimension * 0.5;
 
-    double smoothstep(double edge0, double edge1, double x) {
-      final t = ((x - edge0) / (edge1 - edge0)).clamp(0.0, 1.0);
-      return t * t * (3.0 - 2.0 * t);
-    }
-
-    int index = 0;
-    for (final p in _particles) {
+    for (int index = 0; index < count; index++) {
+      final particle = particles[index];
       final transformIndex = index * 4;
-      final lifeScale = _lifeSizeMin + (1.0 - _lifeSizeMin) * p.life;
-      final edgeDist = min(
-        min(p.dx - bounds.left, bounds.right - p.dx),
-        min(p.dy - bounds.top, bounds.bottom - p.dy),
+      final visual = buildParticleVisual(
+        particle,
+        context,
+        baseRadius: particle.size * 0.5,
       );
-      final edgeFade =
-          edgeDist <= 0.0 ? 0.0 : smoothstep(0.0, boundaryFadePx, edgeDist);
-      final particleRadius = max(spriteRadius * lifeScale, 0.0001);
-      final edgeClamp = (edgeDist / particleRadius).clamp(0.0, 1.0);
-      final edgeScale = edgeFade * edgeClamp;
 
-      if (isFading) {
-        final distSq = (fadeCenter - p).distanceSquared;
-        final radiusSq = fadeRadius * fadeRadius;
+      rects[transformIndex + 0] = 0.0;
+      rects[transformIndex + 1] = 0.0;
+      rects[transformIndex + 2] = sprite.rasterDimension;
+      rects[transformIndex + 3] = sprite.rasterDimension;
 
-        if (distSq < radiusSq) {
-          final dist = sqrt(distSq);
-          final scale = (dist > fadeRadius - fadeEdgeThickness) ? 1.5 : 1.0;
-          final color =
-              (dist > fadeRadius - fadeEdgeThickness) ? Colors.white : p.color;
-          final scaled = scale * lifeScale * edgeScale;
-          final edgeColor = color.withValues(alpha: color.a * edgeScale);
-
-          transforms[transformIndex + 0] = scaled;
-          transforms[transformIndex + 1] = 0.0;
-          transforms[transformIndex + 2] = p.dx - spriteRadius * scaled;
-          transforms[transformIndex + 3] = p.dy - spriteRadius * scaled;
-
-          rects[transformIndex + 0] = 0.0;
-          rects[transformIndex + 1] = 0.0;
-          rects[transformIndex + 2] = _circleImage.dimension.toDouble();
-          rects[transformIndex + 3] = _circleImage.dimension.toDouble();
-
-          colors[index] = edgeScale > 0.0
-              ? _colorToArgb(edgeColor)
-              : _colorToArgb(Colors.transparent);
-          if (edgeScale <= 0.0) {
-            transforms[transformIndex + 0] = 0.0;
-          }
-          index++;
-        } else {
-          // outside fade circle
-          colors[index] = _colorToArgb(Colors.transparent);
-          transforms[transformIndex + 0] = 0;
-          index++;
-        }
-      } else {
-        // normal
-        final scaled = lifeScale * edgeScale;
-        transforms[transformIndex + 0] = scaled;
+      if (visual == null) {
+        transforms[transformIndex + 0] = 0.0;
         transforms[transformIndex + 1] = 0.0;
-        transforms[transformIndex + 2] = p.dx - spriteRadius * scaled;
-        transforms[transformIndex + 3] = p.dy - spriteRadius * scaled;
-
-        rects[transformIndex + 0] = 0.0;
-        rects[transformIndex + 1] = 0.0;
-        rects[transformIndex + 2] = _circleImage.dimension.toDouble();
-        rects[transformIndex + 3] = _circleImage.dimension.toDouble();
-
-        final edgeColor = p.color.withValues(alpha: p.color.a * edgeScale);
-        colors[index] = edgeScale > 0.0
-            ? _colorToArgb(edgeColor)
-            : _colorToArgb(Colors.transparent);
-        if (edgeScale <= 0.0) {
-          transforms[transformIndex + 0] = 0.0;
-        }
-        index++;
+        transforms[transformIndex + 2] = 0.0;
+        transforms[transformIndex + 3] = 0.0;
+        colors[index] = _colorToArgb(Colors.transparent);
+        continue;
       }
+
+      transforms[transformIndex + 0] = visual.scale;
+      transforms[transformIndex + 1] = 0.0;
+      transforms[transformIndex + 2] =
+          particle.dx - spriteRadius * visual.scale;
+      transforms[transformIndex + 3] =
+          particle.dy - spriteRadius * visual.scale;
+      colors[index] = _colorToArgb(visual.color);
     }
 
-    if (index > 0) {
-      canvas.drawRawAtlas(
-        _circleImage.image,
-        transforms,
-        rects,
-        colors,
-        BlendMode.modulate,
-        null,
-        _particlePaint,
-      );
-    }
+    debugRawAtlasPainter(
+      canvas: canvas,
+      atlas: sprite.image,
+      transforms: transforms,
+      rects: rects,
+      colors: colors,
+      blendMode: BlendMode.modulate,
+      cullRect: null,
+      paint: _particlePaint,
+    );
   }
 
   @override
@@ -426,6 +555,64 @@ class AtlasSpoilerDrawer implements SpoilerDrawer {
     _valTransforms = null;
     _valRects = null;
     _valColors = null;
-    _particles.clear();
+    _circleImage = null;
+    super.dispose();
+  }
+}
+
+class VectorSpoilerDrawer extends ParticleSpoilerDrawer {
+  final Paint _particlePaint = Paint()..style = PaintingStyle.fill;
+  FittedPathMetrics? _shapeMetrics;
+
+  @override
+  ParticleRenderBackend get backend => ParticleRenderBackend.vector;
+
+  @override
+  void onParticlesInitialized() {
+    final currentShape = shapePath;
+    _shapeMetrics =
+        currentShape == null ? null : fittedPathMetricsFor(currentShape);
+  }
+
+  @override
+  void draw(
+    Canvas canvas,
+    SpoilerContext context,
+  ) {
+    if (particles.isEmpty) return;
+
+    final shape = shapePath;
+    final shapeMetrics = _shapeMetrics;
+
+    for (final particle in particles) {
+      final visual = buildParticleVisual(
+        particle,
+        context,
+        baseRadius: particle.size * 0.5,
+      );
+      if (visual == null) {
+        continue;
+      }
+
+      _particlePaint.color = visual.color;
+      final radius = particle.size * 0.5 * visual.scale;
+
+      if (shape == null) {
+        canvas.drawCircle(particle, radius, _particlePaint);
+        continue;
+      }
+      if (shapeMetrics == null || !shapeMetrics.isDrawable) {
+        continue;
+      }
+
+      drawFittedPath(
+        canvas,
+        shape,
+        center: particle,
+        targetDiameter: radius * 2.0,
+        paint: _particlePaint,
+        metrics: shapeMetrics,
+      );
+    }
   }
 }

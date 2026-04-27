@@ -2,18 +2,90 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 @immutable
 class CircleImage {
   final ui.Image image;
   final ui.Color color;
   final double dimension;
+  final double rasterDimension;
 
   const CircleImage({
     required this.image,
     required this.color,
     required this.dimension,
+    required this.rasterDimension,
   });
+}
+
+@immutable
+class FittedPathMetrics {
+  final Rect bounds;
+  final double maxDimension;
+  final double centerX;
+  final double centerY;
+
+  const FittedPathMetrics({
+    required this.bounds,
+    required this.maxDimension,
+    required this.centerX,
+    required this.centerY,
+  });
+
+  bool get isDrawable => !bounds.isEmpty && maxDimension > 0.0;
+
+  double scaleForDiameter(double targetDiameter) {
+    final targetSize = math.max(targetDiameter - 1.0, 1.0);
+    return isDrawable ? targetSize / maxDimension : 0.0;
+  }
+
+  Rect fittedBounds(ui.Offset center, double targetDiameter) {
+    final scale = scaleForDiameter(targetDiameter);
+    if (scale <= 0.0) {
+      return Rect.zero;
+    }
+
+    final halfWidth = bounds.width * scale * 0.5;
+    final halfHeight = bounds.height * scale * 0.5;
+    return Rect.fromCenter(
+      center: center,
+      width: halfWidth * 2.0,
+      height: halfHeight * 2.0,
+    );
+  }
+}
+
+FittedPathMetrics fittedPathMetricsFor(ui.Path path) {
+  final bounds = path.getBounds();
+  final maxDim = math.max(bounds.width, bounds.height);
+  return FittedPathMetrics(
+    bounds: bounds,
+    maxDimension: maxDim,
+    centerX: bounds.left + bounds.width * 0.5,
+    centerY: bounds.top + bounds.height * 0.5,
+  );
+}
+
+void drawFittedPath(
+  ui.Canvas canvas,
+  ui.Path path, {
+  required ui.Offset center,
+  required double targetDiameter,
+  required ui.Paint paint,
+  FittedPathMetrics? metrics,
+}) {
+  final fitted = metrics ?? fittedPathMetricsFor(path);
+  if (!fitted.isDrawable) return;
+
+  final scale = fitted.scaleForDiameter(targetDiameter);
+
+  canvas.save();
+  canvas.translate(center.dx, center.dy);
+  canvas.scale(scale, scale);
+  canvas.translate(-fitted.centerX, -fitted.centerY);
+  canvas.drawPath(path, paint);
+  canvas.restore();
 }
 
 /// A factory class for creating circular images using Flutter's low-level
@@ -42,7 +114,11 @@ class CircleImageFactory {
     required double diameter,
     required ui.Color color,
     ui.Path? shapePath,
+    double? rasterDiameter,
   }) {
+    final safeRasterDiameter = rasterDiameter ?? diameter;
+    final rasterSize = math.max(safeRasterDiameter.ceil(), 1);
+
     // Create a PictureRecorder to record drawing commands
     final recorder = ui.PictureRecorder();
     final canvas = ui.Canvas(recorder);
@@ -64,9 +140,10 @@ class CircleImageFactory {
     // End recording and convert it to an image
     final picture = recorder.endRecording();
     return CircleImage(
-      image: picture.toImageSync(diameter.toInt(), diameter.toInt()),
+      image: picture.toImageSync(rasterSize, rasterSize),
       color: color,
       dimension: diameter,
+      rasterDimension: rasterSize.toDouble(),
     );
   }
 
@@ -77,21 +154,12 @@ class CircleImageFactory {
     double diameter,
     ui.Paint paint,
   ) {
-    final bounds = path.getBounds();
-    if (bounds.isEmpty) return;
-    final maxDim = math.max(bounds.width, bounds.height);
-    if (maxDim <= 0.0) return;
-
-    final targetSize = math.max(diameter - 1.0, 1.0);
-    final scale = targetSize / maxDim;
-    final cx = bounds.left + bounds.width * 0.5;
-    final cy = bounds.top + bounds.height * 0.5;
-
-    canvas.save();
-    canvas.translate(center.dx, center.dy);
-    canvas.scale(scale, scale);
-    canvas.translate(-cx, -cy);
-    canvas.drawPath(path, paint);
-    canvas.restore();
+    drawFittedPath(
+      canvas,
+      path,
+      center: center,
+      targetDiameter: diameter,
+      paint: paint,
+    );
   }
 }

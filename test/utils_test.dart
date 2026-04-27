@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:spoiler_widget/extension/path_x.dart';
 import 'package:spoiler_widget/extension/rect_x.dart';
 import 'package:spoiler_widget/models/spoiler_configs.dart';
+import 'package:spoiler_widget/utils/image_factory.dart';
 import 'package:spoiler_widget/utils/path_signature.dart';
 import 'package:spoiler_widget/utils/text_layout_client.dart';
 
@@ -155,5 +156,28 @@ void main() {
     final point = path.getRandomPoint();
 
     expect(path.contains(point), isTrue);
+  });
+
+  test('fittedPathMetrics normalizes large custom path to target diameter', () {
+    final path = Path()..addRect(const Rect.fromLTWH(0, 0, 24, 24));
+    final metrics = fittedPathMetricsFor(path);
+
+    expect(metrics.isDrawable, isTrue);
+    expect(metrics.maxDimension, 24.0);
+    expect(metrics.scaleForDiameter(4.0), closeTo(3.0 / 24.0, 0.0001));
+
+    final fitted = metrics.fittedBounds(const Offset(10, 20), 4.0);
+    expect(fitted.center, const Offset(10, 20));
+    expect(fitted.width, closeTo(3.0, 0.0001));
+    expect(fitted.height, closeTo(3.0, 0.0001));
+  });
+
+  test('fittedPathMetrics preserves aspect ratio for non-square custom path', () {
+    final path = Path()..addRect(const Rect.fromLTWH(0, 0, 24, 12));
+    final metrics = fittedPathMetricsFor(path);
+
+    final fitted = metrics.fittedBounds(Offset.zero, 5.0);
+    expect(fitted.width, closeTo(4.0, 0.0001));
+    expect(fitted.height, closeTo(2.0, 0.0001));
   });
 }
