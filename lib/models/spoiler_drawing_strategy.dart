@@ -51,8 +51,11 @@ AtlasSupportPolicy atlasSupportPolicyFor(ParticleConfig config) {
     config.maxParticleSize.ceilToDouble(),
     _minAtlasRasterDiameter,
   );
+  // Custom shape presets are rendered via vector path drawing, not atlas
+  // rasterization, so mark them ineligible for the atlas backend.
+  final isEligible = config.maxParticleSize > 1.0 && config.shapePreset == null;
   return AtlasSupportPolicy(
-    isEligible: config.maxParticleSize > 1.0,
+    isEligible: isEligible,
     rasterDiameter: rasterDiameter,
   );
 }
