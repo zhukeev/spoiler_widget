@@ -10,6 +10,7 @@ uniform vec4  uRect;
 uniform float uSeed;
 uniform vec3  uColor;
 uniform float uDensity;
+uniform float uSize;
 uniform float uSpeed;
 uniform vec2  uFadeCenter;
 uniform float uFadeRadius;
@@ -99,7 +100,7 @@ void main() {
   float keepAlive = uResolution.x + uResolution.y +
       uRect.x + uRect.y + uRect.z + uRect.w +
       uSeed + uColor.r + uColor.g + uColor.b +
-      uDensity + uSpeed +
+      uDensity + uSize + uSpeed +
       uFadeCenter.x + uFadeCenter.y +
       uFadeRadius + uIsFading + uEdgeThickness;
   if (keepAlive < -1.0) {

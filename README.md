@@ -126,23 +126,24 @@ SpoilerTextWrapper(
 
 ### 1.2 Form field integration
 
-Use `SpoilerTextFieldWrapper` to keep the native context menu/cursor while hiding parts of the input:
+Use `SpoilerTextFieldWrapper` to keep the native context menu/cursor while hiding parts of the input. The wrapper takes a `builder` that receives an `EditableTextContextMenuBuilder` you pass through to your text field:
 
 ```dart
 final controller = TextEditingController(text: 'Type here...');
+final focusNode = FocusNode();
 
 SpoilerTextFieldWrapper(
-  controller: controller,
-  focusNode: FocusNode(),
-  config: const TextSpoilerConfig(
+  config: SpoilerConfig(
     isEnabled: true,
-    fadeConfig: FadeConfig(padding: 10.0, edgeThickness: 20.0),
     enableGestureReveal: true,
-    textSelection: TextSelection(baseOffset: 0, extentOffset: 5),
-    textStyle: TextStyle(fontSize: 18, color: Colors.white),
   ),
-  cursorColor: Colors.deepPurple,
-  maxLines: 3,
+  builder: (context, contextMenuBuilder) => TextFormField(
+    controller: controller,
+    focusNode: focusNode,
+    contextMenuBuilder: contextMenuBuilder,
+    cursorColor: Colors.deepPurple,
+    maxLines: 3,
+  ),
 );
 ```
 
@@ -205,7 +206,7 @@ SpoilerTextWrapper(
 
 ```
 
-#### 3. Full Example
+#### Full Example
 
 You can find a complete, runnable example in the [example/lib/main.dart](https://github.com/zhukeev/spoiler_widget/blob/main/example/lib/main.dart) file. It demonstrates various configuration options and both text and widget-based spoilers.
 
@@ -264,7 +265,7 @@ These fields are kept for backward compatibility; prefer `particleConfig` and `f
 
 | Field            | Type         | Description                                  |
 |-----------------|-------------|----------------------------------------------|
-| `imageFilter`   | ImageFilter? | Blur filter used to hide the child.         |
+| `imageFilter`   | ImageFilter    | Blur filter used to hide the child (required). |
 | `maxActiveWaves` | int         | Max concurrent waves for wave-based effects. |
 
 #### FAQ
@@ -273,10 +274,26 @@ These fields are kept for backward compatibility; prefer `particleConfig` and `f
 Adjust the properties in your configuration object at runtime. For instance, set a new imageFilter or call methods on the wave controller to dynamically tune the effect.
 
 2) Can I skip the wave logic?
-Yes—by default, you get a basic spoiler with fade. Use SpoilerSpotsController only if you want wave animations.
+Yes—by default, you get a basic spoiler with fade. Waves only run when `ParticleConfig.enableWaves` is true and the widget uses `SpoilerSpotsController` (the default for `SpoilerOverlay` without a `shaderConfig`).
 
 3) Does this work on the web?
 Yes! It’s entirely in Flutter/Dart. Just ensure you handle any platform quirks with gesture input.
+
+#### Programmatic control
+
+`SpoilerController` and `SpoilerSpotsController` are exported, so you can drive a spoiler imperatively if you build on the lower-level widgets:
+
+```dart
+final controller = SpoilerSpotsController(vsync: this);
+
+controller.initializeParticles(path, config);
+controller.enable();   // show the spoiler
+controller.disable();  // hide it
+controller.toggle(offset); // toggle at a fade center
+controller.updateConfiguration(newConfig);
+```
+
+`SpoilerOverlay` picks `SpoilerSpotsController` automatically when no `shaderConfig` is set (enabling wave animations) and `SpoilerController` otherwise. `renderBackend` reports whether particles render via `ParticleRenderBackend.shader`, `.atlas`, or `.vector`.
 
 ### Dual Rendering Modes
 

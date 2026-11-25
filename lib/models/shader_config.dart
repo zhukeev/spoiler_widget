@@ -12,6 +12,7 @@ typedef ShaderCallback = List<double> Function(
 );
 
 /// Describes a fragment shader and how to build its uniform values.
+@immutable
 class ShaderConfig {
   /// Path to a custom fragment shader asset (e.g. 'shaders/particles.frag').
   /// If provided, this shader replaces the default particle effect.
@@ -29,13 +30,12 @@ class ShaderConfig {
     required this.customShaderPath,
   });
 
-  static List<double> _particleUniforms(
+  /// Shared uniform prefix: uResolution, uTime, uRect, uSeed, uColor.
+  /// Every built-in shader declares these first, in this order.
+  static List<double> _coreUniforms(
     Rect rect,
     double time,
     double seed,
-    Offset fadeOffset,
-    bool isFading,
-    double fadeRadius,
     SpoilerConfig config,
   ) {
     return [
@@ -55,8 +55,24 @@ class ShaderConfig {
       config.particleConfig.color.r,
       config.particleConfig.color.g,
       config.particleConfig.color.b,
+    ];
+  }
+
+  /// Shared suffix: uDensity, uSize, uSpeed, uFadeCenter, uFadeRadius,
+  /// uIsFading, uEdgeThickness — the tail shared by all built-in shaders.
+  static List<double> _tailUniforms(
+    Offset fadeOffset,
+    bool isFading,
+    double fadeRadius,
+    SpoilerConfig config, {
+    required bool scaleEdgeThickness,
+    required bool clampDensity,
+  }) {
+    return [
       // 6. uDensity
-      config.particleConfig.density.clamp(0.0, 1.0),
+      clampDensity
+          ? config.particleConfig.density.clamp(0.0, 1.0)
+          : config.particleConfig.density,
       // 7. uSize
       config.particleConfig.maxParticleSize,
       // 8. uSpeed
@@ -68,8 +84,32 @@ class ShaderConfig {
       fadeRadius,
       // 11. uIsFading
       isFading ? 1.0 : 0.0,
-      // 12. uFadeEdgeThickness
-      (config.fadeConfig?.edgeThickness ?? 1.0),
+      // 12. uEdgeThickness
+      scaleEdgeThickness
+          ? (config.fadeConfig?.edgeThickness ?? 1.0) * 10.0
+          : (config.fadeConfig?.edgeThickness ?? 1.0),
+    ];
+  }
+
+  static List<double> _particleUniforms(
+    Rect rect,
+    double time,
+    double seed,
+    Offset fadeOffset,
+    bool isFading,
+    double fadeRadius,
+    SpoilerConfig config,
+  ) {
+    return [
+      ..._coreUniforms(rect, time, seed, config),
+      ..._tailUniforms(
+        fadeOffset,
+        isFading,
+        fadeRadius,
+        config,
+        scaleEdgeThickness: false,
+        clampDensity: true,
+      ),
       // 13. uEnableWaves
       config.particleConfig.enableWaves ? 1.0 : 0.0,
       // 14. uMaxWaveRadius
@@ -93,37 +133,15 @@ class ShaderConfig {
     SpoilerConfig config,
   ) {
     return [
-      // 1. uResolution
-      rect.width,
-      rect.height,
-      // 2. uTime
-      time,
-      // 3. uRect
-      rect.left,
-      rect.top,
-      rect.width,
-      rect.height,
-      // 4. uSeed
-      seed,
-      // 5. uColor
-      config.particleConfig.color.r,
-      config.particleConfig.color.g,
-      config.particleConfig.color.b,
-      // 6. uDensity
-      config.particleConfig.density,
-      // 7. uSize
-      config.particleConfig.maxParticleSize,
-      // 8. uSpeed
-      config.particleConfig.speed,
-      // 9. uFadeCenter
-      fadeOffset.dx,
-      fadeOffset.dy,
-      // 10. uFadeRadius
-      fadeRadius,
-      // 11. uIsFading
-      isFading ? 1.0 : 0.0,
-      // 12. uEdgeThickness
-      (config.fadeConfig?.edgeThickness ?? 1.0) * 10.0,
+      ..._coreUniforms(rect, time, seed, config),
+      ..._tailUniforms(
+        fadeOffset,
+        isFading,
+        fadeRadius,
+        config,
+        scaleEdgeThickness: true,
+        clampDensity: false,
+      ),
     ];
   }
 
@@ -146,32 +164,9 @@ class ShaderConfig {
       );
 
   /// Glitch stripes with RGB splits.
-  factory ShaderConfig.glitchStripes() => ShaderConfig(
+  factory ShaderConfig.glitchStripes() => const ShaderConfig(
         customShaderPath: 'packages/spoiler_widget/shaders/glitch_stripes.frag',
-        onGetShaderUniforms:
-            (rect, time, seed, fadeOffset, isFading, fadeRadius, config) {
-          return [
-            rect.width,
-            rect.height,
-            time,
-            rect.left,
-            rect.top,
-            rect.width,
-            rect.height,
-            seed,
-            config.particleConfig.color.r,
-            config.particleConfig.color.g,
-            config.particleConfig.color.b,
-            config.particleConfig.density,
-            config.particleConfig.maxParticleSize,
-            config.particleConfig.speed,
-            fadeOffset.dx,
-            fadeOffset.dy,
-            fadeRadius,
-            isFading ? 1.0 : 0.0,
-            (config.fadeConfig?.edgeThickness ?? 1.0) * 10.0,
-          ];
-        },
+        onGetShaderUniforms: _baseUniforms,
       );
 
   /// Pixelated mosaic censor blocks.
@@ -186,4 +181,14 @@ class ShaderConfig {
             'packages/spoiler_widget/shaders/liquid_spectrum.frag',
         onGetShaderUniforms: _baseUniforms,
       );
+
+  @override
+  int get hashCode => Object.hash(customShaderPath, onGetShaderUniforms);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ShaderConfig &&
+          customShaderPath == other.customShaderPath &&
+          onGetShaderUniforms == other.onGetShaderUniforms;
 }
