@@ -65,4 +65,43 @@ void main() {
 
     expect(receivedSelection, selection);
   });
+
+  testWidgets('SpoilerTextFieldWrapper adds gesture detector only when enabled',
+      (
+    tester,
+  ) async {
+    Widget buildWrapper({required bool enableGestureReveal}) {
+      return MaterialApp(
+        home: Scaffold(
+          body: SpoilerTextFieldWrapper(
+            config: SpoilerConfig(
+              isEnabled: true,
+              enableGestureReveal: enableGestureReveal,
+              enableFadeAnimation: false,
+              particleConfig: const ParticleConfig(
+                density: 0.0,
+                speed: 0.0,
+                color: Colors.white,
+                maxParticleSize: 1.0,
+              ),
+            ),
+            builder: (context, contextMenuBuilder) => const Text('secret'),
+          ),
+        ),
+      );
+    }
+
+    final gestureDetector = find.descendant(
+      of: find.byType(SpoilerTextFieldWrapper),
+      matching: find.byType(GestureDetector),
+    );
+
+    await tester.pumpWidget(buildWrapper(enableGestureReveal: false));
+    await tester.pump();
+    expect(gestureDetector, findsNothing);
+
+    await tester.pumpWidget(buildWrapper(enableGestureReveal: true));
+    await tester.pump();
+    expect(gestureDetector, findsOneWidget);
+  });
 }

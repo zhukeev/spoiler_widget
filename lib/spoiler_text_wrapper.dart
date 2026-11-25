@@ -54,14 +54,8 @@ class _SpoilerTextWrapperState extends State<SpoilerTextWrapper>
     return ListenableBuilder(
       listenable: _spoilerController,
       child: widget.child,
-      builder: (context, child) => GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTapDown: (details) {
-          if (widget.config.enableGestureReveal) {
-            _spoilerController.toggle(details.localPosition);
-          }
-        },
-        child: SpoilerRenderObjectWidget(
+      builder: (context, child) {
+        final spoiler = SpoilerRenderObjectWidget(
           textSelection: widget.config.textSelection,
           onPaint: (canvas, size) {
             if (_spoilerController.isEnabled) {
@@ -82,8 +76,20 @@ class _SpoilerTextWrapperState extends State<SpoilerTextWrapper>
             );
           },
           child: child,
-        ),
-      ),
+        );
+
+        if (widget.config.enableGestureReveal) {
+          return GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTapDown: (details) {
+              _spoilerController.toggle(details.localPosition);
+            },
+            child: spoiler,
+          );
+        }
+
+        return spoiler;
+      },
     );
   }
 }

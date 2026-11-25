@@ -65,36 +65,38 @@ class _SpoilerOverlayState extends State<SpoilerOverlay>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: (details) {
-        if (widget.config.enableGestureReveal) {
+    final content = ListenableBuilder(
+      listenable: _spoilerController,
+      child: widget.child,
+      builder: (context, child) {
+        return SpoilerRenderObjectWidget(
+          onAfterPaint: (canvas, size) => _onPaint(canvas, size),
+          onClipPath: (size) {
+            if (_spoilerController.isEnabled && !_spoilerController.isFading) {
+              return Path()..addRect(Offset.zero & size);
+            }
+
+            return _spoilerController.createClipPath(size);
+          },
+          enableOverlay: true,
+          imageFilter:
+              _spoilerController.isEnabled ? widget.config.imageFilter : null,
+          child: child!,
+        );
+      },
+    );
+
+    if (widget.config.enableGestureReveal) {
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (details) {
           // Toggle the spoiler's visibility state through the controller.
           _spoilerController.toggle(details.localPosition);
-        }
-      },
-      child: ListenableBuilder(
-        listenable: _spoilerController,
-        child: widget.child,
-        builder: (context, child) {
-          return SpoilerRenderObjectWidget(
-            onAfterPaint: (canvas, size) => _onPaint(canvas, size),
-            onClipPath: (size) {
-              if (_spoilerController.isEnabled &&
-                  !_spoilerController.isFading) {
-                return Path()..addRect(Offset.zero & size);
-              }
-
-              return _spoilerController.createClipPath(size);
-            },
-            enableOverlay: true,
-            imageFilter: _spoilerController.isEnabled
-                ? widget.config.imageFilter
-                : null,
-            child: child!,
-          );
         },
-      ),
-    );
+        child: content,
+      );
+    }
+
+    return content;
   }
 }

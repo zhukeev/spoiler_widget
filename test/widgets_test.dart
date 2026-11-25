@@ -39,6 +39,13 @@ void main() {
     await tester.pump();
 
     expect(lastVisibility, isFalse);
+    expect(
+      find.descendant(
+        of: find.byType(SpoilerTextWrapper),
+        matching: find.byType(GestureDetector),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('SpoilerTextWrapper ignores tap when gestures disabled', (
@@ -75,5 +82,12 @@ void main() {
     await tester.pump();
 
     expect(lastVisibility, isNull);
+    expect(
+      find.descendant(
+        of: find.byType(SpoilerTextWrapper),
+        matching: find.byType(GestureDetector),
+      ),
+      findsNothing,
+    );
   });
 }

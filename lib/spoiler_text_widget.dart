@@ -52,31 +52,35 @@ class _SpoilerTextState extends State<SpoilerText>
     return ListenableBuilder(
       listenable: _spoilerController,
       builder: (context, _) {
-        return GestureDetector(
-          onTapDown: (details) {
-            if (widget.config.enableGestureReveal) {
-              // Toggle the spoiler's visibility state through the controller.
-              _spoilerController.toggle(details.localPosition);
+        final painter = SpoilerTextPainter(
+          text: widget.text,
+          textSelection: widget.config.textSelection,
+          textAlign: widget.config.textAlign ?? TextAlign.start,
+          style: widget.config.textStyle,
+          maxLines: widget.config.maxLines,
+          isEllipsis: widget.config.isEllipsis,
+          onPaint: (canvas, size) {
+            if (_spoilerController.isEnabled) {
+              _spoilerController.drawParticles(canvas);
+              canvas.clipPath(
+                _spoilerController.createSplashPathMaskClipper(size),
+              );
             }
           },
-          child: SpoilerTextPainter(
-            text: widget.text,
-            textSelection: widget.config.textSelection,
-            textAlign: widget.config.textAlign ?? TextAlign.start,
-            style: widget.config.textStyle,
-            maxLines: widget.config.maxLines,
-            isEllipsis: widget.config.isEllipsis,
-            onPaint: (canvas, size) {
-              if (_spoilerController.isEnabled) {
-                _spoilerController.drawParticles(canvas);
-                canvas.clipPath(
-                  _spoilerController.createSplashPathMaskClipper(size),
-                );
-              }
-            },
-            onInit: _setSpoilerRegions,
-          ),
+          onInit: _setSpoilerRegions,
         );
+
+        if (widget.config.enableGestureReveal) {
+          return GestureDetector(
+            onTapDown: (details) {
+              // Toggle the spoiler's visibility state through the controller.
+              _spoilerController.toggle(details.localPosition);
+            },
+            child: painter,
+          );
+        }
+
+        return painter;
       },
     );
   }

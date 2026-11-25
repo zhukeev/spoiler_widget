@@ -46,6 +46,13 @@ void main() {
     await tester.pump();
     expect(states, isNotEmpty);
     expect(states.last, isFalse);
+    expect(
+      find.descendant(
+        of: find.byType(SpoilerOverlay),
+        matching: find.byType(GestureDetector),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('SpoilerOverlay ignores taps when gestures are disabled', (
@@ -88,6 +95,13 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('overlay-child')));
     await tester.pump();
     expect(states, isEmpty);
+    expect(
+      find.descendant(
+        of: find.byType(SpoilerOverlay),
+        matching: find.byType(GestureDetector),
+      ),
+      findsNothing,
+    );
   });
 
   testWidgets('SpoilerOverlay enables via tap when disabled', (tester) async {

@@ -25,8 +25,7 @@ class SpoilerTextFieldWrapper extends StatefulWidget {
   final Widget Function(
     BuildContext context,
     EditableTextContextMenuBuilder? contextMenuBuilder,
-  )
-  builder;
+  ) builder;
 
   /// Called with the text selection used to create the spoiler mask.
   final ValueChanged<TextSelection?>? onSelectionChanged;
@@ -107,14 +106,8 @@ class _SpoilerTextFieldWrapperState extends State<SpoilerTextFieldWrapper>
     return ListenableBuilder(
       listenable: _spoilerController,
       child: child,
-      builder: (context, _) => GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTapDown: (details) {
-          if (widget.config.enableGestureReveal) {
-            _spoilerController.toggle(details.localPosition);
-          }
-        },
-        child: SpoilerRenderObjectWidget(
+      builder: (context, _) {
+        final spoiler = SpoilerRenderObjectWidget(
           onPaint: (canvas, size) {
             if (_spoilerController.isEnabled) {
               _spoilerController.drawParticles(canvas);
@@ -135,8 +128,20 @@ class _SpoilerTextFieldWrapperState extends State<SpoilerTextFieldWrapper>
             );
           },
           child: child,
-        ),
-      ),
+        );
+
+        if (widget.config.enableGestureReveal) {
+          return GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTapDown: (details) {
+              _spoilerController.toggle(details.localPosition);
+            },
+            child: spoiler,
+          );
+        }
+
+        return spoiler;
+      },
     );
   }
 }
