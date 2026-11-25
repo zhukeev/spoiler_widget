@@ -11,10 +11,12 @@ class SpoilerTextFieldPage extends StatefulWidget {
 class _SpoilerTextFieldPageState extends State<SpoilerTextFieldPage> {
   final _controller =
       TextEditingController(text: 'This is a spoiler! Tap to reveal');
+  final _focusNode = FocusNode();
 
   @override
   void dispose() {
     _controller.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -33,7 +35,7 @@ class _SpoilerTextFieldPageState extends State<SpoilerTextFieldPage> {
             ),
             builder: (context, contextMenuBuilder) => TextFormField(
               controller: _controller,
-              focusNode: FocusNode(),
+              focusNode: _focusNode,
               contextMenuBuilder: contextMenuBuilder,
               cursorColor: Colors.deepPurple,
               maxLines: 3,
