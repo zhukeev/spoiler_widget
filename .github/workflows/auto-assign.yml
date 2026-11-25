@@ -1,5 +1,8 @@
 name: Auto assign
 
+# pull_request_target is safe here: this workflow never checks out or executes
+# code from the pull request — it only runs a fixed github-script step that
+# adds a hardcoded assignee via the API.
 on:
   issues:
     types: [opened, reopened]
@@ -15,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Add assignee
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           script: |
             const assignees = ['zhukeev'];
