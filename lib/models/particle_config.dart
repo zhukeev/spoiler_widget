@@ -64,12 +64,12 @@ class ParticleConfig {
   });
 
   factory ParticleConfig.defaultConfig() => ParticleConfig(
-    density: 0.1,
-    speed: 0.2,
-    color: Colors.white,
-    maxParticleSize: 1.0,
-    shapePreset: ParticlePathPreset.circle,
-  );
+        density: 0.1,
+        speed: 0.2,
+        color: Colors.white,
+        maxParticleSize: 1.0,
+        shapePreset: ParticlePathPreset.circle,
+      );
 
   double get areaFactor {
     if (shapePreset == null) return 1.0;
@@ -79,15 +79,15 @@ class ParticleConfig {
 
   @override
   int get hashCode => Object.hash(
-    density,
-    speed,
-    color,
-    maxParticleSize,
-    shapePreset,
-    enableWaves,
-    maxWaveRadius,
-    maxWaveCount,
-  );
+        density,
+        speed,
+        color,
+        maxParticleSize,
+        shapePreset,
+        enableWaves,
+        maxWaveRadius,
+        maxWaveCount,
+      );
 
   @override
   bool operator ==(Object other) =>

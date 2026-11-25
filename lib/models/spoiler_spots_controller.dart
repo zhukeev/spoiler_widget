@@ -175,9 +175,8 @@ class SpoilerSpotsController extends SpoilerController {
       );
 
       // If that offset is inside, use it; otherwise revert to waveEndpoint.
-      final finalOffset = current.path.contains(randomOffset)
-          ? randomOffset
-          : waveEndpoint;
+      final finalOffset =
+          current.path.contains(randomOffset) ? randomOffset : waveEndpoint;
 
       affected[current.id] = _WaveParticleBinding(
         index: i,

@@ -193,7 +193,8 @@ class SpoilerCanvas implements Canvas {
     Rect rect, {
     ui.ClipOp clipOp = ui.ClipOp.intersect,
     bool doAntiAlias = true,
-  }) => parent.clipRect(rect, clipOp: clipOp, doAntiAlias: doAntiAlias);
+  }) =>
+      parent.clipRect(rect, clipOp: clipOp, doAntiAlias: doAntiAlias);
   @override
   void clipRRect(RRect rrect, {bool doAntiAlias = true}) =>
       parent.clipRRect(rrect, doAntiAlias: doAntiAlias);
@@ -231,7 +232,8 @@ class SpoilerCanvas implements Canvas {
     double sweepAngle,
     bool useCenter,
     Paint paint,
-  ) => parent.drawArc(rect, startAngle, sweepAngle, useCenter, paint);
+  ) =>
+      parent.drawArc(rect, startAngle, sweepAngle, useCenter, paint);
   @override
   void drawPath(Path path, Paint paint) => parent.drawPath(path, paint);
   @override
@@ -260,15 +262,16 @@ class SpoilerCanvas implements Canvas {
     BlendMode? blendMode,
     Rect? cullRect,
     Paint paint,
-  ) => parent.drawAtlas(
-    atlas,
-    transforms,
-    rects,
-    colors,
-    blendMode,
-    cullRect,
-    paint,
-  );
+  ) =>
+      parent.drawAtlas(
+        atlas,
+        transforms,
+        rects,
+        colors,
+        blendMode,
+        cullRect,
+        paint,
+      );
   @override
   void drawRawAtlas(
     ui.Image atlas,
@@ -278,22 +281,24 @@ class SpoilerCanvas implements Canvas {
     BlendMode? blendMode,
     Rect? cullRect,
     Paint paint,
-  ) => parent.drawRawAtlas(
-    atlas,
-    rstTransforms,
-    rects,
-    colors,
-    blendMode,
-    cullRect,
-    paint,
-  );
+  ) =>
+      parent.drawRawAtlas(
+        atlas,
+        rstTransforms,
+        rects,
+        colors,
+        blendMode,
+        cullRect,
+        paint,
+      );
   @override
   void drawShadow(
     Path path,
     Color color,
     double elevation,
     bool transparentOccluder,
-  ) => parent.drawShadow(path, color, elevation, transparentOccluder);
+  ) =>
+      parent.drawShadow(path, color, elevation, transparentOccluder);
   @override
   void drawRawPoints(ui.PointMode pointMode, Float32List points, Paint paint) =>
       parent.drawRawPoints(pointMode, points, paint);
@@ -302,7 +307,8 @@ class SpoilerCanvas implements Canvas {
   void clipRSuperellipse(
     ui.RSuperellipse rsuperellipse, {
     bool doAntiAlias = true,
-  }) => parent.clipRSuperellipse(rsuperellipse, doAntiAlias: doAntiAlias);
+  }) =>
+      parent.clipRSuperellipse(rsuperellipse, doAntiAlias: doAntiAlias);
 
   @override
   void drawRSuperellipse(ui.RSuperellipse rsuperellipse, ui.Paint paint) =>

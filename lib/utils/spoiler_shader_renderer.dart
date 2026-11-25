@@ -12,8 +12,8 @@ import 'package:flutter/material.dart';
 /// - uSeed (float)
 class SpoilerShaderRenderer {
   SpoilerShaderRenderer._({required ui.FragmentShader shader})
-    : _shader = shader,
-      _paint = Paint()..shader = shader;
+      : _shader = shader,
+        _paint = Paint()..shader = shader;
 
   final ui.FragmentShader _shader;
 

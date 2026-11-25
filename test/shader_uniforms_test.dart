@@ -64,8 +64,7 @@ void main() {
       expect(
         emitted.length,
         declaredFloats,
-        reason:
-            '${entry.key} declares $declaredFloats float uniforms but the '
+        reason: '${entry.key} declares $declaredFloats float uniforms but the '
             'ShaderConfig emits ${emitted.length} values',
       );
     });

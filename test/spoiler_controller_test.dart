@@ -77,16 +77,15 @@ void main() {
   test('falls back to vector when atlas sprite creation fails', () {
     final previousBuilder = debugCircleImageBuilder;
     var buildAttempts = 0;
-    debugCircleImageBuilder =
-        ({
-          required double diameter,
-          required Color color,
-          Path? shapePath,
-          double? rasterDiameter,
-        }) {
-          buildAttempts++;
-          throw StateError('sprite creation failed');
-        };
+    debugCircleImageBuilder = ({
+      required double diameter,
+      required Color color,
+      Path? shapePath,
+      double? rasterDiameter,
+    }) {
+      buildAttempts++;
+      throw StateError('sprite creation failed');
+    };
     addTearDown(() => debugCircleImageBuilder = previousBuilder);
 
     final controller = SpoilerController(vsync: const TestVSync());
@@ -116,19 +115,18 @@ void main() {
 
   test('falls back to vector when atlas draw fails during paint', () {
     final previousAtlasPainter = debugRawAtlasPainter;
-    debugRawAtlasPainter =
-        ({
-          required Canvas canvas,
-          required Image atlas,
-          required Float32List transforms,
-          required Float32List rects,
-          Int32List? colors,
-          BlendMode? blendMode,
-          Rect? cullRect,
-          required Paint paint,
-        }) {
-          throw StateError('atlas draw failed');
-        };
+    debugRawAtlasPainter = ({
+      required Canvas canvas,
+      required Image atlas,
+      required Float32List transforms,
+      required Float32List rects,
+      Int32List? colors,
+      BlendMode? blendMode,
+      Rect? cullRect,
+      required Paint paint,
+    }) {
+      throw StateError('atlas draw failed');
+    };
     addTearDown(() => debugRawAtlasPainter = previousAtlasPainter);
 
     final controller = SpoilerController(vsync: const TestVSync());
@@ -168,16 +166,15 @@ void main() {
   test('vector fallback keeps custom particle shapes drawable', () {
     final previousBuilder = debugCircleImageBuilder;
     var buildAttempts = 0;
-    debugCircleImageBuilder =
-        ({
-          required double diameter,
-          required Color color,
-          Path? shapePath,
-          double? rasterDiameter,
-        }) {
-          buildAttempts++;
-          throw StateError('sprite creation failed');
-        };
+    debugCircleImageBuilder = ({
+      required double diameter,
+      required Color color,
+      Path? shapePath,
+      double? rasterDiameter,
+    }) {
+      buildAttempts++;
+      throw StateError('sprite creation failed');
+    };
     addTearDown(() => debugCircleImageBuilder = previousBuilder);
 
     final controller = SpoilerController(vsync: const TestVSync());
@@ -214,16 +211,15 @@ void main() {
   test('does not retry atlas after atlas is disabled for the controller', () {
     final previousBuilder = debugCircleImageBuilder;
     var buildAttempts = 0;
-    debugCircleImageBuilder =
-        ({
-          required double diameter,
-          required Color color,
-          Path? shapePath,
-          double? rasterDiameter,
-        }) {
-          buildAttempts++;
-          throw StateError('sprite creation failed');
-        };
+    debugCircleImageBuilder = ({
+      required double diameter,
+      required Color color,
+      Path? shapePath,
+      double? rasterDiameter,
+    }) {
+      buildAttempts++;
+      throw StateError('sprite creation failed');
+    };
     addTearDown(() => debugCircleImageBuilder = previousBuilder);
 
     final controller = SpoilerController(vsync: const TestVSync());
@@ -254,16 +250,15 @@ void main() {
     final logs = <String>[];
     var buildAttempts = 0;
     debugSpoilerLogger = logs.add;
-    debugCircleImageBuilder =
-        ({
-          required double diameter,
-          required Color color,
-          Path? shapePath,
-          double? rasterDiameter,
-        }) {
-          buildAttempts++;
-          throw StateError('sprite creation failed');
-        };
+    debugCircleImageBuilder = ({
+      required double diameter,
+      required Color color,
+      Path? shapePath,
+      double? rasterDiameter,
+    }) {
+      buildAttempts++;
+      throw StateError('sprite creation failed');
+    };
     addTearDown(() => debugCircleImageBuilder = previousBuilder);
 
     final controller = SpoilerController(vsync: const TestVSync());
@@ -293,16 +288,15 @@ void main() {
   test('default tiny particles go directly to vector without atlas probe', () {
     final previousBuilder = debugCircleImageBuilder;
     var buildAttempts = 0;
-    debugCircleImageBuilder =
-        ({
-          required double diameter,
-          required Color color,
-          Path? shapePath,
-          double? rasterDiameter,
-        }) {
-          buildAttempts++;
-          throw StateError('atlas probe should not happen');
-        };
+    debugCircleImageBuilder = ({
+      required double diameter,
+      required Color color,
+      Path? shapePath,
+      double? rasterDiameter,
+    }) {
+      buildAttempts++;
+      throw StateError('atlas probe should not happen');
+    };
     addTearDown(() => debugCircleImageBuilder = previousBuilder);
 
     final controller = SpoilerController(vsync: const TestVSync());
@@ -334,16 +328,15 @@ void main() {
   test('repeated tiny-particle reinitialization never probes atlas', () {
     final previousBuilder = debugCircleImageBuilder;
     var buildAttempts = 0;
-    debugCircleImageBuilder =
-        ({
-          required double diameter,
-          required Color color,
-          Path? shapePath,
-          double? rasterDiameter,
-        }) {
-          buildAttempts++;
-          throw StateError('atlas probe should not happen');
-        };
+    debugCircleImageBuilder = ({
+      required double diameter,
+      required Color color,
+      Path? shapePath,
+      double? rasterDiameter,
+    }) {
+      buildAttempts++;
+      throw StateError('atlas probe should not happen');
+    };
     addTearDown(() => debugCircleImageBuilder = previousBuilder);
 
     final controller = SpoilerController(vsync: const TestVSync());
@@ -372,21 +365,20 @@ void main() {
   test('larger particles remain atlas-eligible', () {
     final previousBuilder = debugCircleImageBuilder;
     final seenRasterSizes = <double>[];
-    debugCircleImageBuilder =
-        ({
-          required double diameter,
-          required Color color,
-          Path? shapePath,
-          double? rasterDiameter,
-        }) {
-          seenRasterSizes.add(rasterDiameter ?? diameter);
-          return previousBuilder(
-            diameter: diameter,
-            color: color,
-            shapePath: shapePath,
-            rasterDiameter: rasterDiameter,
-          );
-        };
+    debugCircleImageBuilder = ({
+      required double diameter,
+      required Color color,
+      Path? shapePath,
+      double? rasterDiameter,
+    }) {
+      seenRasterSizes.add(rasterDiameter ?? diameter);
+      return previousBuilder(
+        diameter: diameter,
+        color: color,
+        shapePath: shapePath,
+        rasterDiameter: rasterDiameter,
+      );
+    };
     addTearDown(() => debugCircleImageBuilder = previousBuilder);
 
     final controller = SpoilerController(vsync: const TestVSync());

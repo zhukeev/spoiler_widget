@@ -74,13 +74,13 @@ class RenderSpoiler extends RenderProxyBox {
     TextSelection? textSelection,
     bool enableOverlay = false,
     RenderBox? child,
-  }) : _onPaint = onPaint,
-       _onAfterPaint = onAfterPaint,
-       _onClipPath = onClipPath,
-       _onInit = onInit,
-       _imageFilter = imageFilter,
-       _enableOverlay = enableOverlay,
-       super(child);
+  })  : _onPaint = onPaint,
+        _onAfterPaint = onAfterPaint,
+        _onClipPath = onClipPath,
+        _onInit = onInit,
+        _imageFilter = imageFilter,
+        _enableOverlay = enableOverlay,
+        super(child);
 
   @override
   bool get isRepaintBoundary => true;
@@ -220,8 +220,7 @@ class RenderSpoiler extends RenderProxyBox {
     final visitedOffsets = _cachedVisitedOffsets;
     final selection = _textSelection;
 
-    final shouldRecalculate =
-        _rectsDirty ||
+    final shouldRecalculate = _rectsDirty ||
         _lastSelection != selection ||
         _cachedSelectionRects.isEmpty;
     if (shouldRecalculate) {

@@ -74,23 +74,21 @@ class TextSpoilerConfig extends SpoilerConfig {
     FadeConfig? fadeConfig,
     super.shaderConfig,
   }) : super(
-         particleConfig:
-             particleConfig ??
-             ParticleConfig(
-               density: particleDensity,
-               speed: particleSpeed,
-               color: particleColor,
-               maxParticleSize: maxParticleSize,
-             ),
-         fadeConfig:
-             fadeConfig ??
-             (enableFadeAnimation
-                 ? FadeConfig(
-                     padding: fadeRadius,
-                     edgeThickness: fadeEdgeThickness,
-                   )
-                 : null),
-       );
+          particleConfig: particleConfig ??
+              ParticleConfig(
+                density: particleDensity,
+                speed: particleSpeed,
+                color: particleColor,
+                maxParticleSize: maxParticleSize,
+              ),
+          fadeConfig: fadeConfig ??
+              (enableFadeAnimation
+                  ? FadeConfig(
+                      padding: fadeRadius,
+                      edgeThickness: fadeEdgeThickness,
+                    )
+                  : null),
+        );
 
   @override
   TextSpoilerConfig copyWith({
@@ -121,8 +119,7 @@ class TextSpoilerConfig extends SpoilerConfig {
       maxParticleSize,
     );
 
-    final ParticleConfig nextParticleConfig =
-        particleConfig ??
+    final ParticleConfig nextParticleConfig = particleConfig ??
         (legacyParticleOverrides
             ? mergeLegacyParticleConfig(
                 this.particleConfig,
@@ -139,8 +136,7 @@ class TextSpoilerConfig extends SpoilerConfig {
       fadeEdgeThickness,
     );
 
-    final FadeConfig? nextFadeConfig =
-        fadeConfig ??
+    final FadeConfig? nextFadeConfig = fadeConfig ??
         (legacyFadeOverrides
             ? mergeLegacyFadeConfig(
                 this.fadeConfig,
@@ -169,19 +165,19 @@ class TextSpoilerConfig extends SpoilerConfig {
 
   @override
   int get hashCode => Object.hash(
-    particleConfig,
-    fadeConfig,
-    isEnabled,
-    enableGestureReveal,
-    maskConfig,
-    shaderConfig,
-    onSpoilerVisibilityChanged,
-    textStyle,
-    textSelection,
-    textAlign,
-    maxLines,
-    isEllipsis,
-  );
+        particleConfig,
+        fadeConfig,
+        isEnabled,
+        enableGestureReveal,
+        maskConfig,
+        shaderConfig,
+        onSpoilerVisibilityChanged,
+        textStyle,
+        textSelection,
+        textAlign,
+        maxLines,
+        isEllipsis,
+      );
 
   @override
   bool operator ==(Object other) =>
