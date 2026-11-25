@@ -310,7 +310,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "1.0.26"
+    version: "1.1.0"
   sqflite:
     dependency: transitive
     description:

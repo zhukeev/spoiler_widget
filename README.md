@@ -44,7 +44,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  spoiler_widget: ^1.0.26
+  spoiler_widget: ^1.1.0
 ```
 
 Then run:

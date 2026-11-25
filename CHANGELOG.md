@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.26
+## 1.1.0
 
 * **Correctness:**
   * Fixed `glitch_stripes` shader uniform layout mismatch — uniforms are now built from shared helpers matching each fragment shader's declarations, covered by new contract tests.
