@@ -68,17 +68,20 @@ void main() {
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           SizedBox(
-                              width: 40,
-                              height: 40,
-                              child: ColoredBox(color: Colors.blue)),
+                            width: 40,
+                            height: 40,
+                            child: ColoredBox(color: Colors.blue),
+                          ),
                           SizedBox(
-                              width: 40,
-                              height: 40,
-                              child: ColoredBox(color: Colors.green)),
+                            width: 40,
+                            height: 40,
+                            child: ColoredBox(color: Colors.green),
+                          ),
                           SizedBox(
-                              width: 40,
-                              height: 40,
-                              child: ColoredBox(color: Colors.orange)),
+                            width: 40,
+                            height: 40,
+                            child: ColoredBox(color: Colors.orange),
+                          ),
                         ],
                       ),
                       SizedBox(height: 12),
@@ -132,18 +135,11 @@ void main() {
                   child: Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [
-                          Color(0xFF3A7BD5),
-                          Color(0xFF00D2FF),
-                        ],
+                        colors: [Color(0xFF3A7BD5), Color(0xFF00D2FF)],
                       ),
                     ),
                     child: const Center(
-                      child: Icon(
-                        Icons.star,
-                        size: 48,
-                        color: Colors.white,
-                      ),
+                      child: Icon(Icons.star, size: 48, color: Colors.white),
                     ),
                   ),
                 ),
@@ -246,18 +242,11 @@ void main() {
                   child: Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [
-                          Color(0xFF3A7BD5),
-                          Color(0xFF00D2FF),
-                        ],
+                        colors: [Color(0xFF3A7BD5), Color(0xFF00D2FF)],
                       ),
                     ),
                     child: const Center(
-                      child: Icon(
-                        Icons.star,
-                        size: 48,
-                        color: Colors.white,
-                      ),
+                      child: Icon(Icons.star, size: 48, color: Colors.white),
                     ),
                   ),
                 ),
@@ -409,8 +398,9 @@ void _overrideGoldenTolerance(double tolerance) {
 
 Future<void> _allowShaderLoad(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 16));
-  await tester.binding
-      .runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+  await tester.binding.runAsync(
+    () => Future<void>.delayed(const Duration(milliseconds: 50)),
+  );
   await tester.pump(const Duration(milliseconds: 16));
 }
 
@@ -424,11 +414,11 @@ class _TolerantGoldenFileComparator extends LocalFileComparator {
   _TolerantGoldenFileComparator(
     super.testFile, {
     required double precisionTolerance,
-  })  : assert(
-          0 <= precisionTolerance && precisionTolerance <= 1,
-          'precisionTolerance must be between 0 and 1',
-        ),
-        _precisionTolerance = precisionTolerance;
+  }) : assert(
+         0 <= precisionTolerance && precisionTolerance <= 1,
+         'precisionTolerance must be between 0 and 1',
+       ),
+       _precisionTolerance = precisionTolerance;
 
   final double _precisionTolerance;
 

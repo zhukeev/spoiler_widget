@@ -92,9 +92,7 @@ class SpoilerController extends ChangeNotifier {
   /// Creates a new [SpoilerController].
   ///
   /// [vsync] is the TickerProvider (e.g., your [State] or [SingleTickerProviderStateMixin]).
-  SpoilerController({
-    required TickerProvider vsync,
-  }) : _tickerProvider = vsync {
+  SpoilerController({required TickerProvider vsync}) : _tickerProvider = vsync {
     _initAnimationControllers();
     _drawer = _createDefaultParticleDrawer();
   }
@@ -206,14 +204,19 @@ class SpoilerController extends ChangeNotifier {
   /// [config]: Configuration for speed, density, color, etc.
   /// [rects]: Optional explicit list of rectangles (e.g. for individual words).
   ///          If provided, this is preferred for shader rendering to ensure precise per-rect shapes.
-  void initializeParticles(Path path, SpoilerConfig config,
-      {List<Rect>? rects}) {
+  void initializeParticles(
+    Path path,
+    SpoilerConfig config, {
+    List<Rect>? rects,
+  }) {
     final previousShaderPath = _config.shaderConfig?.customShaderPath;
     final nextShaderPath = config.shaderConfig?.customShaderPath;
 
     // Ensure maxParticleSize is valid
-    assert(config.particleConfig.maxParticleSize >= 1,
-        'maxParticleSize must be >= 1');
+    assert(
+      config.particleConfig.maxParticleSize >= 1,
+      'maxParticleSize must be >= 1',
+    );
     final atlasPolicy = atlasSupportPolicyFor(config.particleConfig);
     _config = config;
     _spoilerRects = rects ?? [];
@@ -226,9 +229,7 @@ class SpoilerController extends ChangeNotifier {
         final newPath = Path.combine(
           config.maskConfig!.maskOperation,
           path,
-          config.maskConfig!.maskPath.shift(
-            config.maskConfig!.offset,
-          ),
+          config.maskConfig!.maskPath.shift(config.maskConfig!.offset),
         );
         _spoilerPath.addPath(newPath, Offset.zero);
       } else {
@@ -259,10 +260,7 @@ class SpoilerController extends ChangeNotifier {
 
     if (_drawer is! ShaderSpoilerDrawer) {
       final particleDrawer = _ensureParticleDrawer();
-      particleDrawer.initializeParticles(
-        paths: subPaths,
-        config: _config,
-      );
+      particleDrawer.initializeParticles(paths: subPaths, config: _config);
       _validateAtlasAvailability(particleDrawer);
     }
 
@@ -386,8 +384,10 @@ class SpoilerController extends ChangeNotifier {
 
     // [_particleCtrl] has a 1s duration, so the value delta is the elapsed
     // time in seconds. Clamp to avoid spiral-of-death jumps after hitches.
-    final dt =
-        (delta * _particleCtrl.duration!.inMicroseconds / 1e6).clamp(0.0, 0.1);
+    final dt = (delta * _particleCtrl.duration!.inMicroseconds / 1e6).clamp(
+      0.0,
+      0.1,
+    );
     _drawer.update(dt);
     notifyListeners();
   }
@@ -449,10 +449,7 @@ class SpoilerController extends ChangeNotifier {
         rethrow;
       }
 
-      final fallbackDrawer = _downgradeAtlasDrawer(
-        error,
-        stackTrace,
-      );
+      final fallbackDrawer = _downgradeAtlasDrawer(error, stackTrace);
       fallbackDrawer.draw(canvas, context);
     }
   }
@@ -523,10 +520,7 @@ class SpoilerController extends ChangeNotifier {
     return drawer;
   }
 
-  void _replaceDrawer(
-    SpoilerDrawer drawer, {
-    required bool disposeCurrent,
-  }) {
+  void _replaceDrawer(SpoilerDrawer drawer, {required bool disposeCurrent}) {
     final previous = _drawer;
     _drawer = drawer;
 
@@ -549,11 +543,7 @@ class SpoilerController extends ChangeNotifier {
     try {
       drawer.ensureSprite();
     } catch (error, stackTrace) {
-      _downgradeAtlasDrawer(
-        error,
-        stackTrace,
-        failedDrawer: drawer,
-      );
+      _downgradeAtlasDrawer(error, stackTrace, failedDrawer: drawer);
     }
   }
 

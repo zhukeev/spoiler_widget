@@ -126,10 +126,7 @@ class _SpoilerTextPainterState extends State<SpoilerTextPainter> {
 
         final (geom, painter) = _layoutCache!;
 
-        final textSize = Size(
-          painter.width,
-          painter.height,
-        );
+        final textSize = Size(painter.width, painter.height);
 
         if (_previousSize != textSize) {
           _previousSize = textSize;

@@ -9,8 +9,9 @@ class SpoilerTextFieldPage extends StatefulWidget {
 }
 
 class _SpoilerTextFieldPageState extends State<SpoilerTextFieldPage> {
-  final _controller =
-      TextEditingController(text: 'This is a spoiler! Tap to reveal');
+  final _controller = TextEditingController(
+    text: 'This is a spoiler! Tap to reveal',
+  );
   final _focusNode = FocusNode();
 
   @override
@@ -29,20 +30,14 @@ class _SpoilerTextFieldPageState extends State<SpoilerTextFieldPage> {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: SpoilerTextFieldWrapper(
-            config: SpoilerConfig(
-              isEnabled: true,
-              enableGestureReveal: true,
-            ),
+            config: SpoilerConfig(isEnabled: true, enableGestureReveal: true),
             builder: (context, contextMenuBuilder) => TextFormField(
               controller: _controller,
               focusNode: _focusNode,
               contextMenuBuilder: contextMenuBuilder,
               cursorColor: Colors.deepPurple,
               maxLines: 3,
-              style: const TextStyle(
-                fontSize: 32,
-                color: Colors.white,
-              ),
+              style: const TextStyle(fontSize: 32, color: Colors.white),
             ),
           ),
         ),

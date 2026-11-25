@@ -23,31 +23,33 @@ void main() {
     expect(rects, isNotEmpty);
   });
 
-  testWidgets('SpoilerRenderObjectWidget reports selection rects for TextField',
-      (tester) async {
-    final controller = TextEditingController(text: 'Hello world');
-    final focusNode = FocusNode();
-    addTearDown(controller.dispose);
-    addTearDown(focusNode.dispose);
+  testWidgets(
+    'SpoilerRenderObjectWidget reports selection rects for TextField',
+    (tester) async {
+      final controller = TextEditingController(text: 'Hello world');
+      final focusNode = FocusNode();
+      addTearDown(controller.dispose);
+      addTearDown(focusNode.dispose);
 
-    List<Rect> rects = const [];
+      List<Rect> rects = const [];
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SpoilerRenderObjectWidget(
-            textSelection: const TextSelection(baseOffset: 0, extentOffset: 5),
-            onInit: (value) => rects = value,
-            child: TextField(
-              controller: controller,
-              focusNode: focusNode,
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SpoilerRenderObjectWidget(
+              textSelection: const TextSelection(
+                baseOffset: 0,
+                extentOffset: 5,
+              ),
+              onInit: (value) => rects = value,
+              child: TextField(controller: controller, focusNode: focusNode),
             ),
           ),
         ),
-      ),
-    );
-    await tester.pump();
+      );
+      await tester.pump();
 
-    expect(rects, isNotEmpty);
-  });
+      expect(rects, isNotEmpty);
+    },
+  );
 }

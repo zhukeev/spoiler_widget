@@ -43,28 +43,30 @@ class WidgetSpoilerConfig extends SpoilerConfig {
     ParticleConfig? particleConfig,
     FadeConfig? fadeConfig,
   }) : super(
-          particleConfig: particleConfig ??
-              ParticleConfig(
-                density: particleDensity,
-                speed: particleSpeed,
-                color: particleColor,
-                maxParticleSize: maxParticleSize,
-              ),
-          fadeConfig: fadeConfig ??
-              (enableFadeAnimation
-                  ? FadeConfig(
-                      padding: fadeRadius,
-                      edgeThickness: fadeEdgeThickness,
-                    )
-                  : null),
-        );
+         particleConfig:
+             particleConfig ??
+             ParticleConfig(
+               density: particleDensity,
+               speed: particleSpeed,
+               color: particleColor,
+               maxParticleSize: maxParticleSize,
+             ),
+         fadeConfig:
+             fadeConfig ??
+             (enableFadeAnimation
+                 ? FadeConfig(
+                     padding: fadeRadius,
+                     edgeThickness: fadeEdgeThickness,
+                   )
+                 : null),
+       );
 
   /// Returns a default configuration for the widget spoiler effect.
   ///
   /// This includes a strong blur effect and other default settings.
   factory WidgetSpoilerConfig.defaultConfig() => WidgetSpoilerConfig(
-        imageFilter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-      );
+    imageFilter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+  );
 
   @override
   WidgetSpoilerConfig copyWith({
@@ -92,7 +94,8 @@ class WidgetSpoilerConfig extends SpoilerConfig {
       maxParticleSize,
     );
 
-    final ParticleConfig nextParticleConfig = particleConfig ??
+    final ParticleConfig nextParticleConfig =
+        particleConfig ??
         (legacyParticleOverrides
             ? mergeLegacyParticleConfig(
                 this.particleConfig,
@@ -109,7 +112,8 @@ class WidgetSpoilerConfig extends SpoilerConfig {
       fadeEdgeThickness,
     );
 
-    final FadeConfig? nextFadeConfig = fadeConfig ??
+    final FadeConfig? nextFadeConfig =
+        fadeConfig ??
         (legacyFadeOverrides
             ? mergeLegacyFadeConfig(
                 this.fadeConfig,
@@ -135,16 +139,16 @@ class WidgetSpoilerConfig extends SpoilerConfig {
 
   @override
   int get hashCode => Object.hash(
-        imageFilter,
-        maxActiveWaves,
-        particleConfig,
-        fadeConfig,
-        isEnabled,
-        enableGestureReveal,
-        maskConfig,
-        onSpoilerVisibilityChanged,
-        shaderConfig,
-      );
+    imageFilter,
+    maxActiveWaves,
+    particleConfig,
+    fadeConfig,
+    isEnabled,
+    enableGestureReveal,
+    maskConfig,
+    onSpoilerVisibilityChanged,
+    shaderConfig,
+  );
 
   @override
   bool operator ==(Object other) =>

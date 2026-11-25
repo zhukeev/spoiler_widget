@@ -11,10 +11,9 @@ import 'package:flutter/material.dart';
 /// - uRect (vec4)
 /// - uSeed (float)
 class SpoilerShaderRenderer {
-  SpoilerShaderRenderer._({
-    required ui.FragmentShader shader,
-  })  : _shader = shader,
-        _paint = Paint()..shader = shader;
+  SpoilerShaderRenderer._({required ui.FragmentShader shader})
+    : _shader = shader,
+      _paint = Paint()..shader = shader;
 
   final ui.FragmentShader _shader;
 
@@ -31,7 +30,8 @@ class SpoilerShaderRenderer {
       return SpoilerShaderRenderer._(shader: shader);
     } catch (e) {
       debugPrint(
-          'SpoilerShaderRenderer: Failed to load shader "$assetPath". Error: $e');
+        'SpoilerShaderRenderer: Failed to load shader "$assetPath". Error: $e',
+      );
       return null;
     }
   }

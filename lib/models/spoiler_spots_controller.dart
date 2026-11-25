@@ -48,9 +48,7 @@ class SpoilerSpotsController extends SpoilerController {
   /// Creates a new wave-enabled spoiler controller.
   ///
   /// [vsync] is required so we can animate wave expansions.
-  SpoilerSpotsController({
-    required super.vsync,
-  });
+  SpoilerSpotsController({required super.vsync});
 
   // ---------------------------------------------------------------------------
   // Initialization
@@ -63,8 +61,11 @@ class SpoilerSpotsController extends SpoilerController {
   /// [configuration] includes fields like [WidgetSpoilerConfig.maxActiveWaves], which limit concurrency.
   /// [rects] optionally provide per-line bounds.
   @override
-  void initializeParticles(Path path, SpoilerConfig configuration,
-      {List<Rect>? rects}) {
+  void initializeParticles(
+    Path path,
+    SpoilerConfig configuration, {
+    List<Rect>? rects,
+  }) {
     if (configuration is WidgetSpoilerConfig) {
       _config = configuration;
     }
@@ -174,8 +175,9 @@ class SpoilerSpotsController extends SpoilerController {
       );
 
       // If that offset is inside, use it; otherwise revert to waveEndpoint.
-      final finalOffset =
-          current.path.contains(randomOffset) ? randomOffset : waveEndpoint;
+      final finalOffset = current.path.contains(randomOffset)
+          ? randomOffset
+          : waveEndpoint;
 
       affected[current.id] = _WaveParticleBinding(
         index: i,
@@ -328,10 +330,7 @@ class _WaveParticleBinding {
   final int index;
   final _ParticleWaveState state;
 
-  const _WaveParticleBinding({
-    required this.index,
-    required this.state,
-  });
+  const _WaveParticleBinding({required this.index, required this.state});
 }
 
 class _ActiveWave {
@@ -341,8 +340,5 @@ class _ActiveWave {
   /// newer wave claims the same particle.
   final Map<int, _WaveParticleBinding> affectedParticles;
 
-  _ActiveWave({
-    required this.controller,
-    required this.affectedParticles,
-  });
+  _ActiveWave({required this.controller, required this.affectedParticles});
 }

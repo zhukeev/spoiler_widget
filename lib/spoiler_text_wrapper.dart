@@ -27,8 +27,9 @@ class SpoilerTextWrapper extends StatefulWidget {
 
 class _SpoilerTextWrapperState extends State<SpoilerTextWrapper>
     with TickerProviderStateMixin {
-  late final SpoilerController _spoilerController =
-      SpoilerController(vsync: this);
+  late final SpoilerController _spoilerController = SpoilerController(
+    vsync: this,
+  );
 
   @override
   void didUpdateWidget(covariant SpoilerTextWrapper oldWidget) {
@@ -74,8 +75,11 @@ class _SpoilerTextWrapperState extends State<SpoilerTextWrapper>
             for (final rect in rects) {
               path.addRect(rect);
             }
-            _spoilerController.initializeParticles(path, widget.config,
-                rects: rects);
+            _spoilerController.initializeParticles(
+              path,
+              widget.config,
+              rects: rects,
+            );
           },
           child: child,
         ),

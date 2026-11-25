@@ -24,10 +24,7 @@ class SpoilerTextWrapperPage extends StatelessWidget {
                 density: .5,
                 speed: .2,
               ),
-              fadeConfig: const FadeConfig(
-                padding: 10,
-                edgeThickness: 20,
-              ),
+              fadeConfig: const FadeConfig(padding: 10, edgeThickness: 20),
               shaderConfig: ShaderConfig.particles(),
             ),
             child: Column(

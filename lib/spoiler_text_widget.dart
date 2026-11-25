@@ -10,11 +10,7 @@ import 'package:spoiler_widget/widgets/spoiler_text_painter.dart';
 /// Deprecated in favor of [SpoilerTextWrapper] for broader text subtree support.
 @Deprecated('Use SpoilerTextWrapper instead')
 class SpoilerText extends StatefulWidget {
-  const SpoilerText({
-    super.key,
-    required this.text,
-    required this.config,
-  });
+  const SpoilerText({super.key, required this.text, required this.config});
 
   final TextSpoilerConfig config;
   final String text;
@@ -25,8 +21,9 @@ class SpoilerText extends StatefulWidget {
 
 class _SpoilerTextState extends State<SpoilerText>
     with TickerProviderStateMixin {
-  late final SpoilerController _spoilerController =
-      SpoilerController(vsync: this);
+  late final SpoilerController _spoilerController = SpoilerController(
+    vsync: this,
+  );
 
   void _setSpoilerRegions(List<Rect> regions) {
     final Path spoilerMaskPath = Path();

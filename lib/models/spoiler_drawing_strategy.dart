@@ -35,11 +35,7 @@ class SpoilerContext {
 ///   efficient batch rendering.
 /// - [vector]: Renders particles as individual vector shapes (paths) without
 ///   using a sprite atlas.
-enum ParticleRenderBackend {
-  shader,
-  atlas,
-  vector,
-}
+enum ParticleRenderBackend { shader, atlas, vector }
 
 class AtlasSupportPolicy {
   const AtlasSupportPolicy({
@@ -67,23 +63,25 @@ AtlasSupportPolicy atlasSupportPolicyFor(ParticleConfig config) {
   );
 }
 
-typedef CircleImageBuilder = CircleImage Function({
-  required double diameter,
-  required ui.Color color,
-  ui.Path? shapePath,
-  double? rasterDiameter,
-});
+typedef CircleImageBuilder =
+    CircleImage Function({
+      required double diameter,
+      required ui.Color color,
+      ui.Path? shapePath,
+      double? rasterDiameter,
+    });
 
-typedef RawAtlasPainter = void Function({
-  required Canvas canvas,
-  required ui.Image atlas,
-  required Float32List transforms,
-  required Float32List rects,
-  Int32List? colors,
-  BlendMode? blendMode,
-  Rect? cullRect,
-  required Paint paint,
-});
+typedef RawAtlasPainter =
+    void Function({
+      required Canvas canvas,
+      required ui.Image atlas,
+      required Float32List transforms,
+      required Float32List rects,
+      Int32List? colors,
+      BlendMode? blendMode,
+      Rect? cullRect,
+      required Paint paint,
+    });
 
 CircleImage _defaultCircleImageBuilder({
   required double diameter,
@@ -136,10 +134,7 @@ abstract class SpoilerDrawer {
 
   void update(double dt);
 
-  void draw(
-    Canvas canvas,
-    SpoilerContext context,
-  );
+  void draw(Canvas canvas, SpoilerContext context);
 
   void dispose();
 }
@@ -195,20 +190,19 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
   }
 
   @override
-  void draw(
-    Canvas canvas,
-    SpoilerContext context,
-  ) {
+  void draw(Canvas canvas, SpoilerContext context) {
     final isFading = context.isFading;
     final fadeRadius = context.fadeRadius;
     final fadeCenter = context.fadeCenter;
     final spoilerBounds = context.spoilerBounds;
     final spoilerRects = context.spoilerRects;
     final config = context.config;
-    final bool isParticleShader =
-        _isParticleShaderPath(config.shaderConfig?.customShaderPath);
-    final CircleImage? sprite =
-        isParticleShader ? _ensureSprite(config.particleConfig) : null;
+    final bool isParticleShader = _isParticleShaderPath(
+      config.shaderConfig?.customShaderPath,
+    );
+    final CircleImage? sprite = isParticleShader
+        ? _ensureSprite(config.particleConfig)
+        : null;
 
     final Rect logicalBounds = spoilerBounds;
 
@@ -216,7 +210,8 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
       canvas.save();
       canvas.clipRect(spoilerBounds);
 
-      final params = config.shaderConfig?.onGetShaderUniforms?.call(
+      final params =
+          config.shaderConfig?.onGetShaderUniforms?.call(
             logicalBounds,
             _shaderTime,
             0.0,
@@ -246,7 +241,8 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
       canvas.save();
       canvas.clipRect(rect);
 
-      final params = config.shaderConfig?.onGetShaderUniforms?.call(
+      final params =
+          config.shaderConfig?.onGetShaderUniforms?.call(
             rect,
             _shaderTime,
             seed,
@@ -286,10 +282,7 @@ int _colorToArgb(Color color) {
 }
 
 class ParticleVisual {
-  const ParticleVisual({
-    required this.scale,
-    required this.color,
-  });
+  const ParticleVisual({required this.scale, required this.color});
 
   final double scale;
   final Color color;
@@ -340,7 +333,8 @@ abstract class ParticleSpoilerDrawer implements SpoilerDrawer {
     for (final path in paths) {
       final rect = path.getBounds();
       final screenArea = rect.width * rect.height;
-      final particleArea = pi *
+      final particleArea =
+          pi *
           pow(config.particleConfig.maxParticleSize * 0.5, 2) *
           config.particleConfig.areaFactor;
 
@@ -421,8 +415,9 @@ abstract class ParticleSpoilerDrawer implements SpoilerDrawer {
       min(particle.dx - bounds.left, bounds.right - particle.dx),
       min(particle.dy - bounds.top, bounds.bottom - particle.dy),
     );
-    final edgeFade =
-        edgeDist <= 0.0 ? 0.0 : smoothstep(0.0, boundaryFadePx, edgeDist);
+    final edgeFade = edgeDist <= 0.0
+        ? 0.0
+        : smoothstep(0.0, boundaryFadePx, edgeDist);
     final particleRadius = max(baseRadius * lifeScale, 0.0001);
     final edgeClamp = (edgeDist / particleRadius).clamp(0.0, 1.0);
     final edgeScale = edgeFade * edgeClamp;
@@ -486,8 +481,10 @@ class AtlasSpoilerDrawer extends ParticleSpoilerDrawer {
   @override
   void onParticlesInitialized() {
     _circleImage = null;
-    _rasterDiameter =
-        max(maxParticleSize.ceilToDouble(), _minAtlasRasterDiameter);
+    _rasterDiameter = max(
+      maxParticleSize.ceilToDouble(),
+      _minAtlasRasterDiameter,
+    );
     _reallocBuffers(particles.length);
   }
 
@@ -509,10 +506,7 @@ class AtlasSpoilerDrawer extends ParticleSpoilerDrawer {
   }
 
   @override
-  void draw(
-    Canvas canvas,
-    SpoilerContext context,
-  ) {
+  void draw(Canvas canvas, SpoilerContext context) {
     final count = particles.length;
     if (count == 0) return;
 
@@ -587,15 +581,13 @@ class VectorSpoilerDrawer extends ParticleSpoilerDrawer {
   @override
   void onParticlesInitialized() {
     final currentShape = shapePath;
-    _shapeMetrics =
-        currentShape == null ? null : fittedPathMetricsFor(currentShape);
+    _shapeMetrics = currentShape == null
+        ? null
+        : fittedPathMetricsFor(currentShape);
   }
 
   @override
-  void draw(
-    Canvas canvas,
-    SpoilerContext context,
-  ) {
+  void draw(Canvas canvas, SpoilerContext context) {
     if (particles.isEmpty) return;
 
     final shape = shapePath;

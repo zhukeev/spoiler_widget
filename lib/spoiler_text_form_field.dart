@@ -25,7 +25,8 @@ class SpoilerTextFieldWrapper extends StatefulWidget {
   final Widget Function(
     BuildContext context,
     EditableTextContextMenuBuilder? contextMenuBuilder,
-  ) builder;
+  )
+  builder;
 
   /// Called with the text selection used to create the spoiler mask.
   final ValueChanged<TextSelection?>? onSelectionChanged;
@@ -37,8 +38,9 @@ class SpoilerTextFieldWrapper extends StatefulWidget {
 
 class _SpoilerTextFieldWrapperState extends State<SpoilerTextFieldWrapper>
     with TickerProviderStateMixin {
-  late final SpoilerController _spoilerController =
-      SpoilerController(vsync: this);
+  late final SpoilerController _spoilerController = SpoilerController(
+    vsync: this,
+  );
 
   TextSelection _spoilerSelection = const TextSelection.collapsed(offset: 0);
 

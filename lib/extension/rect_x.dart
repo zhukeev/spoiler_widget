@@ -23,12 +23,7 @@ extension RectX on Rect {
 
   /// Get the farthest corner from {offset}
   Offset getFarthestPoint(Offset offset) {
-    final corners = [
-      topLeft,
-      topRight,
-      bottomLeft,
-      bottomRight,
-    ];
+    final corners = [topLeft, topRight, bottomLeft, bottomRight];
 
     var farthest = corners.first;
     var maxDistance = (farthest - offset).distanceSquared;

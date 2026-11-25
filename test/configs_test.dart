@@ -81,10 +81,7 @@ void main() {
         color: Colors.green,
         maxParticleSize: 1.0,
       ),
-      fadeConfig: const FadeConfig(
-        padding: 2.0,
-        edgeThickness: 3.0,
-      ),
+      fadeConfig: const FadeConfig(padding: 2.0, edgeThickness: 3.0),
     );
 
     final next = base.copyWith(

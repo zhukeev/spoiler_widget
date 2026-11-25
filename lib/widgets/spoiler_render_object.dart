@@ -48,7 +48,9 @@ class SpoilerRenderObjectWidget extends SingleChildRenderObjectWidget {
 
   @override
   void updateRenderObject(
-      BuildContext context, covariant RenderSpoiler renderObject) {
+    BuildContext context,
+    covariant RenderSpoiler renderObject,
+  ) {
     renderObject
       ..onPaint = onPaint
       ..onAfterPaint = onAfterPaint
@@ -72,13 +74,13 @@ class RenderSpoiler extends RenderProxyBox {
     TextSelection? textSelection,
     bool enableOverlay = false,
     RenderBox? child,
-  })  : _onPaint = onPaint,
-        _onAfterPaint = onAfterPaint,
-        _onClipPath = onClipPath,
-        _onInit = onInit,
-        _imageFilter = imageFilter,
-        _enableOverlay = enableOverlay,
-        super(child);
+  }) : _onPaint = onPaint,
+       _onAfterPaint = onAfterPaint,
+       _onClipPath = onClipPath,
+       _onInit = onInit,
+       _imageFilter = imageFilter,
+       _enableOverlay = enableOverlay,
+       super(child);
 
   @override
   bool get isRepaintBoundary => true;
@@ -88,8 +90,10 @@ class RenderSpoiler extends RenderProxyBox {
 
   final Set<ViewportOffset> _listenedOffsets = <ViewportOffset>{};
 
-  List<RenderEditable> _findRenderEditables(RenderObject root,
-      {Set<ViewportOffset>? offsets}) {
+  List<RenderEditable> _findRenderEditables(
+    RenderObject root, {
+    Set<ViewportOffset>? offsets,
+  }) {
     final out = <RenderEditable>[];
 
     void visit(RenderObject node) {
@@ -216,7 +220,8 @@ class RenderSpoiler extends RenderProxyBox {
     final visitedOffsets = _cachedVisitedOffsets;
     final selection = _textSelection;
 
-    final shouldRecalculate = _rectsDirty ||
+    final shouldRecalculate =
+        _rectsDirty ||
         _lastSelection != selection ||
         _cachedSelectionRects.isEmpty;
     if (shouldRecalculate) {
@@ -245,10 +250,14 @@ class RenderSpoiler extends RenderProxyBox {
 
       if (clipPath != null) {
         context.pushClipPath(
-            needsCompositing, offset, paintBounds.shift(offset), clipPath,
-            (c, o) {
-          _paintOverlayContent(c, o);
-        });
+          needsCompositing,
+          offset,
+          paintBounds.shift(offset),
+          clipPath,
+          (c, o) {
+            _paintOverlayContent(c, o);
+          },
+        );
       } else {
         _paintOverlayContent(context, offset);
       }
@@ -277,10 +286,15 @@ class RenderSpoiler extends RenderProxyBox {
       void paintParticlesIfAny(PaintCallback? callback) {
         if (callback == null) return;
         if (particleClipPath != null) {
-          spoilerContext.pushClipPath(needsCompositing, layerOffset,
-              paintBounds.shift(layerOffset), particleClipPath, (c, o) {
-            _drawParticles(c, o, callback);
-          });
+          spoilerContext.pushClipPath(
+            needsCompositing,
+            layerOffset,
+            paintBounds.shift(layerOffset),
+            particleClipPath,
+            (c, o) {
+              _drawParticles(c, o, callback);
+            },
+          );
         } else {
           _drawParticles(spoilerContext, layerOffset, callback);
         }
@@ -289,10 +303,15 @@ class RenderSpoiler extends RenderProxyBox {
       paintParticlesIfAny(_onPaint);
 
       if (clipPath != null) {
-        spoilerContext.pushClipPath(needsCompositing, layerOffset,
-            paintBounds.shift(layerOffset), clipPath, (c, o) {
-          _paintChildWithFilter(c, o);
-        });
+        spoilerContext.pushClipPath(
+          needsCompositing,
+          layerOffset,
+          paintBounds.shift(layerOffset),
+          clipPath,
+          (c, o) {
+            _paintChildWithFilter(c, o);
+          },
+        );
       } else {
         _paintChildWithFilter(spoilerContext, layerOffset);
       }
@@ -318,8 +337,10 @@ class RenderSpoiler extends RenderProxyBox {
     _drawParticles(context, offset, _onPaint);
 
     if (_imageFilter != null) {
-      context.pushLayer(BackdropFilterLayer(filter: _imageFilter!),
-          (childContext, childOffset) {
+      context.pushLayer(BackdropFilterLayer(filter: _imageFilter!), (
+        childContext,
+        childOffset,
+      ) {
         _drawParticles(childContext, childOffset, _onAfterPaint);
       }, offset);
     } else {
@@ -327,8 +348,11 @@ class RenderSpoiler extends RenderProxyBox {
     }
   }
 
-  void _drawParticles(PaintingContext currentContext, Offset currentOffset,
-      PaintCallback? callback) {
+  void _drawParticles(
+    PaintingContext currentContext,
+    Offset currentOffset,
+    PaintCallback? callback,
+  ) {
     if (callback != null) {
       final canvas = currentContext.canvas;
       canvas.save();
@@ -392,7 +416,9 @@ class RenderSpoiler extends RenderProxyBox {
   }
 
   SpoilerGeometry? _buildEditableGeometry(
-      RenderEditable editable, TextSelection selection) {
+    RenderEditable editable,
+    TextSelection selection,
+  ) {
     final text = editable.plainText;
     if (text.isEmpty) return null;
     return buildSpoilerGeometry(
@@ -404,7 +430,10 @@ class RenderSpoiler extends RenderProxyBox {
   }
 
   List<Rect> _buildParagraphSelectionRects(
-      RenderParagraph paragraph, int start, int end) {
+    RenderParagraph paragraph,
+    int start,
+    int end,
+  ) {
     final text = paragraph.text.toPlainText();
     if (text.isEmpty) return const [];
 
@@ -415,8 +444,10 @@ class RenderSpoiler extends RenderProxyBox {
     final geom = buildSpoilerGeometry(
       layout: RenderParagraphLayoutClient(paragraph),
       text: text,
-      selection:
-          TextSelection(baseOffset: clampedStart, extentOffset: clampedEnd),
+      selection: TextSelection(
+        baseOffset: clampedStart,
+        extentOffset: clampedEnd,
+      ),
       skipWhitespace: true,
     );
     return geom?.rects ?? const [];

@@ -9,30 +9,15 @@ class ParticlePathPreset {
   /// Optional area factor used to normalize density between shapes.
   final double? areaFactor;
 
-  const ParticlePathPreset({
-    required this.path,
-    this.areaFactor,
-  });
+  const ParticlePathPreset({required this.path, this.areaFactor});
 
   /// Creates a preset from a custom [Path].
-  factory ParticlePathPreset.custom(
-    Path path, {
-    double? areaFactor,
-  }) =>
-      ParticlePathPreset(
-        path: path,
-        areaFactor: areaFactor,
-      );
+  factory ParticlePathPreset.custom(Path path, {double? areaFactor}) =>
+      ParticlePathPreset(path: path, areaFactor: areaFactor);
 
   /// Circular particle shape.
   static final ParticlePathPreset circle = ParticlePathPreset(
-    path: Path()
-      ..addOval(
-        Rect.fromCircle(
-          center: Offset.zero,
-          radius: 1.0,
-        ),
-      ),
+    path: Path()..addOval(Rect.fromCircle(center: Offset.zero, radius: 1.0)),
     areaFactor: 1.0,
   );
 

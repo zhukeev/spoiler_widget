@@ -6,11 +6,7 @@ import 'package:spoiler_widget/widgets/spoiler_render_object.dart';
 
 /// Applies a spoiler overlay to any child widget using blur and particles.
 class SpoilerOverlay extends StatefulWidget {
-  const SpoilerOverlay({
-    super.key,
-    required this.child,
-    required this.config,
-  });
+  const SpoilerOverlay({super.key, required this.child, required this.config});
 
   /// The widget to obscure while the spoiler is enabled.
   final Widget child;
@@ -40,7 +36,9 @@ class _SpoilerOverlayState extends State<SpoilerOverlay>
   void _initializeSpoilerBounds(Size size) {
     _spoilerBounds = Rect.fromLTWH(0, 0, size.width, size.height);
     _spoilerController.initializeParticles(
-        Path()..addRect(_spoilerBounds), widget.config);
+      Path()..addRect(_spoilerBounds),
+      widget.config,
+    );
   }
 
   @override
@@ -90,8 +88,9 @@ class _SpoilerOverlayState extends State<SpoilerOverlay>
               return _spoilerController.createClipPath(size);
             },
             enableOverlay: true,
-            imageFilter:
-                _spoilerController.isEnabled ? widget.config.imageFilter : null,
+            imageFilter: _spoilerController.isEnabled
+                ? widget.config.imageFilter
+                : null,
             child: child!,
           );
         },

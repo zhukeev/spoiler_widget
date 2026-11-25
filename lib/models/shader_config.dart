@@ -1,15 +1,16 @@
 part of 'spoiler_configs.dart';
 
 /// Generates the list of float uniforms passed to a fragment shader.
-typedef ShaderCallback = List<double> Function(
-  Rect rect,
-  double time,
-  double seed,
-  Offset fadeCenter,
-  bool isFading,
-  double fadeRadius,
-  SpoilerConfig config,
-);
+typedef ShaderCallback =
+    List<double> Function(
+      Rect rect,
+      double time,
+      double seed,
+      Offset fadeCenter,
+      bool isFading,
+      double fadeRadius,
+      SpoilerConfig config,
+    );
 
 /// Describes a fragment shader and how to build its uniform values.
 @immutable
@@ -147,40 +148,39 @@ class ShaderConfig {
 
   /// Default particle shader with sprite support.
   factory ShaderConfig.particles() => const ShaderConfig(
-        customShaderPath: 'packages/spoiler_widget/shaders/particles.frag',
-        onGetShaderUniforms: _particleUniforms,
-      );
+    customShaderPath: 'packages/spoiler_widget/shaders/particles.frag',
+    onGetShaderUniforms: _particleUniforms,
+  );
 
   /// Soft bokeh-style blur cover shader.
   factory ShaderConfig.bokehCover() => const ShaderConfig(
-        customShaderPath: 'packages/spoiler_widget/shaders/bokeh_cover.frag',
-        onGetShaderUniforms: _baseUniforms,
-      );
+    customShaderPath: 'packages/spoiler_widget/shaders/bokeh_cover.frag',
+    onGetShaderUniforms: _baseUniforms,
+  );
 
   /// Liquid Metal (CC0) warped FBM shader.
   factory ShaderConfig.liquidMetal() => const ShaderConfig(
-        customShaderPath: 'packages/spoiler_widget/shaders/liquid_metal.frag',
-        onGetShaderUniforms: _baseUniforms,
-      );
+    customShaderPath: 'packages/spoiler_widget/shaders/liquid_metal.frag',
+    onGetShaderUniforms: _baseUniforms,
+  );
 
   /// Glitch stripes with RGB splits.
   factory ShaderConfig.glitchStripes() => const ShaderConfig(
-        customShaderPath: 'packages/spoiler_widget/shaders/glitch_stripes.frag',
-        onGetShaderUniforms: _baseUniforms,
-      );
+    customShaderPath: 'packages/spoiler_widget/shaders/glitch_stripes.frag',
+    onGetShaderUniforms: _baseUniforms,
+  );
 
   /// Pixelated mosaic censor blocks.
   factory ShaderConfig.mosaicCensor() => const ShaderConfig(
-        customShaderPath: 'packages/spoiler_widget/shaders/mosaic_censor.frag',
-        onGetShaderUniforms: _baseUniforms,
-      );
+    customShaderPath: 'packages/spoiler_widget/shaders/mosaic_censor.frag',
+    onGetShaderUniforms: _baseUniforms,
+  );
 
   /// Liquid Spectrum (HSV FBM) shader.
   factory ShaderConfig.liquidSpectrum() => const ShaderConfig(
-        customShaderPath:
-            'packages/spoiler_widget/shaders/liquid_spectrum.frag',
-        onGetShaderUniforms: _baseUniforms,
-      );
+    customShaderPath: 'packages/spoiler_widget/shaders/liquid_spectrum.frag',
+    onGetShaderUniforms: _baseUniforms,
+  );
 
   @override
   int get hashCode => Object.hash(customShaderPath, onGetShaderUniforms);

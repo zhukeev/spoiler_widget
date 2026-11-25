@@ -3,10 +3,7 @@ import 'package:spoiler_widget/utils/text_layout_client.dart';
 
 /// Bundles the path and rects that describe a spoiler selection.
 class SpoilerGeometry {
-  SpoilerGeometry({
-    required this.path,
-    required this.rects,
-  });
+  SpoilerGeometry({required this.path, required this.rects});
 
   /// Path representing the spoiler area.
   final Path path;

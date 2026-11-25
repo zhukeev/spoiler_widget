@@ -9,10 +9,7 @@ class FadeConfig {
   /// Thickness of the fade edge band.
   final double edgeThickness;
 
-  const FadeConfig({
-    required this.padding,
-    required this.edgeThickness,
-  });
+  const FadeConfig({required this.padding, required this.edgeThickness});
 
   @override
   int get hashCode => Object.hash(padding, edgeThickness);

@@ -20,8 +20,10 @@ void main() {
       shapePreset: ParticlePathPreset.star,
     );
 
-    expect(config.areaFactor,
-        closeTo(ParticlePathPreset.star.areaFactor!, 0.0001));
+    expect(
+      config.areaFactor,
+      closeTo(ParticlePathPreset.star.areaFactor!, 0.0001),
+    );
   });
 
   test('ParticleConfig areaFactor computes for custom path', () {
@@ -161,13 +163,15 @@ void main() {
     expect(fitted.height, closeTo(3.0, 0.0001));
   });
 
-  test('fittedPathMetrics preserves aspect ratio for non-square custom path',
-      () {
-    final path = Path()..addRect(const Rect.fromLTWH(0, 0, 24, 12));
-    final metrics = fittedPathMetricsFor(path);
+  test(
+    'fittedPathMetrics preserves aspect ratio for non-square custom path',
+    () {
+      final path = Path()..addRect(const Rect.fromLTWH(0, 0, 24, 12));
+      final metrics = fittedPathMetricsFor(path);
 
-    final fitted = metrics.fittedBounds(Offset.zero, 5.0);
-    expect(fitted.width, closeTo(4.0, 0.0001));
-    expect(fitted.height, closeTo(2.0, 0.0001));
-  });
+      final fitted = metrics.fittedBounds(Offset.zero, 5.0);
+      expect(fitted.width, closeTo(4.0, 0.0001));
+      expect(fitted.height, closeTo(2.0, 0.0001));
+    },
+  );
 }

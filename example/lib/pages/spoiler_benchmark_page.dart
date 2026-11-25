@@ -49,8 +49,7 @@ class _SpoilerBenchmarkPageState extends State<SpoilerBenchmarkPage>
           _lastFpsTime = now;
         });
       }
-    })
-      ..start();
+    })..start();
   }
 
   void _initializeController() {
@@ -135,7 +134,9 @@ class _SpoilerBenchmarkPageState extends State<SpoilerBenchmarkPage>
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: _fps > 55
                                 ? Colors.green.withValues(alpha: 0.2)
@@ -170,12 +171,16 @@ class _SpoilerBenchmarkPageState extends State<SpoilerBenchmarkPage>
                       ),
                     ),
                     const SizedBox(height: 8),
-                    _TelemetryRow('Previous Design:',
-                        '$oldListeners (1 per particle per wave)',
-                        labelColor: Colors.redAccent),
                     _TelemetryRow(
-                        'Optimized Design:', '$newListeners (1 per wave total)',
-                        labelColor: Colors.greenAccent),
+                      'Previous Design:',
+                      '$oldListeners (1 per particle per wave)',
+                      labelColor: Colors.redAccent,
+                    ),
+                    _TelemetryRow(
+                      'Optimized Design:',
+                      '$newListeners (1 per wave total)',
+                      labelColor: Colors.greenAccent,
+                    ),
                   ],
                 ),
               ),
@@ -189,8 +194,9 @@ class _SpoilerBenchmarkPageState extends State<SpoilerBenchmarkPage>
                 height: 200,
                 decoration: BoxDecoration(
                   border: Border.all(
-                      color: Colors.cyanAccent.withValues(alpha: 0.5),
-                      width: 2),
+                    color: Colors.cyanAccent.withValues(alpha: 0.5),
+                    width: 2,
+                  ),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: ClipRRect(
@@ -212,8 +218,10 @@ class _SpoilerBenchmarkPageState extends State<SpoilerBenchmarkPage>
                           builder: (context, _) {
                             return SpoilerOverlay(
                               config: WidgetSpoilerConfig(
-                                imageFilter:
-                                    ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                imageFilter: ImageFilter.blur(
+                                  sigmaX: 10,
+                                  sigmaY: 10,
+                                ),
                                 maxActiveWaves: _maxActiveWaves,
                                 isEnabled: true,
                                 enableGestureReveal:
@@ -233,20 +241,25 @@ class _SpoilerBenchmarkPageState extends State<SpoilerBenchmarkPage>
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(Icons.lock,
-                                          size: 48, color: Colors.white54),
+                                      Icon(
+                                        Icons.lock,
+                                        size: 48,
+                                        color: Colors.white54,
+                                      ),
                                       SizedBox(height: 8),
                                       Text(
                                         'Interactive Spoiler',
                                         style: TextStyle(
-                                            color: Colors.white70,
-                                            fontWeight: FontWeight.bold),
+                                          color: Colors.white70,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                       Text(
                                         'Tap to trigger waves',
                                         style: TextStyle(
-                                            color: Colors.white38,
-                                            fontSize: 12),
+                                          color: Colors.white38,
+                                          fontSize: 12,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -288,7 +301,9 @@ class _SpoilerBenchmarkPageState extends State<SpoilerBenchmarkPage>
                     const Text(
                       'Adjust Parameters',
                       style: TextStyle(
-                          color: Colors.white70, fontWeight: FontWeight.bold),
+                        color: Colors.white70,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     _SliderRow(
@@ -351,10 +366,7 @@ class _TelemetryRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(color: labelColor ?? Colors.white70),
-          ),
+          Text(label, style: TextStyle(color: labelColor ?? Colors.white70)),
           Text(
             value,
             style: const TextStyle(
@@ -391,10 +403,14 @@ class _SliderRow extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label,
-                style: const TextStyle(color: Colors.white60, fontSize: 13)),
-            Text(value.toStringAsFixed(2),
-                style: const TextStyle(color: Colors.cyanAccent, fontSize: 13)),
+            Text(
+              label,
+              style: const TextStyle(color: Colors.white60, fontSize: 13),
+            ),
+            Text(
+              value.toStringAsFixed(2),
+              style: const TextStyle(color: Colors.cyanAccent, fontSize: 13),
+            ),
           ],
         ),
         Slider(

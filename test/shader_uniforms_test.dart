@@ -44,8 +44,11 @@ void main() {
   for (final entry in cases.entries) {
     test('ShaderConfig uniforms match ${entry.key}', () {
       final fragFile = File('shaders/${entry.key}');
-      expect(fragFile.existsSync(), isTrue,
-          reason: 'shader asset missing: ${entry.key}');
+      expect(
+        fragFile.existsSync(),
+        isTrue,
+        reason: 'shader asset missing: ${entry.key}',
+      );
 
       final declaredFloats = _floatUniformCount(fragFile.readAsStringSync());
       final emitted = entry.value.onGetShaderUniforms!(
@@ -61,7 +64,8 @@ void main() {
       expect(
         emitted.length,
         declaredFloats,
-        reason: '${entry.key} declares $declaredFloats float uniforms but the '
+        reason:
+            '${entry.key} declares $declaredFloats float uniforms but the '
             'ShaderConfig emits ${emitted.length} values',
       );
     });

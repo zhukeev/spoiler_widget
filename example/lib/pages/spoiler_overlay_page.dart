@@ -4,10 +4,7 @@ import 'package:spoiler_widget/spoiler_widget.dart';
 
 class SpoilerOverlayPage extends StatefulWidget {
   final bool fullPage;
-  const SpoilerOverlayPage({
-    super.key,
-    this.fullPage = false,
-  });
+  const SpoilerOverlayPage({super.key, this.fullPage = false});
 
   @override
   State<SpoilerOverlayPage> createState() => _SpoilerOverlayPageState();
@@ -62,10 +59,11 @@ class _SpoilerOverlayPageState extends State<SpoilerOverlayPage> {
       body: !widget.fullPage
           ? Center(
               child: SizedBox(
-              width: 300,
-              height: 300,
-              child: imageWidget(shaders: true),
-            ))
+                width: 300,
+                height: 300,
+                child: imageWidget(shaders: true),
+              ),
+            )
           : Column(
               children: [
                 Padding(
@@ -85,15 +83,14 @@ class _SpoilerOverlayPageState extends State<SpoilerOverlayPage> {
                   ),
                 ),
                 Expanded(
-                    child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: fullWidget(shaders: true),
-                    ),
-                    if (divided) Expanded(child: fullWidget()),
-                  ],
-                )),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(child: fullWidget(shaders: true)),
+                      if (divided) Expanded(child: fullWidget()),
+                    ],
+                  ),
+                ),
               ],
             ),
     );

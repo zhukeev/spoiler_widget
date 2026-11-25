@@ -36,8 +36,10 @@ class _DemoListPage extends StatelessWidget {
       _DemoEntry('SpoilerTextField', () => const SpoilerTextFieldPage()),
       _DemoEntry('SpoilerTextWrapper', () => const SpoilerTextWrapperPage()),
       _DemoEntry('SpoilerOverlay', () => const SpoilerOverlayPage()),
-      _DemoEntry('SpoilerOverlay Full',
-          () => const SpoilerOverlayPage(fullPage: true)),
+      _DemoEntry(
+        'SpoilerOverlay Full',
+        () => const SpoilerOverlayPage(fullPage: true),
+      ),
       _DemoEntry('Performance Benchmark', () => const SpoilerBenchmarkPage()),
     ];
 
@@ -53,9 +55,9 @@ class _DemoListPage extends StatelessWidget {
             title: Text(demo.title),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => demo.builder()),
-              );
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => demo.builder()));
             },
           );
         },
