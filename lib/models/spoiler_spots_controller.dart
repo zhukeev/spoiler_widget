@@ -42,23 +42,15 @@ class SpoilerSpotsController extends SpoilerController {
   /// Count of waves currently animating. Used to avoid exceeding [WidgetSpoilerConfig.maxActiveWaves].
   int _runningWavesCount = 0;
 
-  /// [TickerProvider] for creating wave animation controllers.
-  final TickerProvider _vsync;
-
   /// Holds wave-related config (maxActiveWaves, fade options, etc.).
   WidgetSpoilerConfig _config = WidgetSpoilerConfig.defaultConfig();
-
-  // ---------------------------------------------------------------------------
-  // Constructor
-  // ---------------------------------------------------------------------------
 
   /// Creates a new wave-enabled spoiler controller.
   ///
   /// [vsync] is required so we can animate wave expansions.
   SpoilerSpotsController({
-    required TickerProvider vsync,
-  })  : _vsync = vsync,
-        super(vsync: vsync);
+    required super.vsync,
+  });
 
   // ---------------------------------------------------------------------------
   // Initialization
@@ -204,7 +196,7 @@ class SpoilerSpotsController extends SpoilerController {
     // Create a dedicated controller for this wave
     final waveCtrl = AnimationController(
       duration: const Duration(seconds: 3),
-      vsync: _vsync,
+      vsync: tickerProvider,
     );
     final activeWave = _ActiveWave(
       controller: waveCtrl,

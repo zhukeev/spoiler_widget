@@ -126,6 +126,11 @@ class SpoilerController extends ChangeNotifier {
   @protected
   List<Particle> get particles => _drawer.particles;
 
+  /// The [TickerProvider] passed to the constructor, exposed for subclasses
+  /// that run their own animations (e.g. [SpoilerSpotsController] waves).
+  @protected
+  TickerProvider get tickerProvider => _tickerProvider;
+
   /// True if the spoiler effect is currently on (particles + fade).
   bool get isEnabled => _isEnabled;
 
