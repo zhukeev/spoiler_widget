@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.0.26
+
+* **Correctness:**
+  * Fixed `glitch_stripes` shader uniform layout mismatch — uniforms are now built from shared helpers matching each fragment shader's declarations, covered by new contract tests.
+  * Particle animation now uses real elapsed time instead of a hardcoded frame step, fixing half-speed motion on high-refresh-rate displays.
+  * Fixed `SpoilerSpotsController.toggle` returning the wrong success value.
+  * Fixed config `copyWith` silently dropping `enableWaves`, `maxWaveRadius`, and `maxWaveCount`.
+* **Performance:**
+  * Render-subtree scans are cached between layouts instead of walking the child subtree twice per frame.
+  * Wave animations use one listener per wave instead of one per particle per wave.
+  * Removed per-frame `Random`, `Paint`, and `TextPainter` allocations; added `debugRandomSeed` for deterministic tests.
+* **API:**
+  * `SpoilerController`, `SpoilerSpotsController`, and `ParticleRenderBackend` are now exported from `spoiler_widget.dart` for programmatic control.
+  * `GestureDetector` is skipped entirely when `enableGestureReveal` is false.
+* **Requirements:**
+  * Minimum Flutter version raised to 3.32 (Dart 3.8).
+* **Docs & CI:**
+  * Rewrote the outdated `SpoilerTextFieldWrapper` README example and documented programmatic control.
+  * Pinned CI actions to commit SHAs; added `repository` field and tightened example dependencies.
+
 ## 1.0.25
 
 * **Platform Support:**
