@@ -6,6 +6,9 @@ import 'dart:ui' show Color, Offset, Path;
 /// This class is used to represent a single particle in the particle system.
 /// It contains the position, size, color, life, speed, angle, and rect of the particle.
 class Particle extends Offset {
+  /// Unique identifier for tracking particles across updates.
+  final int id;
+
   /// The size of the particle.
   final double size;
 
@@ -25,6 +28,7 @@ class Particle extends Offset {
   final Path path;
 
   const Particle(
+    this.id,
     super.dx,
     super.dy,
     this.size,
@@ -35,8 +39,12 @@ class Particle extends Offset {
     this.path,
   );
 
+  static int _nextId = 0;
+  static int generateId() => _nextId++;
+
   /// Copy the particle with new values
   Particle copyWith({
+    int? id,
     double? dx,
     double? dy,
     double? size,
@@ -47,6 +55,7 @@ class Particle extends Offset {
     Path? path,
   }) {
     return Particle(
+      id ?? this.id,
       dx ?? this.dx,
       dy ?? this.dy,
       size ?? this.size,
@@ -62,20 +71,26 @@ class Particle extends Offset {
   ///
   /// This method is used to move the particle.
   /// It calculates the next position of the particle based on the current position, speed, and angle.
-  Particle moveToRandomAngle() {
-    return moveWithAngle(angle).copyWith(
+  ///
+  /// [random] supplies the jitter source (defaults to a new [Random]).
+  /// [step] scales the per-frame motion and life decay; `1.0` matches the
+  /// historical 60 fps frame unit.
+  Particle moveToRandomAngle([Random? random, double step = 1.0]) {
+    final rng = random ?? Random();
+    return moveWithAngle(angle, step: step).copyWith(
       // Random angle
-      angle: angle + (Random().nextDouble() - 0.5),
+      angle: angle + (rng.nextDouble() - 0.5) * step,
     );
   }
 
   /// Move the particle
   ///
   /// This method is used to move the particle to given angle.
-  Particle moveWithAngle(double angle) {
-    final next = this + Offset.fromDirection(angle, speed);
+  /// [step] scales distance travelled and life decay per call.
+  Particle moveWithAngle(double angle, {double step = 1.0}) {
+    final next = this + Offset.fromDirection(angle, speed * step);
 
-    final lifetime = life - 0.01;
+    final lifetime = life - 0.01 * step;
 
     final color = this.color.withValues(alpha: lifetime.clamp(0, 1));
 

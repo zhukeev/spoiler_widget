@@ -26,13 +26,16 @@ extension PathX on Path {
   /// inefficient for complex or thin paths where finding an inside point takes
   /// multiple iterations.
   ///
+  /// [random] optionally supplies the random source so callers can share a
+  /// single [Random] instance across many lookups.
+  ///
   /// **Returns:** A randomly selected [Offset] that lies within the path.
-  Offset getRandomPoint() {
-    final random = Random();
+  Offset getRandomPoint([Random? random]) {
+    final rng = random ?? Random();
     final boundingBox = getBounds();
     while (true) {
-      final x = boundingBox.left + random.nextDouble() * boundingBox.width;
-      final y = boundingBox.top + random.nextDouble() * boundingBox.height;
+      final x = boundingBox.left + rng.nextDouble() * boundingBox.width;
+      final y = boundingBox.top + rng.nextDouble() * boundingBox.height;
       final randomPoint = Offset(x, y);
 
       // Check if the point is inside the path

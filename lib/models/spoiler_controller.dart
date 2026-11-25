@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:spoiler_widget/extension/path_x.dart';
+import 'package:spoiler_widget/extension/rect_x.dart';
+import 'package:spoiler_widget/models/particle.dart';
 import 'package:spoiler_widget/models/spoiler_configs.dart';
 import 'package:spoiler_widget/models/spoiler_drawing_strategy.dart';
-
-import '../extension/rect_x.dart';
-import '../models/particle.dart';
 
 typedef SpoilerLogCallback = void Function(String message);
 
@@ -73,11 +72,6 @@ class SpoilerController extends ChangeNotifier {
   /// A Path describing the spoiler region (may be multiple rectangles).
   final Path _spoilerPath = Path();
 
-  /// Cached list of sub-paths (individual text blocks) for per-rect shader rendering.
-  // TODO: Deprecate/remove if _spoilerRects replaces this completely.
-  // Keeping for fallback or if Path based logic is needed elsewhere.
-  List<Path> _encapsulatedPaths = [];
-
   /// Explicit list of rectangles for per-rect shader rendering.
   List<Rect> _spoilerRects = [];
 
@@ -111,9 +105,16 @@ class SpoilerController extends ChangeNotifier {
   /// True if the active drawer has content to render.
   bool get isInitialized => _drawer.hasContent;
 
+  /// The active particle rendering backend (shader, atlas, or vector).
+  ParticleRenderBackend get renderBackend => _particleRenderBackend;
+
+  /// Number of particles currently managed by the drawer.
+  ///
+  /// Returns 0 when a procedural shader backend is active.
+  int get particleCount => _drawer.particles.length;
+
   @visibleForTesting
-  ParticleRenderBackend get debugParticleRenderBackend =>
-      _particleRenderBackend;
+  ParticleRenderBackend get debugParticleRenderBackend => renderBackend;
 
   @visibleForTesting
   bool get debugAtlasUnavailable => _atlasUnavailable;
@@ -231,12 +232,14 @@ class SpoilerController extends ChangeNotifier {
       _spoilerBounds = _spoilerPath.getBounds();
     }
 
-    // If rects weren't provided, try to approximate them from path bounds
+    // Materialize sub-paths once — each subPaths iteration re-extracts
+    // paths via computeMetrics, so iterating the lazy iterable repeatedly
+    // would redo that work per consumer.
+    final subPaths = _spoilerPath.subPaths.toList();
+
+    // If rects weren't provided, approximate them from sub-path bounds.
     if (_spoilerRects.isEmpty) {
-      // Fallback: use subPaths derived rects
-      final subPaths = _spoilerPath.subPaths;
-      _encapsulatedPaths = subPaths.toList();
-      _spoilerRects = _encapsulatedPaths.map((p) => p.getBounds()).toList();
+      _spoilerRects = subPaths.map((p) => p.getBounds()).toList();
     }
 
     _initFadeIfNeeded();
@@ -248,10 +251,6 @@ class SpoilerController extends ChangeNotifier {
         _replaceDrawer(_createDefaultParticleDrawer(), disposeCurrent: true);
       }
     }
-
-    // Ensure we are using Atlas drawer initially or if config changes
-    final subPaths = _spoilerPath.subPaths;
-    _encapsulatedPaths = subPaths.toList();
 
     if (_drawer is! ShaderSpoilerDrawer) {
       final particleDrawer = _ensureParticleDrawer();
@@ -367,9 +366,24 @@ class SpoilerController extends ChangeNotifier {
     }
   }
 
+  /// Tracks the last seen [_particleCtrl] value so frame deltas can be
+  /// converted into real elapsed seconds regardless of display refresh rate.
+  double _lastParticleValue = 0.0;
+
   /// Called each frame (via [_particleCtrl]) to move or re-spawn particles.
   void _onParticleFrameTick() {
-    _drawer.update(0.016); // ~60fps increment
+    final value = _particleCtrl.value;
+    var delta = value - _lastParticleValue;
+    if (delta < 0) {
+      delta += 1.0; // wrap-around when repeat() restarts the cycle
+    }
+    _lastParticleValue = value;
+
+    // [_particleCtrl] has a 1s duration, so the value delta is the elapsed
+    // time in seconds. Clamp to avoid spiral-of-death jumps after hitches.
+    final dt =
+        (delta * _particleCtrl.duration!.inMicroseconds / 1e6).clamp(0.0, 0.1);
+    _drawer.update(dt);
     notifyListeners();
   }
 

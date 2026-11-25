@@ -21,23 +21,6 @@ extension RectX on Rect {
         right >= offset.dx;
   }
 
-  /// Splits the rect into four equal quadrants.
-  (Rect, Rect, Rect, Rect) divideRect() {
-    final halfWidth = width / 2;
-    final halfHeight = height / 2;
-
-    final topLeft =
-        Rect.fromLTRB(left, top, left + halfWidth, top + halfHeight);
-    final topRight =
-        Rect.fromLTRB(left + halfWidth, top, right, top + halfHeight);
-    final bottomLeft =
-        Rect.fromLTRB(left, top + halfHeight, left + halfWidth, bottom);
-    final bottomRight =
-        Rect.fromLTRB(left + halfWidth, top + halfHeight, right, bottom);
-
-    return (topLeft, topRight, bottomLeft, bottomRight);
-  }
-
   /// Get the farthest corner from {offset}
   Offset getFarthestPoint(Offset offset) {
     final corners = [
@@ -74,15 +57,19 @@ extension RectX on Rect {
   }
 
   /// Get random offset inside the rectangle
-  Offset randomOffset() {
+  ///
+  /// [random] optionally supplies the random source so callers can share a
+  /// single [Random] instance across many lookups.
+  Offset randomOffset([Random? random]) {
+    final rng = random ?? Random();
     final maxX = (width + left);
     final minX = left;
     final maxY = (height + top);
     final minY = top;
 
     return Offset(
-      minX + (Random().nextDouble() * (maxX - minX)),
-      minY + (Random().nextDouble() * (maxY - minY)),
+      minX + (rng.nextDouble() * (maxX - minX)),
+      minY + (rng.nextDouble() * (maxY - minY)),
     );
   }
 }

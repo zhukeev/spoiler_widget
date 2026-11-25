@@ -73,4 +73,17 @@ class ParticlePathPreset {
     path.close();
     return path;
   }
+
+  @override
+  int get hashCode => Object.hash(path, areaFactor);
+
+  /// Paths have no value equality, so [path] is compared by identity.
+  /// Two presets built from the same [Path] instance are equal; presets
+  /// built from different (even identical-looking) paths are not.
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ParticlePathPreset &&
+          path == other.path &&
+          areaFactor == other.areaFactor;
 }

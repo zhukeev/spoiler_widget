@@ -3,8 +3,10 @@ import 'dart:math';
 
 import 'package:flutter/widgets.dart';
 import 'package:spoiler_widget/extension/rect_x.dart';
+import 'package:spoiler_widget/models/spoiler_configs.dart';
 import 'package:spoiler_widget/models/spoiler_controller.dart';
-import 'package:spoiler_widget/spoiler_widget.dart';
+import 'package:spoiler_widget/models/spoiler_drawing_strategy.dart';
+import 'package:spoiler_widget/models/widget_spoiler_config.dart';
 
 /// A specialized [SpoilerController] that adds "wave" animations to the spoiler particles.
 ///
@@ -25,7 +27,7 @@ class SpoilerSpotsController extends SpoilerController {
   // ---------------------------------------------------------------------------
 
   /// Random generator for wave timings, offsets, radii, etc.
-  final Random _random = Random();
+  final Random _random = Random(ParticleSpoilerDrawer.debugRandomSeed);
 
   /// Fires every second, triggering multiple wave schedules.
   Timer? _periodicWaveTimer;
@@ -34,8 +36,8 @@ class SpoilerSpotsController extends SpoilerController {
   /// (We spawn 3 random delays each second, each triggers a wave.)
   final List<Timer> _delayedWaveTimers = [];
 
-  /// One [AnimationController] per active wave, disposed upon wave completion.
-  final List<AnimationController> _activeWaveControllers = [];
+  /// Active waves with their associated animation controller and affected particle states.
+  final List<_ActiveWave> _activeWaves = [];
 
   /// Count of waves currently animating. Used to avoid exceeding [WidgetSpoilerConfig.maxActiveWaves].
   int _runningWavesCount = 0;
@@ -127,26 +129,18 @@ class SpoilerSpotsController extends SpoilerController {
 
     // Determine wave radius
     final maxRadius = spoilerBounds.shortestSide ~/ 4;
-    if (maxRadius == 0) return;
-    final waveRadius = _random.nextInt(maxRadius);
+    if (maxRadius == 0) {
+      _runningWavesCount--;
+      return;
+    }
+    final waveRadius = _random.nextInt(maxRadius).toDouble();
 
     // Pick a random wave origin
-    final waveOrigin = spoilerBounds.randomOffset();
+    final waveOrigin = spoilerBounds.randomOffset(_random);
 
-    // Create a dedicated controller for this wave
-    final waveCtrl = AnimationController(
-      duration: const Duration(seconds: 3),
-      vsync: _vsync,
-    );
-    _activeWaveControllers.add(waveCtrl);
-
-    final anim = CurvedAnimation(
-      parent: waveCtrl,
-      curve: Curves.easeInOutCubic,
-    );
-
-    // Animate each particle within waveRadius
+    final Map<int, _WaveParticleBinding> affected = {};
     const margin = 10.0;
+
     for (int i = 0; i < particles.length; i++) {
       final current = particles[i];
       final distVec = waveOrigin - current;
@@ -155,8 +149,11 @@ class SpoilerSpotsController extends SpoilerController {
       // If beyond waveRadius, skip
       if (dist >= waveRadius) continue;
 
+      // Remove this particle from any other active wave's affected list to resolve animation conflicts.
+      _removeParticleFromOtherWaves(current.id);
+
       // Move the particle outward from wave origin.
-      final direction = distVec / dist;
+      final direction = distVec / (dist > 0.0 ? dist : 1.0);
 
       final adjustedEnd = current.translate(
         -(waveRadius - dist) * direction.dx,
@@ -188,36 +185,75 @@ class SpoilerSpotsController extends SpoilerController {
       final finalOffset =
           current.path.contains(randomOffset) ? randomOffset : waveEndpoint;
 
-      // Build a two-phase tween: (current -> waveEndpoint -> finalOffset)
-      final offsetTween = TweenSequence<Offset>([
-        TweenSequenceItem(
-          tween: Tween(begin: current, end: waveEndpoint),
-          weight: 50,
+      affected[current.id] = _WaveParticleBinding(
+        index: i,
+        state: _ParticleWaveState(
+          start: current,
+          mid: waveEndpoint,
+          end: finalOffset,
         ),
-        TweenSequenceItem(
-          tween: Tween(begin: waveEndpoint, end: finalOffset),
-          weight: 50,
-        ),
-      ]).animate(anim);
-
-      // Update the particle's position on each frame
-      offsetTween.addListener(() {
-        if (!isEnabled || particles.isEmpty || i >= particles.length) return;
-        // Because i might be out of range if particles changed, be mindful in real code
-        particles[i] = current.copyWith(
-          dx: offsetTween.value.dx,
-          dy: offsetTween.value.dy,
-        );
-      });
+      );
     }
+
+    // If no particles are affected, we don't need to run a wave animation.
+    if (affected.isEmpty) {
+      _runningWavesCount--;
+      return;
+    }
+
+    // Create a dedicated controller for this wave
+    final waveCtrl = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: _vsync,
+    );
+    final activeWave = _ActiveWave(
+      controller: waveCtrl,
+      affectedParticles: affected,
+    );
+    _activeWaves.add(activeWave);
+
+    final anim = CurvedAnimation(
+      parent: waveCtrl,
+      curve: Curves.easeInOutCubic,
+    );
+
+    // Update affected particles' positions in a single listener.
+    // Only bound particles are touched — O(affected) per wave per frame
+    // instead of O(total particles). The id check guards against the
+    // particle list being rebuilt mid-wave (re-init).
+    anim.addListener(() {
+      if (!isEnabled || particles.isEmpty) return;
+
+      for (final entry in activeWave.affectedParticles.entries) {
+        final binding = entry.value;
+        final index = binding.index;
+        if (index >= particles.length || particles[index].id != entry.key) {
+          continue;
+        }
+        final nextPos = binding.state.getPositionAt(anim.value);
+        particles[index] = particles[index].copyWith(
+          dx: nextPos.dx,
+          dy: nextPos.dy,
+        );
+      }
+    });
 
     // Start the wave, and when it's complete, clean up
     waveCtrl.forward().whenComplete(() {
       waveCtrl.dispose();
-      _activeWaveControllers.remove(waveCtrl);
+      _activeWaves.remove(activeWave);
       _runningWavesCount--;
     });
   }
+
+  void _removeParticleFromOtherWaves(int particleId) {
+    for (final wave in _activeWaves) {
+      wave.affectedParticles.remove(particleId);
+    }
+  }
+
+  /// Returns the number of currently active wave animations.
+  int get activeWavesCount => _activeWaves.length;
 
   // ---------------------------------------------------------------------------
   // Override: Toggle Behavior
@@ -238,7 +274,7 @@ class SpoilerSpotsController extends SpoilerController {
     } else {
       _cancelAllWaveActivities();
     }
-    return isEnabled;
+    return true;
   }
 
   // ---------------------------------------------------------------------------
@@ -260,10 +296,10 @@ class SpoilerSpotsController extends SpoilerController {
     _delayedWaveTimers.clear();
 
     // Dispose any in-progress wave animations
-    for (final ctrl in _activeWaveControllers) {
-      ctrl.dispose();
+    for (final wave in _activeWaves) {
+      wave.controller.dispose();
     }
-    _activeWaveControllers.clear();
+    _activeWaves.clear();
 
     _runningWavesCount = 0;
   }
@@ -274,4 +310,47 @@ class SpoilerSpotsController extends SpoilerController {
     _cancelAllWaveActivities();
     super.dispose();
   }
+}
+
+class _ParticleWaveState {
+  final Offset start;
+  final Offset mid;
+  final Offset end;
+
+  _ParticleWaveState({
+    required this.start,
+    required this.mid,
+    required this.end,
+  });
+
+  Offset getPositionAt(double t) {
+    if (t < 0.5) {
+      return Offset.lerp(start, mid, t * 2.0)!;
+    }
+    return Offset.lerp(mid, end, (t - 0.5) * 2.0)!;
+  }
+}
+
+class _WaveParticleBinding {
+  /// Index into the controller's particle list, captured at wave launch.
+  final int index;
+  final _ParticleWaveState state;
+
+  const _WaveParticleBinding({
+    required this.index,
+    required this.state,
+  });
+}
+
+class _ActiveWave {
+  final AnimationController controller;
+
+  /// Particle id -> binding. Entries may be removed mid-flight when a
+  /// newer wave claims the same particle.
+  final Map<int, _WaveParticleBinding> affectedParticles;
+
+  _ActiveWave({
+    required this.controller,
+    required this.affectedParticles,
+  });
 }

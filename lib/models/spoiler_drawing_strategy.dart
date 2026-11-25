@@ -28,6 +28,13 @@ class SpoilerContext {
   final SpoilerConfig config;
 }
 
+/// Backend strategies for particle rendering:
+/// - [shader]: Uses a custom GLSL fragment shader (e.g., 'particles.frag')
+///   to generate particle effects procedurally.
+/// - [atlas]: Uses a pre-rendered sprite atlas (array of circle images) for
+///   efficient batch rendering.
+/// - [vector]: Renders particles as individual vector shapes (paths) without
+///   using a sprite atlas.
 enum ParticleRenderBackend {
   shader,
   atlas,
@@ -209,17 +216,16 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
       canvas.save();
       canvas.clipRect(spoilerBounds);
 
-      final params = (config.shaderConfig?.onGetShaderUniforms?.call(
-                logicalBounds,
-                _shaderTime,
-                0.0,
-                fadeCenter,
-                isFading,
-                fadeRadius,
-                config,
-              ) ??
-              <double>[])
-          .toList();
+      final params = config.shaderConfig?.onGetShaderUniforms?.call(
+            logicalBounds,
+            _shaderTime,
+            0.0,
+            fadeCenter,
+            isFading,
+            fadeRadius,
+            config,
+          ) ??
+          const <double>[];
 
       _renderer.render(
         canvas,
@@ -240,17 +246,16 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
       canvas.save();
       canvas.clipRect(rect);
 
-      final params = (config.shaderConfig?.onGetShaderUniforms?.call(
-                rect,
-                _shaderTime,
-                seed,
-                fadeCenter,
-                isFading,
-                fadeRadius,
-                config,
-              ) ??
-              <double>[])
-          .toList();
+      final params = config.shaderConfig?.onGetShaderUniforms?.call(
+            rect,
+            _shaderTime,
+            seed,
+            fadeCenter,
+            isFading,
+            fadeRadius,
+            config,
+          ) ??
+          const <double>[];
 
       _renderer.render(
         canvas,
@@ -293,7 +298,13 @@ class ParticleVisual {
 abstract class ParticleSpoilerDrawer implements SpoilerDrawer {
   static const double lifeSizeMin = 0.6;
 
-  final Random _random = Random();
+  /// Optional fixed seed for the particle random source.
+  ///
+  /// Set this in tests for reproducible particle layouts (e.g. golden
+  /// images). Leave null in production for nondeterministic placement.
+  static int? debugRandomSeed;
+
+  final Random _random = Random(debugRandomSeed);
   final List<Particle> _particles = [];
 
   double _maxParticleSize = 1.0;
@@ -364,17 +375,21 @@ abstract class ParticleSpoilerDrawer implements SpoilerDrawer {
   void update(double dt) {
     if (_particles.isEmpty) return;
 
+    // dt is elapsed seconds; normalize to 60 fps frame units so particle
+    // motion and life decay stay frame-rate independent.
+    final step = dt * 60.0;
     for (int i = 0; i < _particles.length; i++) {
       final p = _particles[i];
       _particles[i] = (p.life <= 0.1)
           ? _createRandomParticlePath(p.path)
-          : p.moveToRandomAngle();
+          : p.moveToRandomAngle(_random, step);
     }
   }
 
   Particle _createRandomParticlePath(Path path) {
-    final offset = path.getRandomPoint();
+    final offset = path.getRandomPoint(_random);
     return Particle(
+      Particle.generateId(),
       offset.dx,
       offset.dy,
       _maxParticleSize,

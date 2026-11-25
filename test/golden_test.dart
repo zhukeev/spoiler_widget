@@ -4,6 +4,7 @@ import 'dart:ui' show ImageFilter, Path, Rect;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spoiler_widget/models/spoiler_configs.dart';
+import 'package:spoiler_widget/models/spoiler_drawing_strategy.dart';
 import 'package:spoiler_widget/models/text_spoiler_configs.dart';
 import 'package:spoiler_widget/models/widget_spoiler_config.dart';
 import 'package:spoiler_widget/spoiler_overlay_widget.dart';
@@ -15,6 +16,8 @@ void main() {
   const double precisionTolerance = 0.03;
 
   setUpAll(() {
+    // Deterministic particle placement for stable golden images.
+    ParticleSpoilerDrawer.debugRandomSeed = 0;
     previousComparator = goldenFileComparator;
     goldenFileComparator = _TolerantGoldenFileComparator(
       Uri.parse('test/golden_test.dart'),
@@ -23,6 +26,7 @@ void main() {
   });
 
   tearDownAll(() {
+    ParticleSpoilerDrawer.debugRandomSeed = null;
     goldenFileComparator = previousComparator;
   });
 

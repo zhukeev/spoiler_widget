@@ -5,6 +5,7 @@ part of 'spoiler_configs.dart';
 /// A mask defines a specific area where the spoiler effect is applied
 /// using a [Path] and a [PathOperation] to determine how the mask interacts
 /// with the spoiler area.
+@immutable
 class SpoilerMask {
   /// The shape or area used as the mask.
   final Path maskPath;
@@ -20,7 +21,7 @@ class SpoilerMask {
   /// Creates a mask configuration with the given path, operation, and optional offset.
   ///
   /// The [offset] parameter defaults to `Offset.zero`, meaning no shift in position.
-  SpoilerMask({
+  const SpoilerMask({
     required this.maskPath,
     required this.maskOperation,
     this.offset = Offset.zero,
@@ -40,4 +41,16 @@ class SpoilerMask {
       innerRatio,
     );
   }
+
+  @override
+  int get hashCode => Object.hash(maskPath, maskOperation, offset);
+
+  /// [maskPath] has no value equality, so it is compared by identity.
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SpoilerMask &&
+          maskPath == other.maskPath &&
+          maskOperation == other.maskOperation &&
+          offset == other.offset;
 }
