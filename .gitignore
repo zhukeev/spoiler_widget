@@ -32,3 +32,9 @@ build/
 
 # FVM Version Cache
 .fvm/
+
+# Codacy CLI workspace output
+.codacy/
+
+# Golden test failure diffs
+test/failures/

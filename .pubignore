@@ -43,3 +43,7 @@ example/pubspec.lock
 
 # Large demo assets
 example/lib/*.gif
+
+# Local audit notes and golden-test failure diffs
+AUDIT.md
+test/failures/
