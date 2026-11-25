@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:spoiler_widget/extension/rect_x.dart';
-import 'package:spoiler_widget/utils/spoiler_text_layout.dart.dart';
+import 'package:spoiler_widget/utils/spoiler_text_layout.dart';
 
 import 'canvas_callback_painter.dart';
 
