@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:spoiler_widget/extension/rect_x.dart';
+import 'package:spoiler_widget/utils/spoiler_path_builder.dart';
 import 'package:spoiler_widget/utils/spoiler_text_layout.dart';
 
 import 'canvas_callback_painter.dart';
@@ -16,8 +17,8 @@ class SpoilerTextPainter extends StatefulWidget {
     this.textSelection,
     this.maxLines,
     this.isEllipsis,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   /// Full text content to render.
   final String text;
@@ -51,6 +52,23 @@ class _SpoilerTextPainterState extends State<SpoilerTextPainter> {
   final Set<Rect> _spoilerRegions = {};
   Size _previousSize = Size.zero;
 
+  /// Cached text layout, reused while all layout inputs are unchanged.
+  /// Previously a new [TextPainter] was created and laid out every build.
+  (SpoilerGeometry, TextPainter)? _layoutCache;
+  Object? _layoutKey;
+
+  void _disposeLayoutCache() {
+    _layoutCache?.$2.dispose();
+    _layoutCache = null;
+    _layoutKey = null;
+  }
+
+  @override
+  void dispose() {
+    _disposeLayoutCache();
+    super.dispose();
+  }
+
   @override
   void didUpdateWidget(covariant SpoilerTextPainter oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -71,21 +89,42 @@ class _SpoilerTextPainterState extends State<SpoilerTextPainter> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final (geom, painter) = computeSpoilerTextLayout(
-          text: widget.text,
-          style: widget.style,
-          textAlign: widget.textAlign,
-          textDirection: direction,
-          maxLines: widget.maxLines,
-          isEllipsis: widget.isEllipsis ?? false,
-          range: widget.textSelection == null
-              ? null
-              : TextRange(
-                  start: widget.textSelection!.start,
-                  end: widget.textSelection!.end,
-                ),
-          maxWidth: constraints.maxWidth,
+        final selection = widget.textSelection;
+        final range = selection == null
+            ? null
+            : TextRange(start: selection.start, end: selection.end);
+        final isEllipsis = widget.isEllipsis ?? false;
+
+        // Key on every input that affects text layout. Selection offsets are
+        // stored as ints because TextRange has no value equality.
+        final key = (
+          widget.text,
+          widget.style,
+          widget.textAlign,
+          direction,
+          widget.maxLines,
+          isEllipsis,
+          range?.start,
+          range?.end,
+          constraints.maxWidth,
         );
+
+        if (_layoutKey != key) {
+          _disposeLayoutCache();
+          _layoutCache = computeSpoilerTextLayout(
+            text: widget.text,
+            style: widget.style,
+            textAlign: widget.textAlign,
+            textDirection: direction,
+            maxLines: widget.maxLines,
+            isEllipsis: isEllipsis,
+            range: range,
+            maxWidth: constraints.maxWidth,
+          );
+          _layoutKey = key;
+        }
+
+        final (geom, painter) = _layoutCache!;
 
         final textSize = Size(
           painter.width,

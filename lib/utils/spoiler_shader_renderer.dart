@@ -13,9 +13,13 @@ import 'package:flutter/material.dart';
 class SpoilerShaderRenderer {
   SpoilerShaderRenderer._({
     required ui.FragmentShader shader,
-  }) : _shader = shader;
+  })  : _shader = shader,
+        _paint = Paint()..shader = shader;
 
   final ui.FragmentShader _shader;
+
+  /// Reused across [render] calls — drawRect does not retain the paint.
+  final Paint _paint;
 
   /// Creates a new [SpoilerShaderRenderer] by loading the shader from the given path.
   ///
@@ -53,8 +57,7 @@ class SpoilerShaderRenderer {
       }
     }
 
-    final paint = Paint()..shader = _shader;
-    canvas.drawRect(rect, paint);
+    canvas.drawRect(rect, _paint);
   }
 
   void dispose() {

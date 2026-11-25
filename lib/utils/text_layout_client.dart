@@ -75,12 +75,9 @@ class TextPainterLayoutClient implements TextLayoutClient {
   required TextSelection selection,
   bool skipWhitespace = true,
 }) {
-  final int rawStart =
-      selection.start < selection.end ? selection.start : selection.end;
-  final int rawEnd =
-      selection.start > selection.end ? selection.start : selection.end;
-  final int start = rawStart.clamp(0, text.length);
-  final int end = rawEnd.clamp(0, text.length);
+  // TextSelection.start/end are already ordered (start <= end).
+  final int start = selection.start.clamp(0, text.length);
+  final int end = selection.end.clamp(0, text.length);
   if (start >= end) return (null, []);
 
   if (skipWhitespace) {
