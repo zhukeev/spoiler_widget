@@ -187,14 +187,18 @@ class SpoilerConfig {
     ValueChanged<bool>? onSpoilerVisibilityChanged,
     ShaderConfig? shaderConfig,
   }) {
-    final bool legacyParticleOverridesProvided = particleDensity != null ||
-        particleSpeed != null ||
-        particleColor != null ||
-        maxParticleSize != null;
+    final bool legacyParticleOverridesProvided = hasLegacyParticleOverrides(
+      particleDensity,
+      particleSpeed,
+      particleColor,
+      maxParticleSize,
+    );
 
-    final bool legacyFadeOverridesProvided = enableFadeAnimation != null ||
-        fadeRadius != null ||
-        fadeEdgeThickness != null;
+    final bool legacyFadeOverridesProvided = hasLegacyFadeOverrides(
+      enableFadeAnimation,
+      fadeRadius,
+      fadeEdgeThickness,
+    );
 
     final ParticleConfig? nextParticleConfig = legacyParticleOverridesProvided
         ? null

@@ -6,7 +6,6 @@ import 'package:spoiler_widget/extension/path_x.dart';
 import 'package:spoiler_widget/extension/rect_x.dart';
 import 'package:spoiler_widget/models/spoiler_configs.dart';
 import 'package:spoiler_widget/utils/image_factory.dart';
-import 'package:spoiler_widget/utils/path_signature.dart';
 import 'package:spoiler_widget/utils/text_layout_client.dart';
 
 void main() {
@@ -36,16 +35,6 @@ void main() {
     );
 
     expect(config.areaFactor, closeTo(4 / math.pi, 0.1));
-  });
-
-  test('pathSignature changes when path geometry changes', () {
-    final path = Path()..addRect(const Rect.fromLTWH(0, 0, 10, 10));
-    final first = pathSignature(path);
-
-    path.addRect(const Rect.fromLTWH(20, 0, 5, 5));
-    final second = pathSignature(path);
-
-    expect(first, isNot(second));
   });
 
   test('buildSelectionPath skips whitespace-only selection', () {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:spoiler_widget/models/spoiler_configs.dart';
+import 'package:spoiler_widget/src/config_resolution.dart';
 
 /// Configuration for the text-based spoiler effect.
 ///
@@ -65,19 +66,14 @@ class TextSpoilerConfig extends SpoilerConfig {
     bool enableFadeAnimation = false,
     double fadeRadius = 10.0,
     double fadeEdgeThickness = 20.0,
-    bool isEnabled = true,
-    bool enableGestureReveal = false,
-    SpoilerMask? maskConfig,
-    ValueChanged<bool>? onSpoilerVisibilityChanged,
+    super.isEnabled = true,
+    super.enableGestureReveal = false,
+    super.maskConfig,
+    super.onSpoilerVisibilityChanged,
     ParticleConfig? particleConfig,
     FadeConfig? fadeConfig,
-    ShaderConfig? shaderConfig,
+    super.shaderConfig,
   }) : super(
-          isEnabled: isEnabled,
-          enableGestureReveal: enableGestureReveal,
-          maskConfig: maskConfig,
-          onSpoilerVisibilityChanged: onSpoilerVisibilityChanged,
-          shaderConfig: shaderConfig,
           particleConfig: particleConfig ??
               ParticleConfig(
                 density: particleDensity,
@@ -116,36 +112,38 @@ class TextSpoilerConfig extends SpoilerConfig {
     int? maxLines,
     bool? isEllipsis,
   }) {
-    final bool legacyParticleOverrides = particleDensity != null ||
-        particleSpeed != null ||
-        particleColor != null ||
-        maxParticleSize != null;
+    final bool legacyParticleOverrides = hasLegacyParticleOverrides(
+      particleDensity,
+      particleSpeed,
+      particleColor,
+      maxParticleSize,
+    );
 
     final ParticleConfig nextParticleConfig = particleConfig ??
         (legacyParticleOverrides
-            ? ParticleConfig(
-                density: particleDensity ?? this.particleConfig.density,
-                speed: particleSpeed ?? this.particleConfig.speed,
-                color: particleColor ?? this.particleConfig.color,
-                maxParticleSize:
-                    maxParticleSize ?? this.particleConfig.maxParticleSize,
-                shapePreset: this.particleConfig.shapePreset,
+            ? mergeLegacyParticleConfig(
+                this.particleConfig,
+                particleDensity: particleDensity,
+                particleSpeed: particleSpeed,
+                particleColor: particleColor,
+                maxParticleSize: maxParticleSize,
               )
             : this.particleConfig);
 
-    final bool legacyFadeOverrides = enableFadeAnimation != null ||
-        fadeRadius != null ||
-        fadeEdgeThickness != null;
+    final bool legacyFadeOverrides = hasLegacyFadeOverrides(
+      enableFadeAnimation,
+      fadeRadius,
+      fadeEdgeThickness,
+    );
 
     final FadeConfig? nextFadeConfig = fadeConfig ??
         (legacyFadeOverrides
-            ? ((enableFadeAnimation ?? (this.fadeConfig != null))
-                ? FadeConfig(
-                    padding: fadeRadius ?? (this.fadeConfig?.padding ?? 10.0),
-                    edgeThickness: fadeEdgeThickness ??
-                        (this.fadeConfig?.edgeThickness ?? 20.0),
-                  )
-                : null)
+            ? mergeLegacyFadeConfig(
+                this.fadeConfig,
+                enableFadeAnimation: enableFadeAnimation,
+                fadeRadius: fadeRadius,
+                fadeEdgeThickness: fadeEdgeThickness,
+              )
             : this.fadeConfig);
 
     return TextSpoilerConfig(

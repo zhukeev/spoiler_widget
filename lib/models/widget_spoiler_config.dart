@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:spoiler_widget/models/spoiler_configs.dart';
+import 'package:spoiler_widget/src/config_resolution.dart';
 
 /// Configuration for the widget-based spoiler effect.
 ///
@@ -34,19 +35,14 @@ class WidgetSpoilerConfig extends SpoilerConfig {
     bool enableFadeAnimation = false,
     double fadeRadius = 10.0,
     double fadeEdgeThickness = 20.0,
-    bool isEnabled = true,
-    bool enableGestureReveal = false,
-    SpoilerMask? maskConfig,
-    ValueChanged<bool>? onSpoilerVisibilityChanged,
-    ShaderConfig? shaderConfig,
+    super.isEnabled = true,
+    super.enableGestureReveal = false,
+    super.maskConfig,
+    super.onSpoilerVisibilityChanged,
+    super.shaderConfig,
     ParticleConfig? particleConfig,
     FadeConfig? fadeConfig,
   }) : super(
-          isEnabled: isEnabled,
-          enableGestureReveal: enableGestureReveal,
-          maskConfig: maskConfig,
-          onSpoilerVisibilityChanged: onSpoilerVisibilityChanged,
-          shaderConfig: shaderConfig,
           particleConfig: particleConfig ??
               ParticleConfig(
                 density: particleDensity,
@@ -89,36 +85,38 @@ class WidgetSpoilerConfig extends SpoilerConfig {
     ImageFilter? imageFilter,
     int? maxActiveWaves,
   }) {
-    final bool legacyParticleOverridesProvided = particleDensity != null ||
-        particleSpeed != null ||
-        particleColor != null ||
-        maxParticleSize != null;
+    final bool legacyParticleOverrides = hasLegacyParticleOverrides(
+      particleDensity,
+      particleSpeed,
+      particleColor,
+      maxParticleSize,
+    );
 
     final ParticleConfig nextParticleConfig = particleConfig ??
-        (legacyParticleOverridesProvided
-            ? ParticleConfig(
-                density: particleDensity ?? this.particleConfig.density,
-                speed: particleSpeed ?? this.particleConfig.speed,
-                color: particleColor ?? this.particleConfig.color,
-                maxParticleSize:
-                    maxParticleSize ?? this.particleConfig.maxParticleSize,
-                shapePreset: this.particleConfig.shapePreset,
+        (legacyParticleOverrides
+            ? mergeLegacyParticleConfig(
+                this.particleConfig,
+                particleDensity: particleDensity,
+                particleSpeed: particleSpeed,
+                particleColor: particleColor,
+                maxParticleSize: maxParticleSize,
               )
             : this.particleConfig);
 
-    final bool legacyFadeOverridesProvided = enableFadeAnimation != null ||
-        fadeRadius != null ||
-        fadeEdgeThickness != null;
+    final bool legacyFadeOverrides = hasLegacyFadeOverrides(
+      enableFadeAnimation,
+      fadeRadius,
+      fadeEdgeThickness,
+    );
 
     final FadeConfig? nextFadeConfig = fadeConfig ??
-        (legacyFadeOverridesProvided
-            ? ((enableFadeAnimation ?? (this.fadeConfig != null))
-                ? FadeConfig(
-                    padding: fadeRadius ?? (this.fadeConfig?.padding ?? 10.0),
-                    edgeThickness: fadeEdgeThickness ??
-                        (this.fadeConfig?.edgeThickness ?? 20.0),
-                  )
-                : null)
+        (legacyFadeOverrides
+            ? mergeLegacyFadeConfig(
+                this.fadeConfig,
+                enableFadeAnimation: enableFadeAnimation,
+                fadeRadius: fadeRadius,
+                fadeEdgeThickness: fadeEdgeThickness,
+              )
             : this.fadeConfig);
 
     return WidgetSpoilerConfig(
