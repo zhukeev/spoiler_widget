@@ -268,7 +268,10 @@ class SpoilerCanvas implements Canvas {
   void drawRawPoints(ui.PointMode pointMode, Float32List points, Paint paint) =>
       parent.drawRawPoints(pointMode, points, paint);
 
+  // Canvas.clipRSuperellipse/drawRSuperellipse only exist on Flutter >=3.32;
+  // @override is required there, so the diagnostic is suppressed on older SDKs.
   @override
+  // ignore: override_on_non_overriding_member
   void clipRSuperellipse(dynamic rsuperellipse, {bool doAntiAlias = true}) {
     // ignore: avoid_dynamic_calls
     (parent as dynamic)
@@ -276,6 +279,7 @@ class SpoilerCanvas implements Canvas {
   }
 
   @override
+  // ignore: override_on_non_overriding_member
   void drawRSuperellipse(dynamic rsuperellipse, ui.Paint paint) {
     // ignore: avoid_dynamic_calls
     (parent as dynamic).drawRSuperellipse(rsuperellipse, paint);
