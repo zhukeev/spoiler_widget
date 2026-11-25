@@ -114,21 +114,22 @@ class SpoilerConfig {
     this.maskConfig,
     this.onSpoilerVisibilityChanged,
     this.shaderConfig,
-  })  : particleConfig = particleConfig ??
-            ParticleConfig(
-              density:
-                  particleDensity ?? ParticleConfig.defaultConfig().density,
-              speed: particleSpeed ?? ParticleConfig.defaultConfig().speed,
-              color: particleColor ?? ParticleConfig.defaultConfig().color,
-              maxParticleSize: maxParticleSize ??
-                  ParticleConfig.defaultConfig().maxParticleSize,
-            ),
-        fadeConfig = _resolveFadeConfig(
-          fadeConfig: fadeConfig,
-          enableFadeAnimation: enableFadeAnimation,
-          fadePadding: fadeRadius,
-          fadeEdgeThickness: fadeEdgeThickness,
-        ) {
+  }) : particleConfig =
+           particleConfig ??
+           ParticleConfig(
+             density: particleDensity ?? ParticleConfig.defaultConfig().density,
+             speed: particleSpeed ?? ParticleConfig.defaultConfig().speed,
+             color: particleColor ?? ParticleConfig.defaultConfig().color,
+             maxParticleSize:
+                 maxParticleSize ??
+                 ParticleConfig.defaultConfig().maxParticleSize,
+           ),
+       fadeConfig = _resolveFadeConfig(
+         fadeConfig: fadeConfig,
+         enableFadeAnimation: enableFadeAnimation,
+         fadePadding: fadeRadius,
+         fadeEdgeThickness: fadeEdgeThickness,
+       ) {
     assert(
       particleConfig == null ||
           (particleDensity == null &&
@@ -165,11 +166,11 @@ class SpoilerConfig {
   ///
   /// This provides a balanced set of default values suitable for most cases.
   factory SpoilerConfig.defaultConfig() => SpoilerConfig(
-        isEnabled: true,
-        enableGestureReveal: true,
-        particleConfig: ParticleConfig.defaultConfig(),
-        fadeConfig: _defaultFadeConfig,
-      );
+    isEnabled: true,
+    enableGestureReveal: true,
+    particleConfig: ParticleConfig.defaultConfig(),
+    fadeConfig: _defaultFadeConfig,
+  );
 
   SpoilerConfig copyWith({
     double? particleDensity,
@@ -204,8 +205,9 @@ class SpoilerConfig {
         ? null
         : (particleConfig ?? this.particleConfig);
 
-    final FadeConfig? nextFadeConfig =
-        legacyFadeOverridesProvided ? null : (fadeConfig ?? this.fadeConfig);
+    final FadeConfig? nextFadeConfig = legacyFadeOverridesProvided
+        ? null
+        : (fadeConfig ?? this.fadeConfig);
 
     return SpoilerConfig(
       particleDensity: legacyParticleOverridesProvided
@@ -223,8 +225,9 @@ class SpoilerConfig {
       enableFadeAnimation: legacyFadeOverridesProvided
           ? (enableFadeAnimation ?? this.enableFadeAnimation)
           : null,
-      fadeRadius:
-          legacyFadeOverridesProvided ? (fadeRadius ?? this.fadeRadius) : null,
+      fadeRadius: legacyFadeOverridesProvided
+          ? (fadeRadius ?? this.fadeRadius)
+          : null,
       fadeEdgeThickness: legacyFadeOverridesProvided
           ? (fadeEdgeThickness ?? this.fadeEdgeThickness)
           : null,
@@ -241,21 +244,21 @@ class SpoilerConfig {
 
   @override
   int get hashCode => Object.hash(
-        particleDensity,
-        particleSpeed,
-        particleColor,
-        maxParticleSize,
-        enableFadeAnimation,
-        fadeRadius,
-        fadeEdgeThickness,
-        isEnabled,
-        enableGestureReveal,
-        maskConfig,
-        shaderConfig,
-        onSpoilerVisibilityChanged,
-        particleConfig,
-        fadeConfig,
-      );
+    particleDensity,
+    particleSpeed,
+    particleColor,
+    maxParticleSize,
+    enableFadeAnimation,
+    fadeRadius,
+    fadeEdgeThickness,
+    isEnabled,
+    enableGestureReveal,
+    maskConfig,
+    shaderConfig,
+    onSpoilerVisibilityChanged,
+    particleConfig,
+    fadeConfig,
+  );
 
   @override
   bool operator ==(Object other) =>

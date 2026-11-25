@@ -25,7 +25,8 @@ class SpoilerTextFieldWrapper extends StatefulWidget {
   final Widget Function(
     BuildContext context,
     EditableTextContextMenuBuilder? contextMenuBuilder,
-  ) builder;
+  )
+  builder;
 
   /// Called with the text selection used to create the spoiler mask.
   final ValueChanged<TextSelection?>? onSelectionChanged;

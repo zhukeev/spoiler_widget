@@ -49,8 +49,7 @@ class _SpoilerBenchmarkPageState extends State<SpoilerBenchmarkPage>
           _lastFpsTime = now;
         });
       }
-    })
-      ..start();
+    })..start();
   }
 
   void _initializeController() {

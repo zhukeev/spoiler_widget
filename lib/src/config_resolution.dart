@@ -35,17 +35,16 @@ ParticleConfig mergeLegacyParticleConfig(
   double? particleSpeed,
   Color? particleColor,
   double? maxParticleSize,
-}) =>
-    ParticleConfig(
-      density: particleDensity ?? base.density,
-      speed: particleSpeed ?? base.speed,
-      color: particleColor ?? base.color,
-      maxParticleSize: maxParticleSize ?? base.maxParticleSize,
-      shapePreset: base.shapePreset,
-      enableWaves: base.enableWaves,
-      maxWaveRadius: base.maxWaveRadius,
-      maxWaveCount: base.maxWaveCount,
-    );
+}) => ParticleConfig(
+  density: particleDensity ?? base.density,
+  speed: particleSpeed ?? base.speed,
+  color: particleColor ?? base.color,
+  maxParticleSize: maxParticleSize ?? base.maxParticleSize,
+  shapePreset: base.shapePreset,
+  enableWaves: base.enableWaves,
+  maxWaveRadius: base.maxWaveRadius,
+  maxWaveCount: base.maxWaveCount,
+);
 
 /// Rebuilds a [FadeConfig] from legacy scalar overrides, falling back to
 /// [base]. Returns null when fade is disabled.

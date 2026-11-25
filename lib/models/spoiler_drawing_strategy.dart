@@ -63,23 +63,25 @@ AtlasSupportPolicy atlasSupportPolicyFor(ParticleConfig config) {
   );
 }
 
-typedef CircleImageBuilder = CircleImage Function({
-  required double diameter,
-  required ui.Color color,
-  ui.Path? shapePath,
-  double? rasterDiameter,
-});
+typedef CircleImageBuilder =
+    CircleImage Function({
+      required double diameter,
+      required ui.Color color,
+      ui.Path? shapePath,
+      double? rasterDiameter,
+    });
 
-typedef RawAtlasPainter = void Function({
-  required Canvas canvas,
-  required ui.Image atlas,
-  required Float32List transforms,
-  required Float32List rects,
-  Int32List? colors,
-  BlendMode? blendMode,
-  Rect? cullRect,
-  required Paint paint,
-});
+typedef RawAtlasPainter =
+    void Function({
+      required Canvas canvas,
+      required ui.Image atlas,
+      required Float32List transforms,
+      required Float32List rects,
+      Int32List? colors,
+      BlendMode? blendMode,
+      Rect? cullRect,
+      required Paint paint,
+    });
 
 CircleImage _defaultCircleImageBuilder({
   required double diameter,
@@ -198,8 +200,9 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
     final bool isParticleShader = _isParticleShaderPath(
       config.shaderConfig?.customShaderPath,
     );
-    final CircleImage? sprite =
-        isParticleShader ? _ensureSprite(config.particleConfig) : null;
+    final CircleImage? sprite = isParticleShader
+        ? _ensureSprite(config.particleConfig)
+        : null;
 
     final Rect logicalBounds = spoilerBounds;
 
@@ -207,7 +210,8 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
       canvas.save();
       canvas.clipRect(spoilerBounds);
 
-      final params = config.shaderConfig?.onGetShaderUniforms?.call(
+      final params =
+          config.shaderConfig?.onGetShaderUniforms?.call(
             logicalBounds,
             _shaderTime,
             0.0,
@@ -237,7 +241,8 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
       canvas.save();
       canvas.clipRect(rect);
 
-      final params = config.shaderConfig?.onGetShaderUniforms?.call(
+      final params =
+          config.shaderConfig?.onGetShaderUniforms?.call(
             rect,
             _shaderTime,
             seed,
@@ -328,7 +333,8 @@ abstract class ParticleSpoilerDrawer implements SpoilerDrawer {
     for (final path in paths) {
       final rect = path.getBounds();
       final screenArea = rect.width * rect.height;
-      final particleArea = pi *
+      final particleArea =
+          pi *
           pow(config.particleConfig.maxParticleSize * 0.5, 2) *
           config.particleConfig.areaFactor;
 
@@ -409,8 +415,9 @@ abstract class ParticleSpoilerDrawer implements SpoilerDrawer {
       min(particle.dx - bounds.left, bounds.right - particle.dx),
       min(particle.dy - bounds.top, bounds.bottom - particle.dy),
     );
-    final edgeFade =
-        edgeDist <= 0.0 ? 0.0 : smoothstep(0.0, boundaryFadePx, edgeDist);
+    final edgeFade = edgeDist <= 0.0
+        ? 0.0
+        : smoothstep(0.0, boundaryFadePx, edgeDist);
     final particleRadius = max(baseRadius * lifeScale, 0.0001);
     final edgeClamp = (edgeDist / particleRadius).clamp(0.0, 1.0);
     final edgeScale = edgeFade * edgeClamp;
@@ -574,8 +581,9 @@ class VectorSpoilerDrawer extends ParticleSpoilerDrawer {
   @override
   void onParticlesInitialized() {
     final currentShape = shapePath;
-    _shapeMetrics =
-        currentShape == null ? null : fittedPathMetricsFor(currentShape);
+    _shapeMetrics = currentShape == null
+        ? null
+        : fittedPathMetricsFor(currentShape);
   }
 
   @override

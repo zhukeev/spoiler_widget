@@ -79,8 +79,9 @@ class _SpoilerOverlayState extends State<SpoilerOverlay>
             return _spoilerController.createClipPath(size);
           },
           enableOverlay: true,
-          imageFilter:
-              _spoilerController.isEnabled ? widget.config.imageFilter : null,
+          imageFilter: _spoilerController.isEnabled
+              ? widget.config.imageFilter
+              : null,
           child: child!,
         );
       },
