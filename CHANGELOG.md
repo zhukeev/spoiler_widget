@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1
+
+* WIP
+
 ## 1.1.0
 
 * **Correctness:**
