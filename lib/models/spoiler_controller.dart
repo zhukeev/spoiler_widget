@@ -522,32 +522,37 @@ class SpoilerController extends ChangeNotifier {
     super.dispose();
   }
 
-  bool get _needsVectorDrawer {
-    if (_atlasUnavailable) return true;
-    return switch (debugForcedParticleBackend) {
-      ParticleRenderBackend.vector => true,
-      ParticleRenderBackend.atlas => false,
-      _ => _atlasDisabledByPolicy,
-    };
+  /// Which particle backend should be active: a forced debug selection wins
+  /// over the policy, and a real atlas failure always falls back to vector.
+  ParticleRenderBackend get _selectedParticleBackend {
+    if (_atlasUnavailable) return ParticleRenderBackend.vector;
+    final forced = debugForcedParticleBackend;
+    if (forced != null && forced != ParticleRenderBackend.shader) {
+      return forced;
+    }
+    return _atlasDisabledByPolicy
+        ? ParticleRenderBackend.vector
+        : ParticleRenderBackend.atlas;
   }
 
   ParticleSpoilerDrawer _createDefaultParticleDrawer() {
-    final drawer = _needsVectorDrawer
-        ? VectorSpoilerDrawer()
-        : AtlasSpoilerDrawer();
+    final ParticleSpoilerDrawer drawer = switch (_selectedParticleBackend) {
+      ParticleRenderBackend.vector => VectorSpoilerDrawer(),
+      ParticleRenderBackend.vertices => VerticesSpoilerDrawer(),
+      _ => AtlasSpoilerDrawer(),
+    };
     _particleRenderBackend = drawer.backend;
     return drawer;
   }
 
   ParticleSpoilerDrawer _ensureParticleDrawer() {
-    final bool needsVector = _needsVectorDrawer;
+    final selected = _selectedParticleBackend;
 
     if (_drawer is ParticleSpoilerDrawer) {
       final currentDrawer = _drawer as ParticleSpoilerDrawer;
-      final isAtlas = currentDrawer is AtlasSpoilerDrawer;
 
       // If policy and current drawer backend match, reuse it.
-      if (isAtlas != needsVector) {
+      if (currentDrawer.backend == selected) {
         _particleRenderBackend = currentDrawer.backend;
         return currentDrawer;
       }

@@ -211,6 +211,7 @@ class _SpoilerBenchmarkPageState extends State<SpoilerBenchmarkPage>
     try {
       for (final backend in const [
         ParticleRenderBackend.atlas,
+        ParticleRenderBackend.vertices,
         ParticleRenderBackend.vector,
         ParticleRenderBackend.shader,
       ]) {
@@ -583,6 +584,10 @@ class _SpoilerBenchmarkPageState extends State<SpoilerBenchmarkPage>
                         ButtonSegment(
                           value: ParticleRenderBackend.atlas,
                           label: Text('Atlas'),
+                        ),
+                        ButtonSegment(
+                          value: ParticleRenderBackend.vertices,
+                          label: Text('Mesh'),
                         ),
                         ButtonSegment(
                           value: ParticleRenderBackend.vector,
