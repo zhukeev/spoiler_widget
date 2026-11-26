@@ -10,6 +10,15 @@ typedef SpoilerLogCallback = void Function(String message);
 @visibleForTesting
 SpoilerLogCallback debugSpoilerLogger = debugPrint;
 
+/// Overrides automatic particle backend selection (atlas vs vector) for
+/// benchmarking and tests. Set before [SpoilerController.initializeParticles];
+/// `null` restores the default policy. The shader backend is still selected
+/// via [SpoilerConfig.shaderConfig] — this flag only steers the particle
+/// drawer. A real atlas failure always wins over a forced atlas selection.
+///
+/// Not for production use — rendering backends are chosen automatically.
+ParticleRenderBackend? debugForcedParticleBackend;
+
 /// A base controller that manages a "spoiler" effect, which involves:
 /// 1. A set of "particles" (positions, movement, lifespan).
 /// 2. An optional fade animation (a radial reveal or cover based on [_fadeCenter]).
@@ -513,8 +522,17 @@ class SpoilerController extends ChangeNotifier {
     super.dispose();
   }
 
+  bool get _needsVectorDrawer {
+    if (_atlasUnavailable) return true;
+    return switch (debugForcedParticleBackend) {
+      ParticleRenderBackend.vector => true,
+      ParticleRenderBackend.atlas => false,
+      _ => _atlasDisabledByPolicy,
+    };
+  }
+
   ParticleSpoilerDrawer _createDefaultParticleDrawer() {
-    final drawer = (_atlasUnavailable || _atlasDisabledByPolicy)
+    final drawer = _needsVectorDrawer
         ? VectorSpoilerDrawer()
         : AtlasSpoilerDrawer();
     _particleRenderBackend = drawer.backend;
@@ -522,7 +540,7 @@ class SpoilerController extends ChangeNotifier {
   }
 
   ParticleSpoilerDrawer _ensureParticleDrawer() {
-    final bool needsVector = _atlasUnavailable || _atlasDisabledByPolicy;
+    final bool needsVector = _needsVectorDrawer;
 
     if (_drawer is ParticleSpoilerDrawer) {
       final currentDrawer = _drawer as ParticleSpoilerDrawer;

@@ -13,6 +13,8 @@
   * `initializeParticles` defers its enabled-state notification to end-of-frame so config changes applied during build/paint no longer assert.
 * **API:**
   * Added `SpoilerController.repaintListenable` and `SpoilerRenderObjectWidget.repaintListenable` for repaint-only signals (previously every consumer rebuilt on each animation frame).
+  * `ShaderConfig.particles()` now accepts an optional `customShaderPath` override so a modified copy of the bundled shader (e.g. a sampler-free variant for iOS Simulator, where runtime-effect samplers are unsupported) can reuse the same uniform layout.
+  * Added `debugForcedParticleBackend` for benchmarking/testing — forces the particle drawer to atlas or vector regardless of the eligibility policy.
 * **Dev tools:**
   * Added a frame-metrics benchmark harness to the example app (`example/lib/benchmark/`): rolling `FrameTiming` stats on the benchmark page, a recordable 10s session (stress-test burst, rebuild/wave counters), and JSON report export (clipboard + file). Baseline report checked in at `example/benchmark/baseline_v1.1.0_ios_sim_debug.json`.
 

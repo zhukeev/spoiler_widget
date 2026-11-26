@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:spoiler_widget/models/spoiler_configs.dart';
+import 'package:spoiler_widget/models/spoiler_controller.dart';
+import 'package:spoiler_widget/models/spoiler_drawing_strategy.dart'
+    show ParticleRenderBackend;
 import 'package:spoiler_widget/models/spoiler_spots_controller.dart';
 import 'package:spoiler_widget/models/widget_spoiler_config.dart';
 import 'package:spoiler_widget/spoiler_overlay_widget.dart';
@@ -28,6 +31,7 @@ class _SpoilerBenchmarkPageState extends State<SpoilerBenchmarkPage>
   double _density = 0.3;
   double _speed = 0.5;
   double _maxParticleSize = 2.0;
+  ParticleRenderBackend _backend = ParticleRenderBackend.atlas;
   final bool _enableWaves = true;
   final int _maxActiveWaves = 15; // Set high for stress-testing
 
@@ -44,6 +48,8 @@ class _SpoilerBenchmarkPageState extends State<SpoilerBenchmarkPage>
   int _peakWaves = 0;
   Map<String, dynamic>? _lastReport;
   String? _lastReportJson;
+  bool _suiteRunning = false;
+  final Map<String, Map<String, dynamic>> _suiteReports = {};
 
   @override
   void initState() {
@@ -70,12 +76,21 @@ class _SpoilerBenchmarkPageState extends State<SpoilerBenchmarkPage>
     })..start();
   }
 
-  void _initializeController() {
-    final config = WidgetSpoilerConfig(
+  WidgetSpoilerConfig _buildConfig({required bool gestureReveal}) {
+    return WidgetSpoilerConfig(
       imageFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
       maxActiveWaves: _maxActiveWaves,
       isEnabled: true,
-      enableGestureReveal: false,
+      enableGestureReveal: gestureReveal,
+      // The bundled particles.frag declares a sampler2D, which the engine
+      // can't bind on the iOS simulator ("missing sampler"). The nosprite
+      // variant strips the sampler and runs the same procedural path — on
+      // physical devices the bundled shader works.
+      shaderConfig: _backend == ParticleRenderBackend.shader
+          ? ShaderConfig.particles(
+              customShaderPath: 'shaders/particles_nosprite.frag',
+            )
+          : null,
       particleConfig: ParticleConfig(
         density: _density,
         speed: _speed,
@@ -85,10 +100,13 @@ class _SpoilerBenchmarkPageState extends State<SpoilerBenchmarkPage>
         maxWaveRadius: 100.0,
       ),
     );
+  }
+
+  void _initializeController() {
     // Initialize with a default 300x200 box path
     _controller.initializeParticles(
       Path()..addRect(const Rect.fromLTWH(0, 0, 320, 200)),
-      config,
+      _buildConfig(gestureReveal: false),
     );
   }
 
@@ -134,6 +152,7 @@ class _SpoilerBenchmarkPageState extends State<SpoilerBenchmarkPage>
               ? 'debug'
               : (kProfileMode ? 'profile' : 'release'),
           'backend': _controller.renderBackend.toString(),
+          'requestedBackend': _backend.name,
           'particleCount': _controller.particleCount,
           'peakWaves': _peakWaves,
           'widgetRebuilds': _rebuilds - _rebuildsAtSessionStart,
@@ -152,6 +171,66 @@ class _SpoilerBenchmarkPageState extends State<SpoilerBenchmarkPage>
       if (mounted) setState(() {});
     } finally {
       if (_metrics.recording) _metrics.stopSession();
+    }
+  }
+
+  /// Switches the render backend for both the telemetry controller and the
+  /// visible overlay. The overlay is keyed by backend, so it rebuilds with a
+  /// fresh controller that re-initializes on first paint.
+  void _applyBackend(ParticleRenderBackend backend) {
+    setState(() {
+      _backend = backend;
+      // For the shader backend the particle drawer only runs as a fallback
+      // while the program loads — leave selection to the default policy.
+      debugForcedParticleBackend = backend == ParticleRenderBackend.shader
+          ? null
+          : backend;
+      _initializeController();
+    });
+  }
+
+  /// Waits until the telemetry controller resolves [expected] (the shader
+  /// drawer loads asynchronously). Returns false on timeout.
+  Future<bool> _waitForBackend(ParticleRenderBackend expected) async {
+    final deadline = DateTime.now().add(const Duration(seconds: 5));
+    while (DateTime.now().isBefore(deadline)) {
+      if (_controller.renderBackend == expected) return true;
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    }
+    return _controller.renderBackend == expected;
+  }
+
+  /// Runs the 10s benchmark once per backend (atlas → vector → shader) and
+  /// combines the reports into a single suite JSON.
+  Future<void> _runAllBackends() async {
+    if (_metrics.recording || _suiteRunning) return;
+    _suiteRunning = true;
+    _suiteReports.clear();
+    _lastReport = null;
+    _lastReportJson = null;
+    try {
+      for (final backend in const [
+        ParticleRenderBackend.atlas,
+        ParticleRenderBackend.vector,
+        ParticleRenderBackend.shader,
+      ]) {
+        _applyBackend(backend);
+        // Let the new overlay mount/paint and the shader program load.
+        await _waitForBackend(backend);
+        await _runBenchmark();
+        final report = _lastReport;
+        if (report != null) {
+          _suiteReports[backend.name] = report;
+        }
+      }
+      _lastReportJson = FrameMetrics.encodeReport(<String, dynamic>{
+        'suite': 'backend-comparison',
+        'generatedAt': DateTime.now().toIso8601String(),
+        'reports': _suiteReports,
+      });
+    } finally {
+      _suiteRunning = false;
+      if (mounted) setState(() {});
     }
   }
 
@@ -343,12 +422,23 @@ class _SpoilerBenchmarkPageState extends State<SpoilerBenchmarkPage>
                             backgroundColor: Colors.cyanAccent,
                             foregroundColor: Colors.black87,
                           ),
-                          onPressed: _metrics.recording ? null : _runBenchmark,
+                          onPressed: (_metrics.recording || _suiteRunning)
+                              ? null
+                              : _runBenchmark,
                           icon: const Icon(Icons.timer, size: 18),
                           label: Text(
                             _metrics.recording
                                 ? 'Recording…'
                                 : 'Run 10s Benchmark',
+                          ),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: (_metrics.recording || _suiteRunning)
+                              ? null
+                              : _runAllBackends,
+                          icon: const Icon(Icons.view_list, size: 16),
+                          label: Text(
+                            _suiteRunning ? 'Suite…' : 'All 3 Backends',
                           ),
                         ),
                         if (_lastReportJson != null) ...[
@@ -367,6 +457,8 @@ class _SpoilerBenchmarkPageState extends State<SpoilerBenchmarkPage>
                     ),
                     if (_lastReport != null)
                       _ReportSummary(report: _lastReport!),
+                    if (_suiteReports.isNotEmpty)
+                      _SuiteSummary(reports: _suiteReports),
                   ],
                 ),
               ),
@@ -404,24 +496,10 @@ class _SpoilerBenchmarkPageState extends State<SpoilerBenchmarkPage>
                           builder: (context, _) {
                             _rebuilds++;
                             return SpoilerOverlay(
-                              config: WidgetSpoilerConfig(
-                                imageFilter: ImageFilter.blur(
-                                  sigmaX: 10,
-                                  sigmaY: 10,
-                                ),
-                                maxActiveWaves: _maxActiveWaves,
-                                isEnabled: true,
-                                enableGestureReveal:
-                                    true, // Let user tap to spawn wave
-                                particleConfig: ParticleConfig(
-                                  density: _density,
-                                  speed: _speed,
-                                  color: Colors.cyanAccent,
-                                  maxParticleSize: _maxParticleSize,
-                                  enableWaves: _enableWaves,
-                                  maxWaveRadius: 100.0,
-                                ),
-                              ),
+                              // Fresh state (and controller) per backend so
+                              // the drawer re-resolves on every switch.
+                              key: ValueKey(_backend),
+                              config: _buildConfig(gestureReveal: true),
                               child: Container(
                                 color: Colors.blueGrey[900],
                                 child: const Center(
@@ -493,6 +571,33 @@ class _SpoilerBenchmarkPageState extends State<SpoilerBenchmarkPage>
                       ),
                     ),
                     const SizedBox(height: 8),
+                    SegmentedButton<ParticleRenderBackend>(
+                      style: SegmentedButton.styleFrom(
+                        selectedBackgroundColor: Colors.cyanAccent.withValues(
+                          alpha: 0.2,
+                        ),
+                        foregroundColor: Colors.white60,
+                        textStyle: const TextStyle(fontSize: 12),
+                      ),
+                      segments: const [
+                        ButtonSegment(
+                          value: ParticleRenderBackend.atlas,
+                          label: Text('Atlas'),
+                        ),
+                        ButtonSegment(
+                          value: ParticleRenderBackend.vector,
+                          label: Text('Vector'),
+                        ),
+                        ButtonSegment(
+                          value: ParticleRenderBackend.shader,
+                          label: Text('Shader'),
+                        ),
+                      ],
+                      selected: {_backend},
+                      onSelectionChanged: _suiteRunning
+                          ? null
+                          : (sel) => _applyBackend(sel.first),
+                    ),
                     _SliderRow(
                       label: 'Particle Density',
                       value: _density,
@@ -577,6 +682,48 @@ class _ReportSummary extends StatelessWidget {
           Text('build   ${_fmt('buildMs')}', style: _mono),
           Text('raster  ${_fmt('rasterMs')}', style: _mono),
           Text('total   ${_fmt('totalMs')}', style: _mono),
+        ],
+      ),
+    );
+  }
+}
+
+class _SuiteSummary extends StatelessWidget {
+  const _SuiteSummary({required this.reports});
+
+  final Map<String, Map<String, dynamic>> reports;
+
+  static String _p99Of(Object? stats) =>
+      stats is Map ? '${stats['p99']}ms' : '—';
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Suite results',
+            style: TextStyle(
+              color: Colors.cyanAccent,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          for (final e in reports.entries)
+            Text(
+              '${e.key.padRight(6)} '
+              'build p99 ${_p99Of(e.value['buildMs'])} · '
+              'raster p99 ${_p99Of(e.value['rasterMs'])} · '
+              'jank ${e.value['jankFrames']}/${e.value['frameCount']}',
+              style: const TextStyle(
+                color: Colors.white60,
+                fontSize: 12,
+                fontFamily: 'Courier',
+              ),
+            ),
         ],
       ),
     );
