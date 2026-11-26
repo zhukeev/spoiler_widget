@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:spoiler_widget/extension/path_x.dart';
 import 'package:spoiler_widget/models/particle.dart';
 import 'package:spoiler_widget/models/spoiler_configs.dart';
 import 'package:spoiler_widget/utils/image_factory.dart';
@@ -154,7 +153,10 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
   static bool _isParticleShaderPath(String? path) {
     if (path == null) return false;
     if (path == _particlesShaderPath) return true;
-    return path.endsWith('particles.frag');
+    // Only a shader that keeps the bundled filename declares the sprite
+    // sampler — a loose endsWith also matched names like my_particles.frag
+    // and would inject an unwanted uniform.
+    return path.split('/').last == 'particles.frag';
   }
 
   CircleImage _ensureSprite(ParticleConfig config) {
@@ -300,6 +302,14 @@ abstract class ParticleSpoilerDrawer implements SpoilerDrawer {
   final Random _random = Random(debugRandomSeed);
   final List<Particle> _particles = [];
 
+  /// Pre-validated spawn positions per source path. Respawns pick from the
+  /// pool instead of running the unbounded `contains()` rejection loop in
+  /// [PathX.getRandomPoint] every frame.
+  final Map<Path, List<Offset>> _pointPools = {};
+
+  static const int _pointPoolTargetSize = 1024;
+  static const int _pointPoolSampleAttempts = 8192;
+
   double _maxParticleSize = 1.0;
   Color _particleColor = Colors.white;
   double _particleSpeed = 1.0;
@@ -323,6 +333,7 @@ abstract class ParticleSpoilerDrawer implements SpoilerDrawer {
     required SpoilerConfig config,
   }) {
     _particles.clear();
+    _pointPools.clear();
     _maxParticleSize = config.particleConfig.maxParticleSize;
     _particleColor = config.particleConfig.color;
     _particleSpeed = config.particleConfig.speed;
@@ -380,8 +391,34 @@ abstract class ParticleSpoilerDrawer implements SpoilerDrawer {
     }
   }
 
+  List<Offset> _pointPoolFor(Path path) {
+    return _pointPools.putIfAbsent(path, () => _buildPointPool(path));
+  }
+
+  List<Offset> _buildPointPool(Path path) {
+    final bounds = path.getBounds();
+    final points = <Offset>[];
+    for (
+      var attempt = 0;
+      attempt < _pointPoolSampleAttempts &&
+          points.length < _pointPoolTargetSize;
+      attempt++
+    ) {
+      final candidate = Offset(
+        bounds.left + _random.nextDouble() * bounds.width,
+        bounds.top + _random.nextDouble() * bounds.height,
+      );
+      if (path.contains(candidate)) points.add(candidate);
+    }
+    // Path contains nothing (degenerate/empty): park particles at the bounds
+    // center rather than looping forever.
+    if (points.isEmpty) points.add(bounds.center);
+    return points;
+  }
+
   Particle _createRandomParticlePath(Path path) {
-    final offset = path.getRandomPoint(_random);
+    final pool = _pointPoolFor(path);
+    final offset = pool[_random.nextInt(pool.length)];
     return Particle(
       Particle.generateId(),
       offset.dx,
@@ -556,7 +593,9 @@ class AtlasSpoilerDrawer extends ParticleSpoilerDrawer {
       rects: rects,
       colors: colors,
       blendMode: BlendMode.modulate,
-      cullRect: null,
+      // Inflate by the sprite extent so edge particles aren't culled while
+      // their scaled sprite still overlaps the bounds.
+      cullRect: context.spoilerBounds.inflate(spriteRadius),
       paint: _particlePaint,
     );
   }

@@ -53,6 +53,7 @@ class _SpoilerTextState extends State<SpoilerText>
       listenable: _spoilerController,
       builder: (context, _) {
         final painter = SpoilerTextPainter(
+          repaint: _spoilerController.repaintListenable,
           text: widget.text,
           textSelection: widget.config.textSelection,
           textAlign: widget.config.textAlign ?? TextAlign.start,

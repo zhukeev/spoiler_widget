@@ -56,6 +56,7 @@ class _SpoilerTextWrapperState extends State<SpoilerTextWrapper>
       child: widget.child,
       builder: (context, child) {
         final spoiler = SpoilerRenderObjectWidget(
+          repaintListenable: _spoilerController.repaintListenable,
           textSelection: widget.config.textSelection,
           onPaint: (canvas, size) {
             if (_spoilerController.isEnabled) {

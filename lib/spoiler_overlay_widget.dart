@@ -70,6 +70,7 @@ class _SpoilerOverlayState extends State<SpoilerOverlay>
       child: widget.child,
       builder: (context, child) {
         return SpoilerRenderObjectWidget(
+          repaintListenable: _spoilerController.repaintListenable,
           onAfterPaint: (canvas, size) => _onPaint(canvas, size),
           onClipPath: (size) {
             if (_spoilerController.isEnabled && !_spoilerController.isFading) {

@@ -37,10 +37,9 @@ class SpoilerSpotsController extends SpoilerController {
   final List<Timer> _delayedWaveTimers = [];
 
   /// Active waves with their associated animation controller and affected particle states.
+  /// [_activeWaves.length] is the running-wave count used to enforce
+  /// [WidgetSpoilerConfig.maxActiveWaves].
   final List<_ActiveWave> _activeWaves = [];
-
-  /// Count of waves currently animating. Used to avoid exceeding [WidgetSpoilerConfig.maxActiveWaves].
-  int _runningWavesCount = 0;
 
   /// Holds wave-related config (maxActiveWaves, fade options, etc.).
   WidgetSpoilerConfig _config = WidgetSpoilerConfig.defaultConfig();
@@ -117,13 +116,11 @@ class SpoilerSpotsController extends SpoilerController {
     if (!isEnabled || spoilerBounds == Rect.zero) return;
 
     // Enforce max wave concurrency.
-    if (_runningWavesCount >= _config.maxActiveWaves) return;
-    _runningWavesCount++;
+    if (_activeWaves.length >= _config.maxActiveWaves) return;
 
     // Determine wave radius
     final maxRadius = spoilerBounds.shortestSide ~/ 4;
     if (maxRadius == 0) {
-      _runningWavesCount--;
       return;
     }
     final waveRadius = _random.nextInt(maxRadius).toDouble();
@@ -191,7 +188,6 @@ class SpoilerSpotsController extends SpoilerController {
 
     // If no particles are affected, we don't need to run a wave animation.
     if (affected.isEmpty) {
-      _runningWavesCount--;
       return;
     }
 
@@ -236,7 +232,6 @@ class SpoilerSpotsController extends SpoilerController {
     waveCtrl.forward().whenComplete(() {
       waveCtrl.dispose();
       _activeWaves.remove(activeWave);
-      _runningWavesCount--;
     });
   }
 
@@ -294,8 +289,6 @@ class SpoilerSpotsController extends SpoilerController {
       wave.controller.dispose();
     }
     _activeWaves.clear();
-
-    _runningWavesCount = 0;
   }
 
   @override

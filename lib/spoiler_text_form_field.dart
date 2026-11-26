@@ -109,6 +109,7 @@ class _SpoilerTextFieldWrapperState extends State<SpoilerTextFieldWrapper>
       child: child,
       builder: (context, _) {
         final spoiler = SpoilerRenderObjectWidget(
+          repaintListenable: _spoilerController.repaintListenable,
           onPaint: (canvas, size) {
             if (_spoilerController.isEnabled) {
               _spoilerController.drawParticles(canvas);
