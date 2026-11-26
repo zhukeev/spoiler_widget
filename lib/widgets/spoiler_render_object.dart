@@ -22,6 +22,7 @@ class SpoilerRenderObjectWidget extends SingleChildRenderObjectWidget {
     this.onInit,
     this.imageFilter,
     this.textSelection,
+    this.repaintListenable,
     this.enableOverlay = false,
   });
 
@@ -33,6 +34,11 @@ class SpoilerRenderObjectWidget extends SingleChildRenderObjectWidget {
   final bool enableOverlay;
   final TextSelection? textSelection;
 
+  /// Fires when the spoiler's visuals advance (e.g. a particle animation
+  /// tick). Triggers [RenderSpoiler.markNeedsPaint] directly, keeping widget
+  /// rebuilds reserved for structural changes.
+  final Listenable? repaintListenable;
+
   @override
   RenderSpoiler createRenderObject(BuildContext context) {
     return RenderSpoiler(
@@ -43,6 +49,7 @@ class SpoilerRenderObjectWidget extends SingleChildRenderObjectWidget {
       imageFilter: imageFilter,
       enableOverlay: enableOverlay,
       textSelection: textSelection,
+      repaintListenable: repaintListenable,
     );
   }
 
@@ -58,6 +65,7 @@ class SpoilerRenderObjectWidget extends SingleChildRenderObjectWidget {
       ..onInit = onInit
       ..imageFilter = imageFilter
       ..textSelection = textSelection
+      ..repaintListenable = repaintListenable
       ..enableOverlay = enableOverlay;
   }
 }
@@ -72,6 +80,7 @@ class RenderSpoiler extends RenderProxyBox {
     ValueChanged<List<Rect>>? onInit,
     ui.ImageFilter? imageFilter,
     TextSelection? textSelection,
+    Listenable? repaintListenable,
     bool enableOverlay = false,
     RenderBox? child,
   }) : _onPaint = onPaint,
@@ -79,6 +88,7 @@ class RenderSpoiler extends RenderProxyBox {
        _onClipPath = onClipPath,
        _onInit = onInit,
        _imageFilter = imageFilter,
+       _repaintListenable = repaintListenable,
        _enableOverlay = enableOverlay,
        super(child);
 
@@ -177,6 +187,28 @@ class RenderSpoiler extends RenderProxyBox {
       _enableOverlay = value;
       markNeedsPaint();
     }
+  }
+
+  Listenable? _repaintListenable;
+  Listenable? _repaintListeningTo;
+  set repaintListenable(Listenable? value) {
+    if (identical(_repaintListenable, value)) return;
+    _repaintListenable = value;
+    _syncRepaintListener();
+  }
+
+  void _syncRepaintListener() {
+    final target = attached ? _repaintListenable : null;
+    if (identical(target, _repaintListeningTo)) return;
+    _repaintListeningTo?.removeListener(markNeedsPaint);
+    _repaintListeningTo = target;
+    _repaintListeningTo?.addListener(markNeedsPaint);
+  }
+
+  @override
+  void attach(PipelineOwner owner) {
+    super.attach(owner);
+    _syncRepaintListener();
   }
 
   @override
@@ -407,6 +439,8 @@ class RenderSpoiler extends RenderProxyBox {
 
   @override
   void detach() {
+    _repaintListeningTo?.removeListener(markNeedsPaint);
+    _repaintListeningTo = null;
     for (final offset in _listenedOffsets) {
       offset.removeListener(_onEditableOffsetChanged);
     }

@@ -10,6 +10,15 @@ typedef SpoilerLogCallback = void Function(String message);
 @visibleForTesting
 SpoilerLogCallback debugSpoilerLogger = debugPrint;
 
+/// Overrides automatic particle backend selection (atlas vs vector) for
+/// benchmarking and tests. Set before [SpoilerController.initializeParticles];
+/// `null` restores the default policy. The shader backend is still selected
+/// via [SpoilerConfig.shaderConfig] — this flag only steers the particle
+/// drawer. A real atlas failure always wins over a forced atlas selection.
+///
+/// Not for production use — rendering backends are chosen automatically.
+ParticleRenderBackend? debugForcedParticleBackend;
+
 /// A base controller that manages a "spoiler" effect, which involves:
 /// 1. A set of "particles" (positions, movement, lifespan).
 /// 2. An optional fade animation (a radial reveal or cover based on [_fadeCenter]).
@@ -131,6 +140,14 @@ class SpoilerController extends ChangeNotifier {
 
   /// True if the spoiler effect is currently on (particles + fade).
   bool get isEnabled => _isEnabled;
+
+  /// Ticks once per animation frame while the spoiler is active.
+  ///
+  /// Render objects subscribe to this for repaint-only signals. In contrast,
+  /// [notifyListeners] on this controller fires only for structural changes
+  /// (enable/disable, fade completion, backend swaps), so widgets listening
+  /// to the controller itself no longer rebuild every vsync.
+  Listenable get repaintListenable => _particleCtrl;
 
   /// True if the fade animation is active.
   bool get isFading =>
@@ -264,8 +281,19 @@ class SpoilerController extends ChangeNotifier {
       _validateAtlasAvailability(particleDrawer);
     }
 
+    final wasEnabled = _isEnabled;
     _isEnabled = config.isEnabled;
     _startParticleAnimationIfNeeded();
+
+    // Structural change: widgets reading isEnabled at build time (e.g. to
+    // toggle an image filter) need a rebuild. initializeParticles can run
+    // inside paint/build callbacks, so defer the notification to the end of
+    // the frame instead of notifying synchronously here.
+    if (_isEnabled != wasEnabled) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_isDisposed) notifyListeners();
+      });
+    }
 
     // Attempt to switch to shader if configured
     if (_config.shaderConfig?.customShaderPath != null) {
@@ -389,7 +417,6 @@ class SpoilerController extends ChangeNotifier {
       0.1,
     );
     _drawer.update(dt);
-    notifyListeners();
   }
 
   /// Recomputes _fadeRadius whenever the fade animation changes.
@@ -403,7 +430,6 @@ class SpoilerController extends ChangeNotifier {
     // If fadeAnim goes from 0→1, we scale radius from 0→distance
     _fadeRadius = distance * _fadeAnim!.value;
     _cachedClipPath = null; // Invalidate cache
-    notifyListeners();
   }
 
   // ---------------------------------------------------------------------------
@@ -418,6 +444,9 @@ class SpoilerController extends ChangeNotifier {
     _fadeRadius = 0;
     _cachedClipPath = null; // Invalidate cache
     _particleCtrl.reset();
+    // The controller value restarts at 0 on the next repeat(); without this
+    // the first tick computes a ~1s delta and particles visibly jump.
+    _lastParticleValue = 0.0;
     notifyListeners();
   }
 
@@ -493,23 +522,37 @@ class SpoilerController extends ChangeNotifier {
     super.dispose();
   }
 
+  /// Which particle backend should be active: a forced debug selection wins
+  /// over the policy, and a real atlas failure always falls back to vector.
+  ParticleRenderBackend get _selectedParticleBackend {
+    if (_atlasUnavailable) return ParticleRenderBackend.vector;
+    final forced = debugForcedParticleBackend;
+    if (forced != null && forced != ParticleRenderBackend.shader) {
+      return forced;
+    }
+    return _atlasDisabledByPolicy
+        ? ParticleRenderBackend.vector
+        : ParticleRenderBackend.atlas;
+  }
+
   ParticleSpoilerDrawer _createDefaultParticleDrawer() {
-    final drawer = (_atlasUnavailable || _atlasDisabledByPolicy)
-        ? VectorSpoilerDrawer()
-        : AtlasSpoilerDrawer();
+    final ParticleSpoilerDrawer drawer = switch (_selectedParticleBackend) {
+      ParticleRenderBackend.vector => VectorSpoilerDrawer(),
+      ParticleRenderBackend.vertices => VerticesSpoilerDrawer(),
+      _ => AtlasSpoilerDrawer(),
+    };
     _particleRenderBackend = drawer.backend;
     return drawer;
   }
 
   ParticleSpoilerDrawer _ensureParticleDrawer() {
-    final bool needsVector = _atlasUnavailable || _atlasDisabledByPolicy;
+    final selected = _selectedParticleBackend;
 
     if (_drawer is ParticleSpoilerDrawer) {
       final currentDrawer = _drawer as ParticleSpoilerDrawer;
-      final isAtlas = currentDrawer is AtlasSpoilerDrawer;
 
       // If policy and current drawer backend match, reuse it.
-      if (isAtlas != needsVector) {
+      if (currentDrawer.backend == selected) {
         _particleRenderBackend = currentDrawer.backend;
         return currentDrawer;
       }

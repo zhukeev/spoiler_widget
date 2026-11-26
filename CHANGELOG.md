@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.1.1
+
+* **Fixes:**
+  * Fixed a visible particle jump when re-enabling the spoiler — the frame-delta tracker now resets when the animation stops.
+  * Custom shader detection no longer injects the sprite sampler into user shaders whose filenames merely end in `particles.frag` (e.g. `my_particles.frag`).
+  * Removed the duplicated running-wave counter; wave concurrency is now derived from the active wave list.
+* **Performance:**
+  * Particle animation ticks no longer fire `notifyListeners` every frame — `RenderSpoiler` subscribes to the new `SpoilerController.repaintListenable` and repaints directly, eliminating a full widget rebuild per vsync per spoiler.
+  * Particle respawns now pick from a pre-validated point pool per path instead of an unbounded `contains()` rejection loop — bounds the worst-case respawn cost and speeds up `initializeParticles`.
+  * `drawRawAtlas` now receives a cull rect (spoiler bounds inflated by sprite radius) for engine-side culling.
+  * `initializeParticles` defers its enabled-state notification to end-of-frame so config changes applied during build/paint no longer assert.
+* **API:**
+  * Added `SpoilerController.repaintListenable` and `SpoilerRenderObjectWidget.repaintListenable` for repaint-only signals (previously every consumer rebuilt on each animation frame).
+  * `ShaderConfig.particles()` now accepts an optional `customShaderPath` override so a modified copy of the bundled shader (e.g. a sampler-free variant for iOS Simulator, where runtime-effect samplers are unsupported) can reuse the same uniform layout.
+  * Added `debugForcedParticleBackend` for benchmarking/testing — forces the particle drawer to atlas or vector regardless of the eligibility policy.
+* **Dev tools:**
+  * Added a frame-metrics benchmark harness to the example app (`example/lib/benchmark/`): rolling `FrameTiming` stats on the benchmark page, a recordable 10s session (stress-test burst, rebuild/wave counters), and JSON report export (clipboard + file). Baseline report checked in at `example/benchmark/baseline_v1.1.0_ios_sim_debug.json`.
+
 ## 1.1.0
 
 * **Correctness:**

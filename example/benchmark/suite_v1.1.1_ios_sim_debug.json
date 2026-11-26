@@ -1,0 +1,60 @@
+{
+  "suite": "backend-comparison",
+  "generatedAt": "2026-11-26T17:16:15.514527",
+  "reports": {
+    "atlas": {
+      "schema": "spoiler_benchmark/1",
+      "generatedAt": "2026-11-26T17:15:55.424731",
+      "buildMode": "debug",
+      "backend": "ParticleRenderBackend.atlas",
+      "requestedBackend": "atlas",
+      "particleCount": 6112,
+      "peakWaves": 10,
+      "widgetRebuilds": 22,
+      "config": {"density": 0.3, "speed": 0.5, "maxParticleSize": 2.0, "maxWaveRadius": 100.0, "maxActiveWaves": 15},
+      "frameCount": 590,
+      "refreshHz": 59.9988,
+      "budgetMs": 16.67,
+      "jankFrames": 2,
+      "buildMs": {"avg": 2.196, "p50": 1.751, "p90": 2.494, "p99": 12.727, "max": 18.276},
+      "rasterMs": {"avg": 1.56, "p50": 1.556, "p90": 1.915, "p99": 2.321, "max": 4.679},
+      "totalMs": {"avg": 21.606, "p50": 21.27, "p90": 22.577, "p99": 32.219, "max": 39.007}
+    },
+    "vector": {
+      "schema": "spoiler_benchmark/1",
+      "generatedAt": "2026-11-26T17:16:05.441073",
+      "buildMode": "debug",
+      "backend": "ParticleRenderBackend.vector",
+      "requestedBackend": "vector",
+      "particleCount": 6112,
+      "peakWaves": 0,
+      "widgetRebuilds": 21,
+      "config": {"density": 0.3, "speed": 0.5, "maxParticleSize": 2.0, "maxWaveRadius": 100.0, "maxActiveWaves": 15},
+      "frameCount": 597,
+      "refreshHz": 59.9988,
+      "budgetMs": 16.67,
+      "jankFrames": 2,
+      "buildMs": {"avg": 2.976, "p50": 2.467, "p90": 3.406, "p99": 11.171, "max": 27.101},
+      "rasterMs": {"avg": 3.896, "p50": 3.783, "p90": 4.2, "p99": 7.785, "max": 8.565},
+      "totalMs": {"avg": 24.386, "p50": 23.967, "p90": 25.272, "p99": 33.528, "max": 51.139}
+    },
+    "shader": {
+      "schema": "spoiler_benchmark/1",
+      "generatedAt": "2026-11-26T17:16:15.502932",
+      "buildMode": "debug",
+      "backend": "ParticleRenderBackend.shader",
+      "requestedBackend": "shader",
+      "particleCount": 0,
+      "peakWaves": 0,
+      "widgetRebuilds": 20,
+      "config": {"density": 0.3, "speed": 0.5, "maxParticleSize": 2.0, "maxWaveRadius": 100.0, "maxActiveWaves": 15},
+      "frameCount": 544,
+      "refreshHz": 59.9988,
+      "budgetMs": 16.67,
+      "jankFrames": 16,
+      "buildMs": {"avg": 1.487, "p50": 0.79, "p90": 1.228, "p99": 20.064, "max": 35.708},
+      "rasterMs": {"avg": 2.119, "p50": 1.853, "p90": 2.211, "p99": 2.991, "max": 181.739},
+      "totalMs": {"avg": 23.312, "p50": 20.694, "p90": 21.68, "p99": 47.253, "max": 518.119}
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "suite": "backend-comparison",
+  "note": "4-backend suite incl. new VerticesSpoilerDrawer (octagon fans, per-vertex RGBA)",
+  "generatedAt": "2026-11-26T17:43:25.999182",
+  "reports": {
+    "atlas": {
+      "schema": "spoiler_benchmark/1", "generatedAt": "2026-11-26T17:42:55.873316",
+      "buildMode": "debug", "backend": "ParticleRenderBackend.atlas", "requestedBackend": "atlas",
+      "particleCount": 6112, "peakWaves": 9, "widgetRebuilds": 21,
+      "config": {"density": 0.3, "speed": 0.5, "maxParticleSize": 2.0, "maxWaveRadius": 100.0, "maxActiveWaves": 15},
+      "frameCount": 571, "refreshHz": 59.9988, "budgetMs": 16.67, "jankFrames": 8,
+      "buildMs": {"avg": 2.782, "p50": 1.613, "p90": 3.815, "p99": 19.138, "max": 100.52},
+      "rasterMs": {"avg": 1.425, "p50": 1.333, "p90": 1.822, "p99": 2.694, "max": 5.263},
+      "totalMs": {"avg": 21.421, "p50": 20.754, "p90": 23.274, "p99": 36.515, "max": 120.187}
+    },
+    "vertices": {
+      "schema": "spoiler_benchmark/1", "generatedAt": "2026-11-26T17:43:05.894311",
+      "buildMode": "debug", "backend": "ParticleRenderBackend.vertices", "requestedBackend": "vertices",
+      "particleCount": 6112, "peakWaves": 0, "widgetRebuilds": 21,
+      "config": {"density": 0.3, "speed": 0.5, "maxParticleSize": 2.0, "maxWaveRadius": 100.0, "maxActiveWaves": 15},
+      "frameCount": 588, "refreshHz": 59.9988, "budgetMs": 16.67, "jankFrames": 6,
+      "buildMs": {"avg": 3.258, "p50": 2.585, "p90": 4.394, "p99": 14.185, "max": 22.475},
+      "rasterMs": {"avg": 2.202, "p50": 2.042, "p90": 2.588, "p99": 4.517, "max": 30.321},
+      "totalMs": {"avg": 23.091, "p50": 22.527, "p90": 24.396, "p99": 36.433, "max": 53.282}
+    },
+    "vector": {
+      "schema": "spoiler_benchmark/1", "generatedAt": "2026-11-26T17:43:15.917379",
+      "buildMode": "debug", "backend": "ParticleRenderBackend.vector", "requestedBackend": "vector",
+      "particleCount": 6112, "peakWaves": 0, "widgetRebuilds": 22,
+      "config": {"density": 0.3, "speed": 0.5, "maxParticleSize": 2.0, "maxWaveRadius": 100.0, "maxActiveWaves": 15},
+      "frameCount": 593, "refreshHz": 59.9988, "budgetMs": 16.67, "jankFrames": 3,
+      "buildMs": {"avg": 3.155, "p50": 2.597, "p90": 3.823, "p99": 13.869, "max": 18.073},
+      "rasterMs": {"avg": 2.948, "p50": 2.785, "p90": 3.372, "p99": 5.379, "max": 9.137},
+      "totalMs": {"avg": 23.766, "p50": 23.217, "p90": 25.452, "p99": 36.003, "max": 57.172}
+    },
+    "shader": {
+      "schema": "spoiler_benchmark/1", "generatedAt": "2026-11-26T17:43:25.995355",
+      "buildMode": "debug", "backend": "ParticleRenderBackend.shader", "requestedBackend": "shader",
+      "particleCount": 0, "peakWaves": 0, "widgetRebuilds": 21,
+      "config": {"density": 0.3, "speed": 0.5, "maxParticleSize": 2.0, "maxWaveRadius": 100.0, "maxActiveWaves": 15},
+      "frameCount": 586, "refreshHz": 59.9988, "budgetMs": 16.67, "jankFrames": 15,
+      "buildMs": {"avg": 1.256, "p50": 0.617, "p90": 0.923, "p99": 19.917, "max": 51.033},
+      "rasterMs": {"avg": 1.614, "p50": 1.626, "p90": 2.265, "p99": 2.827, "max": 21.166},
+      "totalMs": {"avg": 20.625, "p50": 20.158, "p90": 21.465, "p99": 40.054, "max": 83.272}
+    }
+  }
+}

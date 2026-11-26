@@ -147,8 +147,13 @@ class ShaderConfig {
   }
 
   /// Default particle shader with sprite support.
-  factory ShaderConfig.particles() => const ShaderConfig(
-    customShaderPath: 'packages/spoiler_widget/shaders/particles.frag',
+  ///
+  /// [customShaderPath] overrides the bundled asset path — useful for a
+  /// modified copy of `particles.frag` (e.g. a sampler-free variant where
+  /// runtime-effect samplers are unsupported, such as the iOS simulator).
+  factory ShaderConfig.particles({String? customShaderPath}) => ShaderConfig(
+    customShaderPath:
+        customShaderPath ?? 'packages/spoiler_widget/shaders/particles.frag',
     onGetShaderUniforms: _particleUniforms,
   );
 

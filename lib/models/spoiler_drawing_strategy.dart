@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:spoiler_widget/extension/path_x.dart';
 import 'package:spoiler_widget/models/particle.dart';
 import 'package:spoiler_widget/models/spoiler_configs.dart';
 import 'package:spoiler_widget/utils/image_factory.dart';
@@ -35,7 +34,7 @@ class SpoilerContext {
 ///   efficient batch rendering.
 /// - [vector]: Renders particles as individual vector shapes (paths) without
 ///   using a sprite atlas.
-enum ParticleRenderBackend { shader, atlas, vector }
+enum ParticleRenderBackend { shader, atlas, vector, vertices }
 
 class AtlasSupportPolicy {
   const AtlasSupportPolicy({
@@ -154,7 +153,10 @@ class ShaderSpoilerDrawer implements SpoilerDrawer {
   static bool _isParticleShaderPath(String? path) {
     if (path == null) return false;
     if (path == _particlesShaderPath) return true;
-    return path.endsWith('particles.frag');
+    // Only a shader that keeps the bundled filename declares the sprite
+    // sampler — a loose endsWith also matched names like my_particles.frag
+    // and would inject an unwanted uniform.
+    return path.split('/').last == 'particles.frag';
   }
 
   CircleImage _ensureSprite(ParticleConfig config) {
@@ -300,6 +302,14 @@ abstract class ParticleSpoilerDrawer implements SpoilerDrawer {
   final Random _random = Random(debugRandomSeed);
   final List<Particle> _particles = [];
 
+  /// Pre-validated spawn positions per source path. Respawns pick from the
+  /// pool instead of running the unbounded `contains()` rejection loop in
+  /// [PathX.getRandomPoint] every frame.
+  final Map<Path, List<Offset>> _pointPools = {};
+
+  static const int _pointPoolTargetSize = 1024;
+  static const int _pointPoolSampleAttempts = 8192;
+
   double _maxParticleSize = 1.0;
   Color _particleColor = Colors.white;
   double _particleSpeed = 1.0;
@@ -323,6 +333,7 @@ abstract class ParticleSpoilerDrawer implements SpoilerDrawer {
     required SpoilerConfig config,
   }) {
     _particles.clear();
+    _pointPools.clear();
     _maxParticleSize = config.particleConfig.maxParticleSize;
     _particleColor = config.particleConfig.color;
     _particleSpeed = config.particleConfig.speed;
@@ -380,8 +391,34 @@ abstract class ParticleSpoilerDrawer implements SpoilerDrawer {
     }
   }
 
+  List<Offset> _pointPoolFor(Path path) {
+    return _pointPools.putIfAbsent(path, () => _buildPointPool(path));
+  }
+
+  List<Offset> _buildPointPool(Path path) {
+    final bounds = path.getBounds();
+    final points = <Offset>[];
+    for (
+      var attempt = 0;
+      attempt < _pointPoolSampleAttempts &&
+          points.length < _pointPoolTargetSize;
+      attempt++
+    ) {
+      final candidate = Offset(
+        bounds.left + _random.nextDouble() * bounds.width,
+        bounds.top + _random.nextDouble() * bounds.height,
+      );
+      if (path.contains(candidate)) points.add(candidate);
+    }
+    // Path contains nothing (degenerate/empty): park particles at the bounds
+    // center rather than looping forever.
+    if (points.isEmpty) points.add(bounds.center);
+    return points;
+  }
+
   Particle _createRandomParticlePath(Path path) {
-    final offset = path.getRandomPoint(_random);
+    final pool = _pointPoolFor(path);
+    final offset = pool[_random.nextInt(pool.length)];
     return Particle(
       Particle.generateId(),
       offset.dx,
@@ -556,7 +593,9 @@ class AtlasSpoilerDrawer extends ParticleSpoilerDrawer {
       rects: rects,
       colors: colors,
       blendMode: BlendMode.modulate,
-      cullRect: null,
+      // Inflate by the sprite extent so edge particles aren't culled while
+      // their scaled sprite still overlaps the bounds.
+      cullRect: context.spoilerBounds.inflate(spriteRadius),
       paint: _particlePaint,
     );
   }
@@ -623,5 +662,112 @@ class VectorSpoilerDrawer extends ParticleSpoilerDrawer {
         metrics: shapeMetrics,
       );
     }
+  }
+}
+
+/// Strategy for drawing particles as a single triangulated mesh via
+/// [Canvas.drawVertices].
+///
+/// Each particle becomes an octagon fan (a close enough disc at particle
+/// sizes) with per-vertex RGBA, so individual scale, tint and alpha survive
+/// batching — unlike [Canvas.drawPoints], which shares one [Paint] across
+/// all points. This exists mainly as a fast-path candidate for configs that
+/// would otherwise fall back to per-particle vector drawing.
+class VerticesSpoilerDrawer extends ParticleSpoilerDrawer {
+  static const int _sides = 8;
+  static const int _vertsPerParticle = _sides * 3;
+
+  /// Unit-circle ring vertices; index [_sides] duplicates index 0 so each
+  /// fan segment reads two consecutive entries.
+  static final List<Offset> _ring = List<Offset>.generate(
+    _sides + 1,
+    (i) => Offset(cos(2 * pi * i / _sides), sin(2 * pi * i / _sides)),
+  );
+
+  final Paint _particlePaint = Paint();
+  Float32List? _positions;
+  Int32List? _colors;
+  int _lastParticleCount = 0;
+
+  @override
+  ParticleRenderBackend get backend => ParticleRenderBackend.vertices;
+
+  @override
+  void onParticlesInitialized() {
+    _reallocBuffers(particles.length);
+  }
+
+  void _reallocBuffers(int count) {
+    if (count == _lastParticleCount && _positions != null) return;
+    _positions = Float32List(count * _vertsPerParticle * 2);
+    _colors = Int32List(count * _vertsPerParticle);
+    _lastParticleCount = count;
+  }
+
+  @override
+  void draw(Canvas canvas, SpoilerContext context) {
+    final count = particles.length;
+    if (count == 0) return;
+
+    _reallocBuffers(count);
+    final positions = _positions!;
+    final colors = _colors!;
+    final transparent = _colorToArgb(Colors.transparent);
+
+    for (var index = 0; index < count; index++) {
+      final particle = particles[index];
+      final visual = buildParticleVisual(
+        particle,
+        context,
+        baseRadius: particle.size * 0.5,
+      );
+
+      var v = index * _vertsPerParticle * 2;
+      var c = index * _vertsPerParticle;
+
+      if (visual == null) {
+        // Degenerate (zero-area, transparent) triangles — keeps buffer
+        // layout fixed so no sublist copy is needed per frame.
+        for (var t = 0; t < _vertsPerParticle; t++) {
+          positions[v] = 0;
+          positions[v + 1] = 0;
+          v += 2;
+          colors[c++] = transparent;
+        }
+        continue;
+      }
+
+      final radius = particle.size * 0.5 * visual.scale;
+      final argb = _colorToArgb(visual.color);
+      final cx = particle.dx;
+      final cy = particle.dy;
+
+      for (var s = 0; s < _sides; s++) {
+        final p1 = _ring[s];
+        final p2 = _ring[s + 1];
+        positions[v++] = cx;
+        positions[v++] = cy;
+        colors[c++] = argb;
+        positions[v++] = cx + p1.dx * radius;
+        positions[v++] = cy + p1.dy * radius;
+        colors[c++] = argb;
+        positions[v++] = cx + p2.dx * radius;
+        positions[v++] = cy + p2.dy * radius;
+        colors[c++] = argb;
+      }
+    }
+
+    canvas.drawVertices(
+      ui.Vertices.raw(ui.VertexMode.triangles, positions, colors: colors),
+      BlendMode.srcOver,
+      _particlePaint,
+    );
+  }
+
+  @override
+  void dispose() {
+    _positions = null;
+    _colors = null;
+    super.dispose();
   }
 }

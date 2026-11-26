@@ -17,6 +17,7 @@ class SpoilerTextPainter extends StatefulWidget {
     this.textSelection,
     this.maxLines,
     this.isEllipsis,
+    this.repaint,
     super.key,
   });
 
@@ -43,6 +44,10 @@ class SpoilerTextPainter extends StatefulWidget {
 
   /// Whether overflowing text should use an ellipsis.
   final bool? isEllipsis;
+
+  /// Fires when the spoiler visuals advance, repainting the [CustomPaint]
+  /// without rebuilding the widget.
+  final Listenable? repaint;
 
   @override
   State<SpoilerTextPainter> createState() => _SpoilerTextPainterState();
@@ -138,6 +143,7 @@ class _SpoilerTextPainterState extends State<SpoilerTextPainter> {
 
         return CustomPaint(
           painter: CustomPainterCanvasCallback(
+            repaint: widget.repaint,
             onPaint: (canvas, size) {
               // 1) First draw spoiler / particles / clip.
               widget.onPaint(canvas, size);

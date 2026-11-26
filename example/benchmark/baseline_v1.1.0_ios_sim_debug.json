@@ -1,0 +1,41 @@
+{
+  "schema": "spoiler_benchmark/1",
+  "generatedAt": "2026-11-26T16:44:39.660680",
+  "buildMode": "debug",
+  "backend": "ParticleRenderBackend.atlas",
+  "particleCount": 6112,
+  "peakWaves": 11,
+  "widgetRebuilds": 38,
+  "config": {
+    "density": 0.3,
+    "speed": 0.5,
+    "maxParticleSize": 2.0,
+    "maxWaveRadius": 100.0,
+    "maxActiveWaves": 15
+  },
+  "frameCount": 596,
+  "refreshHz": 59.998800023999515,
+  "budgetMs": 16.67,
+  "jankFrames": 0,
+  "buildMs": {
+    "avg": 2.322,
+    "p50": 1.858,
+    "p90": 3.141,
+    "p99": 11.064,
+    "max": 12.297
+  },
+  "rasterMs": {
+    "avg": 1.428,
+    "p50": 1.395,
+    "p90": 1.685,
+    "p99": 2.05,
+    "max": 2.142
+  },
+  "totalMs": {
+    "avg": 21.455,
+    "p50": 21.126,
+    "p90": 22.513,
+    "p99": 29.949,
+    "max": 31.749
+  }
+}
