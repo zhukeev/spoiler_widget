@@ -2,7 +2,8 @@
 
 ## 1.1.1
 
-* WIP
+* **Dev tools:**
+  * Added a frame-metrics benchmark harness to the example app (`example/lib/benchmark/`): rolling `FrameTiming` stats on the benchmark page, a recordable 10s session (stress-test burst, rebuild/wave counters), and JSON report export (clipboard + file). Baseline report checked in at `example/benchmark/baseline_v1.1.0_ios_sim_debug.json`.
 
 ## 1.1.0
 
